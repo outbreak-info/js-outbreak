@@ -6,7 +6,7 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [
     vue(),
-    dts({ include: ['src/components/**/*.vue'] })
+    dts({ include: ['src/components/**/*.vue', 'src/**/*.ts'] })
   ],
   build: {
     lib: {
@@ -19,7 +19,8 @@ export default defineConfig({
       output: {
         globals: {
           vue: 'Vue'
-        }
+        },
+        exports: 'named'
       }
     }
   }
