@@ -9,11 +9,10 @@
         :width="width"
         :height="height"
         :pointColor="currentColor"
-        xKey="key"
-        yKey="value"
-        titleKey="key"
-        xLabel="Category"
-        yLabel="Value"
+        xKey="valueX"
+        yKey="valueY"
+        xLabel="valueX"
+        yLabel="valueY"
       />
     </div>
     
@@ -23,12 +22,10 @@
         :data="chartData"
         :width="width"
         :height="height"
-        :pointColor="'indianred'"
-        xKey="key"
-        yKey="value"
-        titleKey="key"
-        xLabel="Category"
-        yLabel="Value (log scale)"
+        xKey="valueX"
+        yKey="valueY"
+        xLabel="valueX"
+        yLabel="valueY (log scale)"
         :logScale="true"
       />
     </div>
@@ -44,26 +41,26 @@ const height = ref(400)
 const currentColor = ref('#333333')
 
 const chartData = ref([
-  {"key": "A", "value": 15},
-  {"key": "B", "value": 7},
-  {"key": "C", "value": 12},
-  {"key": "D", "value": 9},
-  {"key": "E", "value": 18},
-  {"key": "F", "value": 3},
-  {"key": "G", "value": 14},
-  {"key": "H", "value": 5},
-  {"key": "I", "value": 11},
-  {"key": "J", "value": 2},
-  {"key": "K", "value": 17},
-  {"key": "L", "value": 8},
-  {"key": "M", "value": 19},
-  {"key": "N", "value": 6},
-  {"key": "O", "value": 13},
-  {"key": "P", "value": 1},
-  {"key": "Q", "value": 16},
-  {"key": "R", "value": 4},
-  {"key": "S", "value": 10},
-  {"key": "T", "value": 20}
+  {"valueX": 10, "valueY": 15},
+  {"valueX": 12, "valueY": 7},
+  {"valueX": 4, "valueY": 12},
+  {"valueX": 7, "valueY": 9},
+  {"valueX": 8, "valueY": 18},
+  {"valueX": 13, "valueY": 3},
+  {"valueX": 2, "valueY": 14},
+  {"valueX": 1, "valueY": 5},
+  {"valueX": 0, "valueY": 11},
+  {"valueX": 17, "valueY": 2},
+  {"valueX": 15, "valueY": 17},
+  {"valueX": 14.5, "valueY": 8},
+  {"valueX": 16.8, "valueY": 19},
+  {"valueX": 22, "valueY": 6},
+  {"valueX": 10.2, "valueY": 13},
+  {"valueX": 13, "valueY": 1},
+  {"valueX": 14.5, "valueY": 16},
+  {"valueX": 19, "valueY": 4},
+  {"valueX": 7.5, "valueY": 10},
+  {"valueX": 6, "valueY": 20}
 ])
 
 </script>

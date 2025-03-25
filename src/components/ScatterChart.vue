@@ -10,14 +10,13 @@ const props = defineProps({
   data: { type: Array, required: true },
   xKey: { type: String, default: 'x' },
   yKey: { type: String, default: 'y' },
-  titleKey: { type: String, default: 'key' },
   pointColor: { type: String, default: 'indianred' },
   height: { type: Number, default: 500 },
   width: { type: Number, default: 800 },
-  marginLeft: { type: Number, default: 70 },
-  marginBottom: { type: Number, default: 70 },
-  xLabel: { type: String, default: 'X Axis' },
-  yLabel: { type: String, default: 'Y Axis' },
+  marginLeft: { type: Number, default: 50 },
+  marginBottom: { type: Number, default: 50 },
+  xLabel: { type: String, default: 'valueX' },
+  yLabel: { type: String, default: 'valueY' },
   xGrid: { type: Boolean, default: true },
   yGrid: { type: Boolean, default: true },
   logScale: { type: Boolean, default: false },
@@ -29,11 +28,10 @@ const chartContainer = ref(null);
 function getTipFormat(d) {
   if (props.tipFormatString) {
     return props.tipFormatString
-      .replace('{key}', d[props.titleKey])
       .replace('{x}', d[props.xKey])
       .replace('{y}', d[props.yKey]);
   }
-  return `${props.titleKey}: ${d[props.titleKey]}\n${props.xKey}: ${d[props.xKey]}\n${props.yKey}: ${d[props.yKey]}`;
+  return `${props.xKey}: ${d[props.xKey]}\n${props.yKey}: ${d[props.yKey]}`;
 }
 
 function renderChart() {
@@ -64,21 +62,19 @@ function renderChart() {
     x: xConfig,
     y: yConfig,
     marks: [
+      Plot.ruleY([(props.logScale) ? 1 : 0]),
+      Plot.ruleX([0]),
       Plot.dot(props.data, { 
-        x: props.xKey, 
-        y: props.yKey, 
-        title: props.titleKey, 
-        fill: props.pointColor 
+        x: props.xKey,
+        y: props.yKey,
+        fill: props.pointColor
       }),
       Plot.tip(props.data, Plot.pointer({
         x: props.xKey,
         y: props.yKey,
         title: getTipFormat
       }))
-    ],
-    style: {
-      fontSize: "12px"
-    }
+    ]
   });
   
   chartContainer.value.appendChild(chart);
@@ -96,12 +92,3 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-
-<style scoped>
-.chart-container {
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 1rem;
-}
-</style>
