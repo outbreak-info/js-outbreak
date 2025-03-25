@@ -23,7 +23,7 @@
         :data="chartData"
         :width="width"
         :height="height"
-        :pointColor="'steelblue'"
+        :pointColor="'indianred'"
         xKey="key"
         yKey="value"
         titleKey="key"
@@ -32,8 +32,6 @@
         :logScale="true"
       />
     </div>
-    
-    <button @click="randomizeData">Randomize Data</button>
   </div>
 </template>
 
@@ -68,12 +66,6 @@ const chartData = ref([
   {"key": "T", "value": 20}
 ])
 
-const randomizeData = () => {
-  chartData.value = chartData.value.map(item => ({
-    key: item.key,
-    value: Math.floor(Math.random() * 20) + 1
-  }))
-}
 </script>
 
 <style scoped>
