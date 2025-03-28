@@ -4,7 +4,7 @@
 
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
-import {defaultColor} from '../utils/colorSchemes';
+import { defaultColor } from '../utils/colorSchemes';
 import * as Plot from '@observablehq/plot';
 
 const props = defineProps({
