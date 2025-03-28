@@ -1,4 +1,3 @@
-<!-- src/dev/TestBarChart.vue -->
 <template>
   <div class="test-container">
     <h1>BarChart Component Test</h1>
@@ -7,7 +6,7 @@
         :data="chartData"
         :width="width"
         :height="height"
-        :barColor="currentColor"
+        barColor="currentColor"
     />
 
     Vertical
@@ -15,7 +14,7 @@
         :data="chartData"
         :width="width"
         :height="height"
-        :barColor="currentColor"
+        barColor="currentColor"
         :horizontal="false"
         xLabel="key"
         yLabel="value"
