@@ -26,10 +26,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import BarChart from '../../../src/components/BarChart.vue'
+import { colorPalette } from '../../../src/utils/colorSchemes'
 
 const width = ref(800)
 const height = ref(400)
-const currentColor = ref('#333333')
+const currentColor = colorPalette[7];
 
 const chartData = ref([
   {"key": "A", "value": 15},
