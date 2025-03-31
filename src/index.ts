@@ -4,6 +4,7 @@ import ScatterChart from './components/ScatterChart.vue'
 import TimeSeriesChart from './components/TimeSeriesChart.vue'
 import HistogramChart from './components/HistogramChart.vue'
 import PrevalenceChart from './components/PrevalenceChart.vue'
+import AreaChart from './components/AreaChart.vue'
 
 // Import utilities
 import { colorPalette } from './utils/colorSchemes'
@@ -14,8 +15,8 @@ export {
     ScatterChart,
     TimeSeriesChart,
     HistogramChart,
-    MutationChart,
-    PrevalenceChart
+    PrevalenceChart,
+    AreaChart
 }
 
 export { colorPalette as outbreakInfoColorPalette }
@@ -28,5 +29,6 @@ export default {
         app.component('TimeSeriesChart', TimeSeriesChart)
         app.component('HistogramChart', HistogramChart)
         app.component('PrevalenceChart', PrevalenceChart)
+        app.component('AreaChart', AreaChart)
     }
 }
