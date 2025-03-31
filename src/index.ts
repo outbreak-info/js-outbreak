@@ -2,7 +2,7 @@
 import BarChart from './components/BarChart.vue'
 import ScatterChart from './components/ScatterChart.vue'
 import TimeSeriesChart from './components/TimeSeriesChart.vue'
-import MutationChart from './components/MutationChart.vue'
+import HistogramChart from './components/HistogramChart.vue'
 
 // Import utilities
 import { colorPalette } from './utils/colorSchemes'
@@ -12,7 +12,7 @@ export {
     BarChart,
     ScatterChart,
     TimeSeriesChart,
-    MutationChart
+    HistogramChart
 }
 
 export { colorPalette as outbreakInfoColorPalette }
@@ -23,6 +23,6 @@ export default {
         app.component('BarChart', BarChart)
         app.component('ScatterChart', ScatterChart)
         app.component('TimeSeriesChart', TimeSeriesChart)
-        app.component('MutationChart', MutationChart)
+        app.component('HistogramChart', HistogramChart)
     }
 }
