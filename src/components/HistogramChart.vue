@@ -9,7 +9,6 @@ import * as Plot from '@observablehq/plot';
 
 const props = defineProps({
   data: { type: Array, required: true },
-  columns: { type: Array, required: true },
   frequencyKey: { type: String, default: 'frequency' },
   height: { type: Number, default: 500 },
   width: { type: Number, default: 800 },
@@ -67,17 +66,7 @@ function renderChart() {
   
   const frequencyData = createFrequencyBins();
   
-  const chartPanel = document.createElement('div');
-  chartPanel.style.padding = '20px 0 0 0';
-  
-  // Sample count
-  const sampleCount = document.createElement('div');
-  sampleCount.style.padding = '0 0 10px 20px';
-  sampleCount.style.fontWeight = 'bold';
-  sampleCount.textContent = `${props.data.length} Sample${props.data.length !== 1 ? 's' : ''}`;
-  chartPanel.appendChild(sampleCount);
-  
-  const barChart = Plot.plot({
+  const chart = Plot.plot({
     marginBottom: props.marginBottom,
     marginLeft: props.marginLeft,
     height: props.height,
@@ -96,10 +85,8 @@ function renderChart() {
       Plot.ruleY([0])
     ]
   });
-  
-  chartPanel.appendChild(barChart);
 
-  chartContainer.value.appendChild(chartPanel);
+  chartContainer.value.appendChild(chart);
 }
 
 onMounted(() => {
