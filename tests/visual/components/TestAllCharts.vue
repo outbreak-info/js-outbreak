@@ -32,7 +32,12 @@
                   <TestHistogramChart />
                 </div>
 
+                <div class="chart-component">
+                  <TestPrevalenceChart />
+                </div>
+
                 <!-- Add new components here -->
+
             </div>
         
             <div v-else-if="currentTab === 'bar'" class="single-chart-view">
@@ -55,6 +60,10 @@
                 <TestAreaChart />
             </div>
 
+            <div v-else-if="currentTab === 'prevalence'" class="single-chart-view">
+                <TestPrevalenceChart />
+            </div>
+
             <!-- Add new component tabs here -->
 
         </div>
@@ -67,6 +76,7 @@ import TestBarChart from './TestBarChart.vue'
 import TestScatterChart from './TestScatterChart.vue'
 import TestTimeSeriesChart from "./TestTimeSeriesChart.vue";
 import TestHistogramChart from './TestHistogramChart.vue';
+import TestPrevalenceChart from './TestPrevalenceChart.vue'
 import TestAreaChart from './TestAreaChart.vue';
 
 // Tab configuration
@@ -76,6 +86,7 @@ const tabs = [
 { id: 'scatter', name: 'Scatter Chart' },
 { id: 'time-series', name: 'Times Series Chart' },
 { id: 'hist', name: 'Histogram Chart' },
+{ id: 'prevalence', name: 'Prevalence Chart' },
 { id: 'area', name: 'Area Chart' }
 // Add new components here
 ]
