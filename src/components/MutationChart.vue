@@ -18,9 +18,11 @@ const props = defineProps({
   barColor: { type: String, default: defaultColor },
   xLabel: { type: String, default: 'Frequency' },
   yLabel: { type: String, default: '' },
-  bins: { type: Array, default: () => [0, 0.01, 0.02, 0.03, 0.04, 0.05] },
+  bins: { type: Array, default: () => [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1] },
   initialSortKey: { type: String, default: '' },
-  initialSortOrder: { type: String, default: 'desc' }
+  initialSortOrder: { type: String, default: 'desc' },
+  xMin: { type: Number, default: 0 },
+  xMax: { type: Number, default: 1 }
 });
 
 const chartContainer = ref(null);
@@ -29,14 +31,15 @@ const sortOrder = ref(props.initialSortOrder);
 
 // Create frequency bins for histogram
 function createFrequencyBins() {
-  const bins = props.bins;
+  const binWidth = (props.xMax - props.xMin) / (props.bins.length - 1);
+  const bins = Array.from({ length: props.bins.length }, (_, i) => props.xMin + (i * binWidth));
   const counts = Array(bins.length).fill(0);
   
   props.data.forEach(item => {
     const freq = parseFloat(item[props.frequencyKey]) || 0;
     
     for (let i = 0; i < bins.length; i++) {
-      const max = i === bins.length - 1 ? Infinity : bins[i + 1];
+      const max = i === bins.length - 1 ? props.xMax : bins[i + 1];
       if (freq >= bins[i] && freq < max) {
         counts[i]++;
         break;
@@ -45,9 +48,8 @@ function createFrequencyBins() {
   });
   
   return bins.map((bin, index) => {
-    const label = index < bins.length - 1 
-      ? `${bin.toFixed(2)}-${bins[index + 1].toFixed(2)}`
-      : `${bin.toFixed(2)}+`;
+    const nextBin = index < bins.length - 1 ? bins[index + 1] : props.xMax;
+    const label = `${bin.toFixed(2)}-${nextBin.toFixed(2)}`;
     return { key: label, value: counts[index] };
   });
 }
@@ -109,8 +111,6 @@ function renderChart() {
   layout.className = 'histogram-table-layout';
   layout.style.display = 'flex';
   layout.style.width = '100%';
-  layout.style.border = '1px solid #e0e0e0';
-  layout.style.borderRadius = '8px';
   
   const chartPanel = document.createElement('div');
   chartPanel.style.padding = '20px 0 0 0';
@@ -129,15 +129,25 @@ function renderChart() {
     width: props.width * 0.4,
     x: {
       tickRotate: 45, 
-      label: props.xLabel, 
-      type: "band"
+      label: props.xLabel,
+      domain: [props.xMin, props.xMax],
+      ticks: props.bins.length
     },
     y: {
       grid: true, 
       label: props.yLabel
     },
     marks: [
-      Plot.barY(frequencyData, {x: "key", y: "value", fill: props.barColor}),
+      Plot.rectY(props.data, 
+        Plot.binX(
+          {y: "count"},
+          {
+            x: d => parseFloat(d[props.frequencyKey]) || 0,
+            thresholds: props.bins,
+            fill: props.barColor
+          }
+        )
+      ),
       Plot.ruleY([0])
     ]
   });
@@ -151,7 +161,6 @@ function renderChart() {
   
   const table = document.createElement('table');
   table.style.width = '100%';
-  table.style.borderCollapse = 'collapse';
   
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -160,7 +169,6 @@ function renderChart() {
     const th = document.createElement('th');
     th.style.textAlign = 'left';
     th.style.padding = '8px 16px';
-    th.style.borderBottom = '1px solid #e0e0e0';
     th.style.cursor = 'pointer';
     
     th.textContent = column.label;
@@ -185,7 +193,6 @@ function renderChart() {
     props.columns.forEach(column => {
       const td = document.createElement('td');
       td.style.padding = '8px 16px';
-      td.style.borderBottom = '1px solid #e0e0e0';
       
       if (column.class === 'numeric') {
         td.style.textAlign = 'right';
