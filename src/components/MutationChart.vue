@@ -19,13 +19,9 @@ const props = defineProps({
   xLabel: { type: String, default: 'Frequency' },
   yLabel: { type: String, default: '' },
   bins: { type: Array, default: () => [0, 0.01, 0.02, 0.03, 0.04, 0.05] },
-  initialSortKey: { type: String, default: '' },
-  initialSortOrder: { type: String, default: 'desc' }
 });
 
 const chartContainer = ref(null);
-const sortKey = ref(props.initialSortKey);
-const sortOrder = ref(props.initialSortOrder);
 
 // Create frequency bins for histogram
 function createFrequencyBins() {
@@ -52,29 +48,6 @@ function createFrequencyBins() {
   });
 }
 
-// Sort the data
-function getSortedData() {
-  if (!sortKey.value) return [...props.data];
-  
-  return [...props.data].sort((a, b) => {
-    let aVal = a[sortKey.value];
-    let bVal = b[sortKey.value];
-    
-    // Handle numeric comparison
-    if (typeof aVal === 'number' && typeof bVal === 'number') {
-      return sortOrder.value === 'asc' ? aVal - bVal : bVal - aVal;
-    }
-    
-    // String comparison
-    aVal = String(aVal || '').toLowerCase();
-    bVal = String(bVal || '').toLowerCase();
-    
-    if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
-    if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1;
-    return 0;
-  });
-}
-
 // Format cell values
 function formatValue(value, format) {
   if (value == null) return '';
@@ -87,30 +60,12 @@ function formatValue(value, format) {
   }
 }
 
-function sortTable(key) {
-  if (sortKey.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortKey.value = key;
-    sortOrder.value = 'desc';
-  }
-  renderChart();
-}
-
 function renderChart() {
   if (!props.data || !props.data.length || !chartContainer.value) return;
 
   chartContainer.value.innerHTML = '';
   
   const frequencyData = createFrequencyBins();
-  const sortedData = getSortedData();
-  
-  const layout = document.createElement('div');
-  layout.className = 'histogram-table-layout';
-  layout.style.display = 'flex';
-  layout.style.width = '100%';
-  layout.style.border = '1px solid #e0e0e0';
-  layout.style.borderRadius = '8px';
   
   const chartPanel = document.createElement('div');
   chartPanel.style.padding = '20px 0 0 0';
@@ -125,8 +80,8 @@ function renderChart() {
   const barChart = Plot.plot({
     marginBottom: props.marginBottom,
     marginLeft: props.marginLeft,
-    height: props.height * 0.8,
-    width: props.width * 0.4,
+    height: props.height,
+    width: props.width,
     x: {
       tickRotate: 45, 
       label: props.xLabel, 
@@ -143,77 +98,11 @@ function renderChart() {
   });
   
   chartPanel.appendChild(barChart);
-  
-  const tablePanel = document.createElement('div');
-  tablePanel.style.flex = '1';
-  tablePanel.style.padding = '20px';
-  tablePanel.style.overflowX = 'auto';
-  
-  const table = document.createElement('table');
-  table.style.width = '100%';
-  table.style.borderCollapse = 'collapse';
-  
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  
-  props.columns.forEach(column => {
-    const th = document.createElement('th');
-    th.style.textAlign = 'left';
-    th.style.padding = '8px 16px';
-    th.style.borderBottom = '1px solid #e0e0e0';
-    th.style.cursor = 'pointer';
-    
-    th.textContent = column.label;
-    
-    if (sortKey.value === column.key) {
-      const sortIcon = sortOrder.value === 'asc' ? '↑' : '↓';
-      th.textContent += ` ${sortIcon}`;
-    }
-    
-    th.addEventListener('click', () => sortTable(column.key));
-    headerRow.appendChild(th);
-  });
-  
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-  
-  const tbody = document.createElement('tbody');
-  
-  sortedData.forEach(row => {
-    const tr = document.createElement('tr');
-    
-    props.columns.forEach(column => {
-      const td = document.createElement('td');
-      td.style.padding = '8px 16px';
-      td.style.borderBottom = '1px solid #e0e0e0';
-      
-      if (column.class === 'numeric') {
-        td.style.textAlign = 'right';
-      }
-      
-      td.textContent = formatValue(row[column.key], column.format);
-      tr.appendChild(td);
-    });
-    
-    tbody.appendChild(tr);
-  });
-  
-  table.appendChild(tbody);
-  tablePanel.appendChild(table);
-  
-  layout.appendChild(chartPanel);
-  layout.appendChild(tablePanel);
-  chartContainer.value.appendChild(layout);
+
+  chartContainer.value.appendChild(chartPanel);
 }
 
 onMounted(() => {
-  if (props.initialSortKey) {
-    sortKey.value = props.initialSortKey;
-    sortOrder.value = props.initialSortOrder;
-  } else if (props.columns.length > 0) {
-    sortKey.value = props.columns[0].key;
-  }
-  
   renderChart();
 });
 

@@ -5,8 +5,9 @@ export const heatmapColorScheme = interpolateRdPu;
 
 export const defaultColor = '#3498db';
 
+export const otherColor = '#bab0ab';
+
 export const colorPalette = [
-    '#bab0ab', // grey (other)
     '#4E79A7', // dk blue
     '#aecBe8', // lt blue
     '#f28e2b', // orange
