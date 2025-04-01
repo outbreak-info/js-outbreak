@@ -3,7 +3,7 @@ import BarChart from './components/BarChart.vue'
 import ScatterChart from './components/ScatterChart.vue'
 import TimeSeriesChart from './components/TimeSeriesChart.vue'
 import HistogramChart from './components/HistogramChart.vue'
-import PrevalenceChart from './components/PrevalenceChart.vue'
+import BoxPlotChart from './components/BoxPlotChart.vue'
 import AreaChart from './components/AreaChart.vue'
 
 // Import utilities
@@ -15,7 +15,7 @@ export {
     ScatterChart,
     TimeSeriesChart,
     HistogramChart,
-    PrevalenceChart,
+    BoxPlotChart,
     AreaChart
 }
 
@@ -28,7 +28,7 @@ export default {
         app.component('ScatterChart', ScatterChart)
         app.component('TimeSeriesChart', TimeSeriesChart)
         app.component('HistogramChart', HistogramChart)
-        app.component('PrevalenceChart', PrevalenceChart)
+        app.component('BoxPlotChart', BoxPlotChart)
         app.component('AreaChart', AreaChart)
     }
 }
