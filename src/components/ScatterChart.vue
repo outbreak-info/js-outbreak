@@ -21,7 +21,8 @@ const props = defineProps({
   xGrid: { type: Boolean, default: true },
   yGrid: { type: Boolean, default: true },
   logScale: { type: Boolean, default: false },
-  tipFormatString: { type: String, default: '' }
+  tipFormatString: { type: String, default: '' },
+  titleKey: { type: String, default: 'key' }
 });
 
 const chartContainer = ref(null);
@@ -30,7 +31,8 @@ function getTipFormat(d) {
   if (props.tipFormatString) {
     return props.tipFormatString
       .replace('{x}', d[props.xKey])
-      .replace('{y}', d[props.yKey]);
+      .replace('{y}', d[props.yKey])
+      .replace('{key}', d[props.titleKey]);
   }
   return `${props.xKey}: ${d[props.xKey]}\n${props.yKey}: ${d[props.yKey]}`;
 }
