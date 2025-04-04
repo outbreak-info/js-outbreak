@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
+import { ref, onMounted, watch, onBeforeUnmount, computed } from 'vue';
 import { defaultColor } from '../utils/colorSchemes';
 import * as Plot from '@observablehq/plot';
 
@@ -15,48 +15,49 @@ const props = defineProps({
   marginLeft: { type: Number, default: 50 },
   marginBottom: { type: Number, default: 50 },
   barColor: { type: String, default: defaultColor },
-  xLabel: { type: String, default: 'Frequency' },
-  yLabel: { type: String, default: '' },
-  bins: { type: Array, default: () => [0, 0.01, 0.02, 0.03, 0.04, 0.05] },
+  xLabel: { type: String, default: 'Frequency Range' },
+  yLabel: { type: String, default: 'Number of Samples' },
+  xMin: { type: Number, default: 0 },
+  xMax: { type: Number, default: 1 },
+  binCount: { type: Number, default: 10 }, // 10 bins for 0 to 1 with 0.1 steps
+  bins: { type: Array, default: null }, // Make this optional to allow auto-generation
 });
 
 const chartContainer = ref(null);
 
+// Compute bins dynamically if not provided
+const computedBins = computed(() => {
+  if (props.bins) return props.bins;
+  
+  const step = (props.xMax - props.xMin) / props.binCount;
+  const bins = [];
+  
+  for (let i = 0; i <= props.binCount; i++) {
+    bins.push(props.xMin + i * step);
+  }
+  
+  return bins;
+});
+
 // Create frequency bins for histogram
 function createFrequencyBins() {
-  const bins = props.bins;
-  const counts = Array(bins.length).fill(0);
+  const bins = computedBins.value;
+  const counts = Array(bins.length - 1).fill(0);
   
   props.data.forEach(item => {
     const freq = parseFloat(item[props.frequencyKey]) || 0;
     
-    for (let i = 0; i < bins.length; i++) {
-      const max = i === bins.length - 1 ? Infinity : bins[i + 1];
-      if (freq >= bins[i] && freq < max) {
+    for (let i = 0; i < bins.length - 1; i++) {
+      if (freq >= bins[i] && freq < bins[i + 1]) {
         counts[i]++;
         break;
       }
     }
   });
   
-  return bins.map((bin, index) => {
-    const label = index < bins.length - 1 
-      ? `${bin.toFixed(2)}-${bins[index + 1].toFixed(2)}`
-      : `${bin.toFixed(2)}+`;
-    return { key: label, value: counts[index] };
+  return bins.slice(0, -1).map((bin, index) => {
+    return { key: bin.toFixed(2), value: counts[index] };
   });
-}
-
-// Format cell values
-function formatValue(value, format) {
-  if (value == null) return '';
-  
-  switch (format) {
-    case 'number': return typeof value === 'number' ? value.toLocaleString() : value;
-    case 'decimal': return typeof value === 'number' ? value.toFixed(2) : value;
-    case 'percent': return typeof value === 'number' ? (value * 100).toFixed(1) + '%' : value;
-    default: return value;
-  }
 }
 
 function renderChart() {
@@ -73,7 +74,7 @@ function renderChart() {
     width: props.width,
     x: {
       tickRotate: 45, 
-      label: props.xLabel, 
+      label: props.xLabel,
       type: "band"
     },
     y: {
@@ -95,6 +96,10 @@ onMounted(() => {
 
 watch(() => props.data, renderChart, { deep: true });
 watch(() => props.barColor, renderChart);
+watch(() => props.xMin, renderChart);
+watch(() => props.xMax, renderChart);
+watch(() => props.binCount, renderChart);
+watch(() => props.bins, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
