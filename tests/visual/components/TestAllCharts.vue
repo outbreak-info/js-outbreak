@@ -64,6 +64,10 @@
                 <TestAreaChart />
             </div>
 
+            <div v-else-if="currentTab === 'another-area'" class="single-chart-view">
+                <TestAnotherAreaChart />
+            </div>
+
             <!-- Add new component tabs here -->
 
         </div>
@@ -78,6 +82,7 @@ import TestTimeSeriesChart from "./TestTimeSeriesChart.vue";
 import TestHistogramChart from './TestHistogramChart.vue';
 import TestBoxPlotChart from './TestBoxPlotChart.vue'
 import TestAreaChart from './TestAreaChart.vue';
+import TestAnotherAreaChart from './TestAnotherAreaChart.vue';
 
 // Tab configuration
 const tabs = [
@@ -87,7 +92,8 @@ const tabs = [
 { id: 'time-series', name: 'Times Series Chart' },
 { id: 'hist', name: 'Histogram Chart' },
 { id: 'box', name: 'Box Plot Chart' },
-{ id: 'area', name: 'Area Chart' }
+{ id: 'area', name: 'Area Chart' },
+{ id: 'another-area', name: 'Another Area Chart' }
 // Add new components here
 ]
 
