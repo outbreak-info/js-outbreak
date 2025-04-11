@@ -39,7 +39,10 @@ const selectedBarKey = ref(props.selectedBarKey.key);
 let svg = null;
 
 const removeFilter = () => {
-  selectedBarKey.value = null;
+  selectedBarKey.value = {
+    key: null,
+    value: null
+  };
   updateBarColors();
   emit('bar-selected', null);
 };
