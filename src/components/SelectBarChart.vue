@@ -35,7 +35,7 @@ const props = defineProps({
 const emit = defineEmits(['bar-selected']);
 
 const chartContainer = ref(null);
-const selectedBarKey = ref(props.selectedBarKey.key);
+const selectedBarKey = ref(props.selectedBarKey);
 let svg = null;
 
 const removeFilter = () => {
@@ -44,11 +44,14 @@ const removeFilter = () => {
     value: null
   };
   updateBarColors();
-  emit('bar-selected', null);
+  emit('bar-selected', selectedBarKey.value);
 };
 
 const selectBar = (d) => {
-  selectedBarKey.value = d.key;
+  selectedBarKey.value = {
+    key: d.key,
+    value: d.value
+  };
   updateBarColors();
   emit('bar-selected', d);
 };
@@ -57,14 +60,14 @@ const updateBarColors = () => {
   if (!svg) return;
 
   svg.selectAll('.bar')
-      .attr('fill', d => d.key === selectedBarKey.value ? props.selectBarColor : props.barColor)
+      .attr('fill', d => d.key === selectedBarKey.value.key ? props.selectBarColor : props.barColor)
       .on('mouseover', function(event, d) {
-        if (d.key !== selectedBarKey.value) {
+        if (d.key !== selectedBarKey.value.key) {
           d3.select(this).attr('fill', props.hoverBarColor);
         }
       })
       .on('mouseout', function(event, d) {
-        if (d.key !== selectedBarKey.value) {
+        if (d.key !== selectedBarKey.value.key) {
           d3.select(this).attr('fill', props.barColor);
         }
       });
@@ -126,15 +129,15 @@ const renderChart = () => {
         .attr('x', 0)
         .attr('height', y.bandwidth())
         .attr('width', d => x(d.value))
-        .attr('fill', d => d.key === selectedBarKey.value ? props.selectBarColor : props.barColor)
+        .attr('fill', d => d.key === selectedBarKey.value.key ? props.selectBarColor : props.barColor)
         .style('cursor', 'pointer')
         .on('mouseover', function(event, d) {
-          if (d.key !== selectedBarKey.value) {
+          if (d.key !== selectedBarKey.value.key) {
             d3.select(this).attr('fill', props.hoverBarColor);
           }
         })
         .on('mouseout', function(event, d) {
-          if (d.key !== selectedBarKey.value) {
+          if (d.key !== selectedBarKey.value.key) {
             d3.select(this).attr('fill', props.barColor);
           }
         })
@@ -176,15 +179,15 @@ const renderChart = () => {
         .attr('y', d => y(d.value))
         .attr('width', x.bandwidth())
         .attr('height', d => height - y(d.value))
-        .attr('fill', d => d.key === selectedBarKey.value ? props.selectBarColor : props.barColor)
+        .attr('fill', d => d.key === selectedBarKey.value.key ? props.selectBarColor : props.barColor)
         .style('cursor', 'pointer')
         .on('mouseover', function(event, d) {
-          if (d.key !== selectedBarKey.value) {
+          if (d.key !== selectedBarKey.value.key) {
             d3.select(this).attr('fill', props.hoverBarColor);
           }
         })
         .on('mouseout', function(event, d) {
-          if (d.key !== selectedBarKey.value) {
+          if (d.key !== selectedBarKey.value.key) {
             d3.select(this).attr('fill', props.barColor);
           }
         })
@@ -202,6 +205,10 @@ onMounted(() => {
 // Re-render when data changes
 watch(() => props.data, () => {
   renderChart();
+}, { deep: true });
+watch(() => props.selectedBarKey, (newVal) => {
+  selectedBarKey.value = newVal;
+  updateBarColors();
 }, { deep: true });
 </script>
 

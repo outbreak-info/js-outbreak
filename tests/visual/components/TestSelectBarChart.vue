@@ -18,9 +18,11 @@
         :selectedBarKey="selectedItemVertical"
         @bar-selected="barSelectedVertical"
     />
-    <div v-if="selectedItemVertical" class="selected-info">
-      Selected: {{ selectedItemVertical.key }} ({{ selectedItemVertical.value }})
-    </div>
+    <select v-model="selectedItemVertical" class="form-select">
+      <option v-for="item in chartData" :key="item.key" :value="{ key: item.key, value: item.value }">
+        {{ item.key }} ({{ item.value }})
+      </option>
+    </select>
   </div>
 </template>
 
