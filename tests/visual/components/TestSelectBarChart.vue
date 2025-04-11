@@ -15,6 +15,7 @@
         :data="chartData"
         :horizontal="false"
         fieldName="test-field"
+        :selectedBarKey="selectedItemVertical"
         @bar-selected="barSelectedVertical"
     />
     <div v-if="selectedItemVertical" class="selected-info">
@@ -31,17 +32,6 @@ import { colorPalette } from '../../../src/utils/colorSchemes'
 const width = ref(800)
 const height = ref(400)
 const currentColor = colorPalette[7];
-const selectedItem = ref(null);
-const selectedItemVertical = ref(null);
-
-const barSelected = (item) => {
-  selectedItem.value = item;
-};
-
-const barSelectedVertical = (item) => {
-  selectedItemVertical.value = item;
-};
-
 
 const chartData = ref([
   {"key": "A", "value": 15},
@@ -65,5 +55,16 @@ const chartData = ref([
   {"key": "S", "value": 10},
   {"key": "T", "value": 20}
 ])
+
+const selectedItem = ref(null);
+const selectedItemVertical = ref(chartData.value[3]);
+
+const barSelected = (item) => {
+  selectedItem.value = item;
+};
+
+const barSelectedVertical = (item) => {
+  selectedItemVertical.value = item;
+};
 
 </script>

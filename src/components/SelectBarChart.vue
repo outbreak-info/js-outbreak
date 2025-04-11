@@ -28,13 +28,14 @@ const props = defineProps({
   yLabel: { type: String, default: 'key' },
   hoverBarColor: { type: String, default: colorPalette[1] },
   selectBarColor: { type: String, default: colorPalette[2] },
-  fieldName: { type: String, default: null }
+  fieldName: { type: String, default: null },
+  selectedBarKey: { type: Object, default: () => ({key: null, value: null}) },
 });
 
 const emit = defineEmits(['bar-selected']);
 
 const chartContainer = ref(null);
-const selectedBarKey = ref(null);
+const selectedBarKey = ref(props.selectedBarKey.key);
 let svg = null;
 
 const removeFilter = () => {
