@@ -1,0 +1,241 @@
+<template>
+  <div>
+    <div class="chart-header">
+      <div class="chart-controls">
+        <button class="remove-filter-btn" @click="removeFilter">
+          Remove Filter
+        </button>
+      </div>
+    </div>
+    <div ref="chartContainer" class="bar-chart-container"></div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, watch } from 'vue';
+import * as d3 from 'd3';
+import { defaultColor, colorPalette } from "../utils/colorSchemes.js";
+
+const props = defineProps({
+  data: { type: Array, required: true }, // Expecting [{key: string, value: number}, ...]
+  horizontal: { type: Boolean, default: true },
+  height: { type: Number, default: 500 },
+  width: { type: Number, default: 800 },
+  marginBottom: { type: Number, default: 50 },
+  marginLeft: { type: Number, default: 50 },
+  barColor: { type: String, default: colorPalette[0] },
+  xLabel: { type: String, default: 'value' },
+  yLabel: { type: String, default: 'key' },
+  hoverBarColor: { type: String, default: colorPalette[1] },
+  selectBarColor: { type: String, default: colorPalette[2] },
+});
+
+const emit = defineEmits(['bar-selected']);
+
+const chartContainer = ref(null);
+const selectedBarKey = ref(null);
+const isHorizontal = ref(false);
+let svg = null;
+
+const removeFilter = () => {
+  selectedBarKey.value = null;
+  updateBarColors();
+  emit('bar-selected', null);
+};
+
+const selectBar = (d) => {
+  selectedBarKey.value = d.key;
+  updateBarColors();
+  emit('bar-selected', d);
+};
+
+const updateBarColors = () => {
+  if (!svg) return;
+
+  svg.selectAll('.bar')
+      .attr('fill', d => d.key === selectedBarKey.value ? props.selectBarColor : props.barColor)
+      .on('mouseover', function(event, d) {
+        if (d.key !== selectedBarKey.value) {
+          d3.select(this).attr('fill', props.hoverBarColor);
+        }
+      })
+      .on('mouseout', function(event, d) {
+        if (d.key !== selectedBarKey.value) {
+          d3.select(this).attr('fill', props.barColor);
+        }
+      });
+};
+
+// Render the chart
+const renderChart = () => {
+  if (!chartContainer.value || !props.data || props.data.length === 0) return;
+
+  // Clear previous chart if any
+  d3.select(chartContainer.value).selectAll('*').remove();
+
+  // Sort data in descending order by value
+  const sortedData = [...props.data].sort((a, b) => b.value - a.value);
+
+  // Create the SVG container
+  svg = d3.select(chartContainer.value)
+      .append('svg')
+      .attr('width', props.width)
+      .attr('height', props.height);
+
+  // Define dimensions
+  const width = props.width - props.marginLeft;
+  const height = props.height - props.marginBottom;
+
+  // Create a group for the chart content
+  const g = svg.append('g')
+      .attr('transform', `translate(${props.marginLeft},0)`);
+
+  if (isHorizontal.value) {
+    // For horizontal bar chart
+    // Create scales
+    const y = d3.scaleBand()
+        .domain(sortedData.map(d => d.key))
+        .range([0, height])
+        .padding(0.1);
+
+    const x = d3.scaleLinear()
+        .domain([0, d3.max(sortedData, d => d.value)])
+        .nice()
+        .range([0, width]);
+
+    // Add X axis
+    g.append('g')
+        .attr('transform', `translate(0,${height})`)
+        .call(d3.axisBottom(x));
+
+    // Add Y axis
+    g.append('g')
+        .call(d3.axisLeft(y));
+
+    // Add the bars
+    g.selectAll('.bar')
+        .data(sortedData)
+        .enter()
+        .append('rect')
+        .attr('class', 'bar')
+        .attr('y', d => y(d.key))
+        .attr('x', 0)
+        .attr('height', y.bandwidth())
+        .attr('width', d => x(d.value))
+        .attr('fill', d => d.key === selectedBarKey.value ? props.selectBarColor : props.barColor)
+        .style('cursor', 'pointer')
+        .on('mouseover', function(event, d) {
+          if (d.key !== selectedBarKey.value) {
+            d3.select(this).attr('fill', props.hoverBarColor);
+          }
+        })
+        .on('mouseout', function(event, d) {
+          if (d.key !== selectedBarKey.value) {
+            d3.select(this).attr('fill', props.barColor);
+          }
+        })
+        .on('click', (event, d) => {
+          selectBar(d);
+        });
+  } else {
+    // For vertical bar chart
+    // Create scales
+    const x = d3.scaleBand()
+        .domain(sortedData.map(d => d.key))
+        .range([0, width])
+        .padding(0.1);
+
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(sortedData, d => d.value)])
+        .nice()
+        .range([height, 0]);
+
+    // Add X axis
+    g.append('g')
+        .attr('transform', `translate(0,${height})`)
+        .call(d3.axisBottom(x))
+        .selectAll('text')
+        .attr('transform', 'rotate(-45)')
+        .style('text-anchor', 'end');
+
+    // Add Y axis
+    g.append('g')
+        .call(d3.axisLeft(y));
+
+    // Add the bars
+    g.selectAll('.bar')
+        .data(sortedData)
+        .enter()
+        .append('rect')
+        .attr('class', 'bar')
+        .attr('x', d => x(d.key))
+        .attr('y', d => y(d.value))
+        .attr('width', x.bandwidth())
+        .attr('height', d => height - y(d.value))
+        .attr('fill', d => d.key === selectedBarKey.value ? props.selectBarColor : props.barColor)
+        .style('cursor', 'pointer')
+        .on('mouseover', function(event, d) {
+          if (d.key !== selectedBarKey.value) {
+            d3.select(this).attr('fill', props.hoverBarColor);
+          }
+        })
+        .on('mouseout', function(event, d) {
+          if (d.key !== selectedBarKey.value) {
+            d3.select(this).attr('fill', props.barColor);
+          }
+        })
+        .on('click', (event, d) => {
+          selectBar(d);
+        });
+  }
+};
+
+// Initial render
+onMounted(() => {
+  renderChart();
+});
+
+// Re-render when data changes
+watch(() => props.data, () => {
+  renderChart();
+}, { deep: true });
+</script>
+
+<style scoped>
+.bar-chart-container {
+  width: 100%;
+  height: 100%;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.orientation-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.remove-filter-btn {
+  padding: 6px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.remove-filter-btn:hover {
+  background-color: #e0e0e0;
+}
+</style>
