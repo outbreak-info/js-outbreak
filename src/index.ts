@@ -5,6 +5,7 @@ import TimeSeriesChart from './components/TimeSeriesChart.vue'
 import HistogramChart from './components/HistogramChart.vue'
 import BoxPlotChart from './components/BoxPlotChart.vue'
 import AreaChart from './components/AreaChart.vue'
+import SelectBarChart from './components/SelectBarChart.vue'
 
 // Import utilities
 import { colorPalette } from './utils/colorSchemes'
@@ -16,7 +17,8 @@ export {
     TimeSeriesChart,
     HistogramChart,
     BoxPlotChart,
-    AreaChart
+    AreaChart,
+    SelectBarChart
 }
 
 export { colorPalette as outbreakInfoColorPalette }
@@ -30,5 +32,6 @@ export default {
         app.component('HistogramChart', HistogramChart)
         app.component('BoxPlotChart', BoxPlotChart)
         app.component('AreaChart', AreaChart)
+        app.component('SelectBarChart', SelectBarChart)
     }
 }

@@ -13,7 +13,8 @@
     Vertical
     <SelectBarChart
         :data="chartData"
-        :horizontal="true"
+        :horizontal="false"
+        fieldName="test-field"
         @bar-selected="barSelectedVertical"
     />
     <div v-if="selectedItemVertical" class="selected-info">

@@ -3,7 +3,7 @@
     <div class="chart-header">
       <div class="chart-controls">
         <button class="remove-filter-btn" @click="removeFilter">
-          Remove Filter
+          Remove {{props.fieldName}} Filter
         </button>
       </div>
     </div>
@@ -28,13 +28,13 @@ const props = defineProps({
   yLabel: { type: String, default: 'key' },
   hoverBarColor: { type: String, default: colorPalette[1] },
   selectBarColor: { type: String, default: colorPalette[2] },
+  fieldName: { type: String, default: null }
 });
 
 const emit = defineEmits(['bar-selected']);
 
 const chartContainer = ref(null);
 const selectedBarKey = ref(null);
-const isHorizontal = ref(false);
 let svg = null;
 
 const removeFilter = () => {
@@ -88,9 +88,9 @@ const renderChart = () => {
 
   // Create a group for the chart content
   const g = svg.append('g')
-      .attr('transform', `translate(${props.marginLeft},0)`);
+      .attr('transform', `translate(${props.marginLeft},10)`);
 
-  if (isHorizontal.value) {
+  if (props.horizontal) {
     // For horizontal bar chart
     // Create scales
     const y = d3.scaleBand()
@@ -202,40 +202,5 @@ watch(() => props.data, () => {
 </script>
 
 <style scoped>
-.bar-chart-container {
-  width: 100%;
-  height: 100%;
-}
 
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.chart-controls {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.orientation-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-}
-
-.remove-filter-btn {
-  padding: 6px 12px;
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.remove-filter-btn:hover {
-  background-color: #e0e0e0;
-}
 </style>
