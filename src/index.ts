@@ -6,9 +6,11 @@ import HistogramChart from './components/HistogramChart.vue'
 import BoxPlotChart from './components/BoxPlotChart.vue'
 import AreaChart from './components/AreaChart.vue'
 import SelectBarChart from './components/SelectBarChart.vue'
+import SelectBarChartWithBarGraph from './components/SelectBarChartWithBarGraph.vue'
 
 // Import utilities
 import { colorPalette } from './utils/colorSchemes'
+import { themeOverrides } from './assets/naiveThemeVariables'
 
 // Export components
 export {
@@ -18,10 +20,11 @@ export {
     HistogramChart,
     BoxPlotChart,
     AreaChart,
-    SelectBarChart
+    SelectBarChart,
+    SelectBarChartWithBarGraph,
+    colorPalette as outbreakInfoColorPalette,
+    themeOverrides as outbreakInfoThemeOverrides
 }
-
-export { colorPalette as outbreakInfoColorPalette }
 
 // Export default object for Vue.use()
 export default {
@@ -33,5 +36,6 @@ export default {
         app.component('BoxPlotChart', BoxPlotChart)
         app.component('AreaChart', AreaChart)
         app.component('SelectBarChart', SelectBarChart)
+        app.component('SelectBarChartWithBarGraph', SelectBarChartWithBarGraph)
     }
 }

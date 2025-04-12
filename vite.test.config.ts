@@ -7,7 +7,7 @@ export default defineConfig({
     root: 'tests/visual',
     resolve: {
         alias: {
-            '@': resolve(__dirname, './src')
+            '@': resolve(__dirname, 'src')
         }
     }
 })

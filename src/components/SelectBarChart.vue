@@ -1,20 +1,24 @@
 <template>
-  <div>
-    <div class="chart-header">
-      <div class="chart-controls">
-        <button class="remove-filter-btn" @click="removeFilter">
-          Remove {{props.fieldName}} Filter
-        </button>
+  <n-config-provider :theme-overrides="themeOverrides">
+    <div>
+      <div class="chart-header">
+        <div class="chart-controls">
+          <n-button type="primary" class="remove-filter-btn" @click="removeFilter">
+            Remove {{props.fieldName}} Filter
+          </n-button>
+        </div>
       </div>
+      <div ref="chartContainer" class="bar-chart-container"></div>
     </div>
-    <div ref="chartContainer" class="bar-chart-container"></div>
-  </div>
+  </n-config-provider>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import * as d3 from 'd3';
-import { defaultColor, colorPalette } from "../utils/colorSchemes.js";
+import { colorPalette } from "../utils/colorSchemes";
+import { themeOverrides } from '../assets/naiveThemeVariables.js'
+import { NButton, NConfigProvider } from 'naive-ui'
 
 const props = defineProps({
   data: { type: Array, required: true }, // Expecting [{key: string, value: number}, ...]
@@ -110,15 +114,6 @@ const renderChart = () => {
         .nice()
         .range([0, width]);
 
-    // Add X axis
-    g.append('g')
-        .attr('transform', `translate(0,${height})`)
-        .call(d3.axisBottom(x));
-
-    // Add Y axis
-    g.append('g')
-        .call(d3.axisLeft(y));
-
     // Add the bars
     g.selectAll('.bar')
         .data(sortedData)
@@ -144,6 +139,16 @@ const renderChart = () => {
         .on('click', (event, d) => {
           selectBar(d);
         });
+
+    // Add X axis
+    g.append('g')
+        .attr('transform', `translate(0,${height})`)
+        .call(d3.axisBottom(x));
+
+    // Add Y axis
+    g.append('g')
+        .call(d3.axisLeft(y));
+
   } else {
     // For vertical bar chart
     // Create scales
@@ -156,18 +161,6 @@ const renderChart = () => {
         .domain([0, d3.max(sortedData, d => d.value)])
         .nice()
         .range([height, 0]);
-
-    // Add X axis
-    g.append('g')
-        .attr('transform', `translate(0,${height})`)
-        .call(d3.axisBottom(x))
-        .selectAll('text')
-        .attr('transform', 'rotate(-45)')
-        .style('text-anchor', 'end');
-
-    // Add Y axis
-    g.append('g')
-        .call(d3.axisLeft(y));
 
     // Add the bars
     g.selectAll('.bar')
@@ -194,6 +187,18 @@ const renderChart = () => {
         .on('click', (event, d) => {
           selectBar(d);
         });
+
+    // Add X axis
+    g.append('g')
+        .attr('transform', `translate(0,${height})`)
+        .call(d3.axisBottom(x))
+        .selectAll('text')
+        .attr('transform', 'rotate(-45)')
+        .style('text-anchor', 'end');
+
+    // Add Y axis
+    g.append('g')
+        .call(d3.axisLeft(y));
   }
 };
 

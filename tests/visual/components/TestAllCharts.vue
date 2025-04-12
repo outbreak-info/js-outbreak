@@ -40,6 +40,10 @@
                   <TestSelectBarChart />
                 </div>
 
+                <div class="chart-component">
+                  <TestSelectBarChartWithBarGraph />
+                </div>
+
                 <!-- Add new components here -->
 
             </div>
@@ -72,6 +76,10 @@
                 <TestSelectBarChart />
             </div>
 
+            <div v-else-if="currentTab === 'select-bar-chart-with-bar-graph'" class="single-chart-view">
+              <TestSelectBarChartWithBarGraph />
+            </div>
+
             <!-- Add new component tabs here -->
 
         </div>
@@ -87,6 +95,7 @@ import TestHistogramChart from './TestHistogramChart.vue';
 import TestBoxPlotChart from './TestBoxPlotChart.vue'
 import TestAreaChart from './TestAreaChart.vue';
 import TestSelectBarChart from "./TestSelectBarChart.vue";
+import TestSelectBarChartWithBarGraph from "./TestSelectBarChartWithBarGraph.vue";
 
 // Tab configuration
 const tabs = [
@@ -97,7 +106,8 @@ const tabs = [
 { id: 'hist', name: 'Histogram Chart' },
 { id: 'box', name: 'Box Plot Chart' },
 { id: 'area', name: 'Area Chart' },
-{ id: 'select-bar-chart', name: 'Select Bar Chart' }
+{ id: 'select-bar-chart', name: 'Select Bar Chart' },
+{ id: 'select-bar-chart-with-bar-graph', name: 'Select Bar Chart with Bar Graph' }
 // Add new components here
 ]
 
