@@ -44,6 +44,10 @@
                   <TestSelectBarChartWithBarGraph />
                 </div>
 
+                <div class="chart-component">
+                  <TestMonthlyBarChart />
+                </div>
+
                 <!-- Add new components here -->
 
             </div>
@@ -80,6 +84,10 @@
               <TestSelectBarChartWithBarGraph />
             </div>
 
+            <div v-else-if="currentTab === 'monthly-bar'" class="single-chart-view">
+              <TestMonthlyBarChart />
+            </div>
+
             <!-- Add new component tabs here -->
 
         </div>
@@ -96,6 +104,7 @@ import TestBoxPlotChart from './TestBoxPlotChart.vue'
 import TestAreaChart from './TestAreaChart.vue';
 import TestSelectBarChart from "./TestSelectBarChart.vue";
 import TestSelectBarChartWithBarGraph from "./TestSelectBarChartWithBarGraph.vue";
+import TestMonthlyBarChart from "./TestMonthlyBarChart.vue";
 
 // Tab configuration
 const tabs = [
@@ -107,7 +116,8 @@ const tabs = [
 { id: 'box', name: 'Box Plot Chart' },
 { id: 'area', name: 'Area Chart' },
 { id: 'select-bar-chart', name: 'Select Bar Chart' },
-{ id: 'select-bar-chart-with-bar-graph', name: 'Select Bar Chart with Bar Graph' }
+{ id: 'select-bar-chart-with-bar-graph', name: 'Select Bar Chart with Bar Graph' },
+{ id: 'monthly-bar', name: 'Monthly Bar Chart' }
 // Add new components here
 ]
 
