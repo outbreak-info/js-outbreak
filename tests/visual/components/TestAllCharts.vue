@@ -64,6 +64,10 @@
                 <TestTimeSeriesChart />
             </div>
 
+            <div v-else-if="currentTab === 'point-range'" class="single-chart-view">
+                <TestPointRangeChart />
+            </div>
+
             <div v-else-if="currentTab === 'hist'" class="single-chart-view">
                 <TestHistogramChart />
             </div>
@@ -105,6 +109,7 @@ import TestAreaChart from './TestAreaChart.vue';
 import TestSelectBarChart from "./TestSelectBarChart.vue";
 import TestSelectBarChartWithBarGraph from "./TestSelectBarChartWithBarGraph.vue";
 import TestMonthlyBarChart from "./TestMonthlyBarChart.vue";
+import TestPointRangeChart from "./TestPointRangeChart.vue";
 
 // Tab configuration
 const tabs = [
@@ -112,6 +117,7 @@ const tabs = [
 { id: 'bar', name: 'Bar Chart' },
 { id: 'scatter', name: 'Scatter Chart' },
 { id: 'time-series', name: 'Times Series Chart' },
+{ id: 'point-range', name: 'Point Range Chart' },
 { id: 'hist', name: 'Histogram Chart' },
 { id: 'box', name: 'Box Plot Chart' },
 { id: 'area', name: 'Area Chart' },

@@ -17,4 +17,5 @@ declare module 'outbreakInfo' {
     export const SelectBarChart: DefineComponent<{}, {}, any>
     export const SelectBarChartWithBarGraph: DefineComponent<{}, {}, any>
     export const MonthlyBarChart: DefineComponent<{}, {}, any>
+    export const PointRangeChart: DefineComponent<{}, {}, any>
 }
