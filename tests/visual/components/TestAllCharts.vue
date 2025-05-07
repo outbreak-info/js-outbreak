@@ -48,6 +48,10 @@
                   <TestMonthlyBarChart />
                 </div>
 
+                <div class="chart-component">
+                  <TestUSChoroplethMap />
+                </div>
+
                 <!-- Add new components here -->
 
             </div>
@@ -88,6 +92,11 @@
               <TestMonthlyBarChart />
             </div>
 
+            <div v-else-if="currentTab === 'us-choropleth-map'"
+                class="single-chart-view">
+              <TestUSChoroplethMap />
+            </div>
+
             <!-- Add new component tabs here -->
 
         </div>
@@ -105,6 +114,7 @@ import TestAreaChart from './TestAreaChart.vue';
 import TestSelectBarChart from "./TestSelectBarChart.vue";
 import TestSelectBarChartWithBarGraph from "./TestSelectBarChartWithBarGraph.vue";
 import TestMonthlyBarChart from "./TestMonthlyBarChart.vue";
+import TestUSChoroplethMap from "./TestUSChoroplethMap.vue";
 
 // Tab configuration
 const tabs = [
@@ -117,7 +127,9 @@ const tabs = [
 { id: 'area', name: 'Area Chart' },
 { id: 'select-bar-chart', name: 'Select Bar Chart' },
 { id: 'select-bar-chart-with-bar-graph', name: 'Select Bar Chart with Bar Graph' },
-{ id: 'monthly-bar', name: 'Monthly Bar Chart' }
+{ id: 'monthly-bar', name: 'Monthly Bar Chart' },
+{ id: 'us-choropleth-map', name: 'US Choropleth Map' }
+
 // Add new components here
 ]
 
@@ -187,5 +199,4 @@ h2 {
 .chart-component:last-child {
     margin-bottom: 0;
 }
-
 </style>
