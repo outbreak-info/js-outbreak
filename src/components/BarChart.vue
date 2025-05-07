@@ -26,9 +26,6 @@ function renderChart() {
 
   chartContainer.value.innerHTML = '';
 
-  // Sort data by value
-  const data = [...props.data].sort((a, b) => b.value - a.value);
-
   // Create chart
   const chart = props.horizontal
     ? Plot.plot({
@@ -39,7 +36,7 @@ function renderChart() {
         y: {label: props.yLabel},
         x: {label: props.xLabel, grid: true},
         marks: [
-          Plot.barX(data, {y: "key", x: "value", fill: props.barColor, sort: {y: "-x"}}),
+          Plot.barX(props.data, {y: "key", x: "value", fill: props.barColor, sort: {y: "-x"}}),
           Plot.ruleX([0])
         ]
       })
@@ -51,7 +48,7 @@ function renderChart() {
         x: {tickRotate: 45, label: props.xLabel},
         y: {grid: true, label: props.yLabel},
         marks: [
-          Plot.barY(data, {x: "key", y: "value", fill: props.barColor, sort: {x: "-y"}}),
+          Plot.barY(props.data, {x: "key", y: "value", fill: props.barColor, sort: {x: "-y"}}),
           Plot.ruleY([0])
         ]
       });
