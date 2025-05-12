@@ -1,101 +1,109 @@
 <template>
-    <div class="test-container">
-        <h1>Charts Testing Dashboard</h1>
+  <div class="test-container">
+    <h1>Charts Testing Dashboard</h1>
         
-        <div class="tab-controls">
-            <button 
-                v-for="(tab, index) in tabs" 
-                :key="index"
-                @click="currentTab = tab.id"
-                :class="{ 'active-tab': currentTab === tab.id }"
-                class="tab-button"
-            >
-                {{ tab.name }}
-            </button>
-        </div>
-        
-        <div class="tab-content">
-            <div v-if="currentTab === 'all'" class="all-charts-view">
-                <div class="chart-component">
-                    <TestBarChart />
-                </div>
-                
-                <div class="chart-component">
-                    <TestScatterChart />
-                </div>
-
-                <div class="chart-component">
-                    <TestTimeSeriesChart />
-                </div>
-
-                <div class="chart-component">
-                    <TestHistogramChart />
-                </div>
-
-                <div class="chart-component">
-                    <TestBoxPlotChart />
-                </div>
-
-                <div class="chart-component">
-                  <TestSelectBarChart />
-                </div>
-
-                <div class="chart-component">
-                  <TestSelectBarChartWithBarGraph />
-                </div>
-
-                <div class="chart-component">
-                  <TestMonthlyBarChart />
-                </div>
-
-                <!-- Add new components here -->
-
-            </div>
-        
-            <div v-else-if="currentTab === 'bar'" class="single-chart-view">
-                <TestBarChart />
-            </div>
-            
-            <div v-else-if="currentTab === 'scatter'" class="single-chart-view">
-                <TestScatterChart />
-            </div>
-
-            <div v-else-if="currentTab === 'time-series'" class="single-chart-view">
-                <TestTimeSeriesChart />
-            </div>
-
-            <div v-else-if="currentTab === 'point-range'" class="single-chart-view">
-                <TestPointRangeChart />
-            </div>
-
-            <div v-else-if="currentTab === 'hist'" class="single-chart-view">
-                <TestHistogramChart />
-            </div>
-
-            <div v-else-if="currentTab === 'box'" class="single-chart-view">
-                <TestBoxPlotChart />
-            </div>
-
-            <div v-else-if="currentTab === 'area'" class="single-chart-view">
-                <TestAreaChart />
-            </div>
-
-            <div v-else-if="currentTab === 'select-bar-chart'" class="single-chart-view">
-                <TestSelectBarChart />
-            </div>
-
-            <div v-else-if="currentTab === 'select-bar-chart-with-bar-graph'" class="single-chart-view">
-              <TestSelectBarChartWithBarGraph />
-            </div>
-
-            <div v-else-if="currentTab === 'monthly-bar'" class="single-chart-view">
-              <TestMonthlyBarChart />
-            </div>
-
-            <!-- Add new component tabs here -->
-
-        </div>
+    <div class="tab-controls">
+      <button
+        v-for="(tab, index) in tabs"
+        :key="index"
+        @click="currentTab = tab.id"
+        :class="{ 'active-tab': currentTab === tab.id }"
+        class="tab-button"
+      >
+        {{ tab.name }}
+      </button>
     </div>
+        
+    <div class="tab-content">
+      <div v-if="currentTab === 'all'" class="all-charts-view">
+        <div class="chart-component">
+          <TestBarChart />
+        </div>
+                
+        <div class="chart-component">
+          <TestScatterChart />
+        </div>
+
+        <div class="chart-component">
+          <TestTimeSeriesChart />
+        </div>
+
+        <div class="chart-component">
+          <TestHistogramChart />
+        </div>
+
+        <div class="chart-component">
+          <TestBoxPlotChart />
+        </div>
+
+        <div class="chart-component">
+          <TestSelectBarChart />
+        </div>
+
+        <div class="chart-component">
+          <TestSelectBarChartWithBarGraph />
+        </div>
+
+        <div class="chart-component">
+          <TestMonthlyBarChart />
+        </div>
+
+        <div class="chart-component">
+          <TestUsChoroplethMap />
+        </div>
+
+        <!-- Add new components here -->
+
+      </div>
+        
+      <div v-else-if="currentTab === 'bar'" class="single-chart-view">
+          <TestBarChart />
+      </div>
+
+      <div v-else-if="currentTab === 'scatter'" class="single-chart-view">
+          <TestScatterChart />
+      </div>
+
+      <div v-else-if="currentTab === 'time-series'" class="single-chart-view">
+          <TestTimeSeriesChart />
+      </div>
+
+      <div v-else-if="currentTab === 'point-range'" class="single-chart-view">
+          <TestPointRangeChart />
+      </div>
+
+      <div v-else-if="currentTab === 'hist'" class="single-chart-view">
+          <TestHistogramChart />
+      </div>
+
+      <div v-else-if="currentTab === 'box'" class="single-chart-view">
+          <TestBoxPlotChart />
+      </div>
+
+      <div v-else-if="currentTab === 'area'" class="single-chart-view">
+          <TestAreaChart />
+      </div>
+
+      <div v-else-if="currentTab === 'select-bar-chart'" class="single-chart-view">
+          <TestSelectBarChart />
+      </div>
+
+      <div v-else-if="currentTab === 'select-bar-chart-with-bar-graph'" class="single-chart-view">
+        <TestSelectBarChartWithBarGraph />
+      </div>
+
+      <div v-else-if="currentTab === 'monthly-bar'" class="single-chart-view">
+        <TestMonthlyBarChart />
+      </div>
+
+      <div v-else-if="currentTab === 'us-choropleth-map'" class="single-chart-view">
+        <TestUsChoroplethMap />
+      </div>
+
+      <!-- Add new component tabs here -->
+
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -110,6 +118,7 @@ import TestSelectBarChart from "./TestSelectBarChart.vue";
 import TestSelectBarChartWithBarGraph from "./TestSelectBarChartWithBarGraph.vue";
 import TestMonthlyBarChart from "./TestMonthlyBarChart.vue";
 import TestPointRangeChart from "./TestPointRangeChart.vue";
+import TestUsChoroplethMap from "./TestUsChoroplethMap.vue";
 
 // Tab configuration
 const tabs = [
@@ -123,75 +132,66 @@ const tabs = [
 { id: 'area', name: 'Area Chart' },
 { id: 'select-bar-chart', name: 'Select Bar Chart' },
 { id: 'select-bar-chart-with-bar-graph', name: 'Select Bar Chart with Bar Graph' },
-{ id: 'monthly-bar', name: 'Monthly Bar Chart' }
+{ id: 'monthly-bar', name: 'Monthly Bar Chart' },
+{ id: 'us-choropleth-map', name: 'US Choropleth Map' }
+
 // Add new components here
 ]
 
 const currentTab = ref('all')
-
 </script>
 
 <style scoped>
 .test-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
 }
-
 h1 {
-    text-align: center;
-    margin-bottom: 20px;
+  text-align: center;
+  margin-bottom: 20px;
 }
-
 h2 {
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 8px;
-    margin-top: 20px;
-    margin-bottom: 15px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 8px;
+  margin-top: 20px;
+  margin-bottom: 15px;
 }
-
 .tab-controls {
-    display: flex;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 20px;
+  display: flex;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 20px;
 }
-
 .tab-button {
-    padding: 10px 20px;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    cursor: pointer;
-    font-size: 16px;
-    transition: all 0.2s;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
 }
-
 .tab-button:hover {
-    background-color: #f5f5f5;
+  background-color: #f5f5f5;
 }
-
 .active-tab {
-    border-bottom: 3px solid #4CAF50;
-    font-weight: bold;
+  border-bottom: 3px solid #4CAF50;
+  font-weight: bold;
 }
-
 .tab-content {
-    background-color: #fff;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
-
 .chart-component {
-    margin-bottom: 40px;
-    padding: 20px;
-    border: 1px solid #e5e5e5;
-    border-radius: 8px;
+  margin-bottom: 40px;
+  padding: 20px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
 }
-
 .chart-component:last-child {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
-
 </style>
