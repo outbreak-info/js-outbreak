@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onBeforeUnmount, nextTick } from 'vue';
+import { ref, onMounted, watch, onBeforeUnmount, nextTick, computed } from 'vue';
 import * as Plot from '@observablehq/plot';
 import usGeoJson from '../assets/geo/us_states.json';
 
@@ -31,15 +31,36 @@ const container = ref(null);
 const svgRef = ref(null);
 let resizeObserver;
 
+// calculate plot height based on screen size
+function calculatePlotHeight(width) {
+  const baseHeight = 600;
+  if (width < 768) {
+    return Math.max(300, width * 0.7);
+  }
+  return baseHeight;
+}
+
+// calculate legend margin based on screen size
+function calculateLegendMargin(width) {
+  if (width < 768) {
+    return 40;
+  }
+  return 80;
+}
+
 function renderPlot(width) {
   if (!usGeoJson || !props.data) return;
 
   const features = usGeoJson.features;
   const dataMap = new Map(props.data.map(d => [d.state.toLowerCase(), d.value]));
 
+  const plotHeight = calculatePlotHeight(width);
+  const legendMargin = calculateLegendMargin(width);
+
   const plot = Plot.plot({
     width,
-    height: 600,
+    height: plotHeight,
+    marginBottom: legendMargin, // Dynamically adjust bottom margin
     projection: 'albers-usa',
     color: {
       type: 'quantize',
