@@ -1,11 +1,12 @@
 <template>
   <div class="choropleth-container" ref="container">
     <svg ref="svgRef" />
+    <div class="tooltip" ref="tooltipRef" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onBeforeUnmount, nextTick, computed } from 'vue';
+import { ref, onMounted, watch, onBeforeUnmount, nextTick } from 'vue';
 import * as Plot from '@observablehq/plot';
 import usGeoJson from '../assets/geo/us_states.json';
 
@@ -26,23 +27,35 @@ const props = defineProps({
 
 const container = ref(null);
 const svgRef = ref(null);
+const tooltipRef = ref(null);
 let resizeObserver;
+let tooltipTimeout;
 
-// calculate plot height based on screen size
 const calculatePlotHeight = (width) => {
   const baseHeight = 600;
-  if (width < 768) {
-    return Math.max(300, width * 0.7);
-  }
-  return baseHeight;
+  return width < 768 ? Math.max(300, width * 0.7) : baseHeight;
 };
 
-// calculate legend margin based on screen size
-const calculateLegendMargin = (width) => {
-  if (width < 768) {
-    return 40;
+const calculateLegendMargin = (width) => (width < 768 ? 40 : 80);
+
+const showTooltip = (event, content) => {
+  const tooltip = tooltipRef.value;
+  if (!tooltip) return;
+
+  tooltip.innerHTML = content;
+
+  const offsetX = event.offsetX || event.layerX || 0;
+  const offsetY = event.offsetY || event.layerY || 0;
+
+  tooltip.style.left = `${offsetX + 10}px`;
+  tooltip.style.top = `${offsetY + 10}px`;
+  tooltip.style.visibility = 'visible';
+};
+
+const hideTooltip = () => {
+  if (tooltipRef.value) {
+    tooltipRef.value.style.visibility = 'hidden';
   }
-  return 80;
 };
 
 const renderPlot = (width) => {
@@ -66,37 +79,25 @@ const renderPlot = (width) => {
       legend: true
     },
     marks: [
-      // no-data states in white
       Plot.geo(
-        features.filter(d => {
-          const name = d.properties.NAME?.toLowerCase();
-          return !dataMap.has(name);
-        }),
+        features.filter(d => !dataMap.has(d.properties.NAME?.toLowerCase())),
         {
           fill: '#ffffff',
           stroke: '#000000',
           strokeWidth: 0.5,
-          title: d => `${d.properties.NAME}\n${props.valueLabel}: No data`
+          ariaLabel: d => `${d.properties.NAME}<br>${props.valueLabel}: No data`
         }
       ),
-
-      // states with data using color scale
       Plot.geo(
-        features.filter(d => {
-          const name = d.properties.NAME?.toLowerCase();
-          return dataMap.has(name);
-        }),
+        features.filter(d => dataMap.has(d.properties.NAME?.toLowerCase())),
         {
-          fill: d => {
-            const name = d.properties.NAME?.toLowerCase();
-            return dataMap.get(name);
-          },
+          fill: d => dataMap.get(d.properties.NAME?.toLowerCase()),
           stroke: '#000000',
           strokeWidth: 0.5,
-          title: d => {
+          ariaLabel: d => {
             const name = d.properties.NAME;
-            const value = dataMap.get(name?.toLowerCase());
-            return `${name}\n${props.valueLabel}: ${value}`;
+            const value = dataMap.get(name.toLowerCase());
+            return `${name}<br>${props.valueLabel}: ${value}`;
           }
         }
       )
@@ -106,6 +107,30 @@ const renderPlot = (width) => {
   if (svgRef.value) {
     svgRef.value.replaceWith(plot);
     svgRef.value = plot;
+
+    const paths = plot.querySelectorAll('path');
+    paths.forEach(path => {
+      const label = path.getAttribute('aria-label');
+      if (!label) return;
+
+      // desktop hover
+      path.addEventListener('pointerenter', e => showTooltip(e, label));
+      path.addEventListener('pointerleave', hideTooltip);
+
+      // mobile click/tap
+      path.addEventListener('click', e => {
+        e.stopPropagation();
+        showTooltip(e, label);
+
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = setTimeout(() => {
+          hideTooltip();
+        }, 3000); // auto-hide after 3s
+      });
+    });
+
+    // hide tooltip when clicking outside on mobile
+    plot.addEventListener('click', hideTooltip);
   }
 };
 
@@ -135,6 +160,7 @@ watch(() => props.data, () => {
 
 onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
+  if (tooltipTimeout) clearTimeout(tooltipTimeout);
 });
 </script>
 
@@ -148,5 +174,18 @@ svg {
   width: 100%;
   height: auto;
   max-width: 100%;
+}
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  z-index: 10;
+  visibility: hidden;
+  transition: opacity 0.1s ease;
 }
 </style>
