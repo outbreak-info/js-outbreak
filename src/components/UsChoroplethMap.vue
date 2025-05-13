@@ -10,9 +10,6 @@ import * as Plot from '@observablehq/plot';
 import usGeoJson from '../assets/geo/us_states.json';
 
 const props = defineProps({
-  /**
-   * Data format: [{ state: "Maryland", value: 42 }]
-   */
   data: {
     type: Array,
     required: true
@@ -32,23 +29,23 @@ const svgRef = ref(null);
 let resizeObserver;
 
 // calculate plot height based on screen size
-function calculatePlotHeight(width) {
+const calculatePlotHeight = (width) => {
   const baseHeight = 600;
   if (width < 768) {
     return Math.max(300, width * 0.7);
   }
   return baseHeight;
-}
+};
 
 // calculate legend margin based on screen size
-function calculateLegendMargin(width) {
+const calculateLegendMargin = (width) => {
   if (width < 768) {
     return 40;
   }
   return 80;
-}
+};
 
-function renderPlot(width) {
+const renderPlot = (width) => {
   if (!usGeoJson || !props.data) return;
 
   const features = usGeoJson.features;
@@ -60,7 +57,7 @@ function renderPlot(width) {
   const plot = Plot.plot({
     width,
     height: plotHeight,
-    marginBottom: legendMargin, // Dynamically adjust bottom margin
+    marginBottom: legendMargin,
     projection: 'albers-usa',
     color: {
       type: 'quantize',
@@ -110,9 +107,9 @@ function renderPlot(width) {
     svgRef.value.replaceWith(plot);
     svgRef.value = plot;
   }
-}
+};
 
-async function initResponsiveRender() {
+const initResponsiveRender = async () => {
   await nextTick();
   if (!container.value) return;
 
@@ -124,7 +121,7 @@ async function initResponsiveRender() {
   resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(container.value);
   resize();
-}
+};
 
 onMounted(() => {
   initResponsiveRender();
