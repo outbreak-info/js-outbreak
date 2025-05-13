@@ -11,10 +11,7 @@ import * as Plot from '@observablehq/plot';
 import usGeoJson from '../assets/geo/us_states.json';
 
 const props = defineProps({
-  data: {
-    type: Array,
-    required: true
-  },
+  data: Array,
   colorScheme: {
     type: String,
     default: 'blues'
@@ -30,32 +27,45 @@ const svgRef = ref(null);
 const tooltipRef = ref(null);
 let resizeObserver;
 let tooltipTimeout;
+let activePath = null;
+let originalStrokeStyle = null;
 
-const calculatePlotHeight = (width) => {
-  const baseHeight = 600;
-  return width < 768 ? Math.max(300, width * 0.7) : baseHeight;
-};
-
-const calculateLegendMargin = (width) => (width < 768 ? 40 : 80);
+const calculatePlotHeight = width => (width < 768 ? Math.max(300, width * 0.7) : 600);
+const calculateLegendMargin = width => (width < 768 ? 40 : 80);
 
 const showTooltip = (event, content) => {
   const tooltip = tooltipRef.value;
   if (!tooltip) return;
 
+  const bounds = container.value.getBoundingClientRect();
   tooltip.innerHTML = content;
-
-  const offsetX = event.offsetX || event.layerX || 0;
-  const offsetY = event.offsetY || event.layerY || 0;
-
-  tooltip.style.left = `${offsetX + 10}px`;
-  tooltip.style.top = `${offsetY + 10}px`;
+  tooltip.style.left = `${event.clientX - bounds.left + 10}px`;
+  tooltip.style.top = `${event.clientY - bounds.top + 10}px`;
   tooltip.style.visibility = 'visible';
 };
 
 const hideTooltip = () => {
-  if (tooltipRef.value) {
-    tooltipRef.value.style.visibility = 'hidden';
-  }
+  const tooltip = tooltipRef.value;
+  if (tooltip) tooltip.style.visibility = 'hidden';
+};
+
+const highlightPath = (path) => {
+  if (!path) return;
+  originalStrokeStyle = {
+    stroke: path.getAttribute('stroke'),
+    strokeWidth: path.getAttribute('stroke-width'),
+    filter: path.style.filter
+  };
+  path.setAttribute('stroke', '#fdb863');
+  path.setAttribute('stroke-width', '2.5');
+  path.style.filter = 'drop-shadow(0 0 4px #fdb863)';
+};
+
+const unhighlightPath = (path) => {
+  if (!path || !originalStrokeStyle) return;
+  path.setAttribute('stroke', originalStrokeStyle.stroke || '#000');
+  path.setAttribute('stroke-width', originalStrokeStyle.strokeWidth || '0.5');
+  path.style.filter = originalStrokeStyle.filter || '';
 };
 
 const renderPlot = (width) => {
@@ -63,7 +73,6 @@ const renderPlot = (width) => {
 
   const features = usGeoJson.features;
   const dataMap = new Map(props.data.map(d => [d.state.toLowerCase(), d.value]));
-
   const plotHeight = calculatePlotHeight(width);
   const legendMargin = calculateLegendMargin(width);
 
@@ -113,24 +122,51 @@ const renderPlot = (width) => {
       const label = path.getAttribute('aria-label');
       if (!label) return;
 
+      const handleHighlight = (target) => {
+        if (activePath && activePath !== target) {
+          unhighlightPath(activePath);
+        }
+        activePath = target;
+        highlightPath(activePath);
+      };
+
       // desktop hover
-      path.addEventListener('pointerenter', e => showTooltip(e, label));
-      path.addEventListener('pointerleave', hideTooltip);
+      path.addEventListener('pointerenter', e => {
+        showTooltip(e, label);
+        handleHighlight(e.currentTarget);
+      });
+
+      path.addEventListener('pointerleave', e => {
+        hideTooltip();
+        if (activePath === e.currentTarget) {
+          unhighlightPath(activePath);
+          activePath = null;
+        }
+      });
 
       // mobile click/tap
       path.addEventListener('click', e => {
         e.stopPropagation();
         showTooltip(e, label);
+        handleHighlight(e.currentTarget);
 
         clearTimeout(tooltipTimeout);
         tooltipTimeout = setTimeout(() => {
           hideTooltip();
+          if (activePath) unhighlightPath(activePath);
+          activePath = null;
         }, 3000); // auto-hide after 3s
       });
     });
 
     // hide tooltip when clicking outside on mobile
-    plot.addEventListener('click', hideTooltip);
+    plot.addEventListener('click', () => {
+      hideTooltip();
+      if (activePath) {
+        unhighlightPath(activePath);
+        activePath = null;
+      }
+    });
   }
 };
 
@@ -148,19 +184,15 @@ const initResponsiveRender = async () => {
   resize();
 };
 
-onMounted(() => {
-  initResponsiveRender();
-});
+onMounted(initResponsiveRender);
 
 watch(() => props.data, () => {
-  if (container.value) {
-    renderPlot(container.value.clientWidth);
-  }
+  if (container.value) renderPlot(container.value.clientWidth);
 }, { deep: true });
 
 onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
-  if (tooltipTimeout) clearTimeout(tooltipTimeout);
+  clearTimeout(tooltipTimeout);
 });
 </script>
 
@@ -173,7 +205,6 @@ svg {
   display: block;
   width: 100%;
   height: auto;
-  max-width: 100%;
 }
 .tooltip {
   position: absolute;
