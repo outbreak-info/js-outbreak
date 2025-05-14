@@ -22,7 +22,7 @@ const props = defineProps({
   },
   highlightColor: {
   type: String,
-  default: '#fdb863',
+  default: '#080808',
   },
 });
 
