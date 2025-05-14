@@ -12,14 +12,18 @@ import usGeoJson from '../assets/geo/us_states.json';
 
 const props = defineProps({
   data: Array,
+  valueLabel: {
+    type: String,
+    default: 'Value'
+  },
   colorScheme: {
     type: String,
     default: 'blues'
   },
-  valueLabel: {
-    type: String,
-    default: 'Value'
-  }
+  highlightColor: {
+  type: String,
+  default: '#fdb863',
+  },
 });
 
 const container = ref(null);
@@ -56,9 +60,9 @@ const highlightPath = (path) => {
     strokeWidth: path.getAttribute('stroke-width'),
     filter: path.style.filter
   };
-  path.setAttribute('stroke', '#fdb863');
+  path.setAttribute('stroke', props.highlightColor);
   path.setAttribute('stroke-width', '2.5');
-  path.style.filter = 'drop-shadow(0 0 4px #fdb863)';
+  path.style.filter = `drop-shadow(0 0 4px ${props.highlightColor})`;
 };
 
 const unhighlightPath = (path) => {
