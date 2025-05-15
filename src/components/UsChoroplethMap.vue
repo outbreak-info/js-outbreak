@@ -213,14 +213,16 @@ svg {
 .tooltip {
   position: absolute;
   pointer-events: none;
-  background: rgba(0, 0, 0, 0.75);
-  color: white;
-  padding: 6px 10px;
+  background: #ffffff;
+  color: #111;
+  padding: 6px 8px;
   border-radius: 4px;
+  border: 1px solid #ccc;
   font-size: 0.875rem;
   white-space: nowrap;
   z-index: 10;
   visibility: hidden;
   transition: opacity 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>
