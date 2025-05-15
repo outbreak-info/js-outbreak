@@ -4,7 +4,6 @@
       <UsChoroplethMap
         :data="chartData"
         valueLabel="Prevalence (%)" 
-        colorScheme="purples"
       />
   </div>
 </template>

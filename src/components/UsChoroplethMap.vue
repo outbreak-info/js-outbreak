@@ -18,7 +18,7 @@ const props = defineProps({
   },
   colorScheme: {
     type: String,
-    default: 'blues'
+    default: 'YlGnBu'
   },
   highlightColor: {
   type: String,
