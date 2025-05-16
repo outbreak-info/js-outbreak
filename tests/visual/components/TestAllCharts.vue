@@ -1,144 +1,121 @@
 <template>
   <div class="test-container">
     <h1>Charts Testing Dashboard</h1>
-        
-    <div class="tab-controls">
-      <button
-        v-for="(tab, index) in tabs"
-        :key="index"
-        @click="currentTab = tab.id"
-        :class="{ 'active-tab': currentTab === tab.id }"
-        class="tab-button"
-      >
-        {{ tab.name }}
-      </button>
-    </div>
-        
-    <div class="tab-content">
-      <div v-if="currentTab === 'all'" class="all-charts-view">
-        <div class="chart-component">
-          <TestBarChart />
-        </div>
-                
-        <div class="chart-component">
-          <TestScatterChart />
-        </div>
 
-        <div class="chart-component">
-          <TestTimeSeriesChart />
-        </div>
+    <div class="dashboard-layout">
+      <!-- Left sidebar menu -->
+      <div class="sidebar-menu">
+        <button
+            v-for="(tab, index) in tabs"
+            :key="index"
+            @click="currentTab = tab.id"
+            :class="{ 'active-tab': currentTab === tab.id }"
+            class="menu-button"
+        >
+          {{ tab.name }}
+        </button>
+      </div>
 
-        <div class="chart-component">
-          <TestHistogramChart />
+      <!-- Main content area -->
+      <div class="tab-content">
+        <div v-if="currentTab === 'all'" class="all-charts-view">
+          <div
+              v-for="(component, index) in chartComponents"
+              :key="index"
+              class="chart-component"
+          >
+            <component :is="component" />
+          </div>
         </div>
 
-        <div class="chart-component">
-          <TestBoxPlotChart />
+        <div v-else class="single-chart-view">
+          <component :is="currentComponent" />
         </div>
-
-        <div class="chart-component">
-          <TestSelectBarChart />
-        </div>
-
-        <div class="chart-component">
-          <TestSelectBarChartWithBarGraph />
-        </div>
-
-        <div class="chart-component">
-          <TestMonthlyBarChart />
-        </div>
-
-        <div class="chart-component">
-          <TestUsChoroplethMap />
-        </div>
-
-        <!-- Add new components here -->
-
       </div>
-        
-      <div v-else-if="currentTab === 'bar'" class="single-chart-view">
-          <TestBarChart />
-      </div>
-
-      <div v-else-if="currentTab === 'scatter'" class="single-chart-view">
-          <TestScatterChart />
-      </div>
-
-      <div v-else-if="currentTab === 'time-series'" class="single-chart-view">
-          <TestTimeSeriesChart />
-      </div>
-
-      <div v-else-if="currentTab === 'point-range'" class="single-chart-view">
-          <TestPointRangeChart />
-      </div>
-
-      <div v-else-if="currentTab === 'hist'" class="single-chart-view">
-          <TestHistogramChart />
-      </div>
-
-      <div v-else-if="currentTab === 'box'" class="single-chart-view">
-          <TestBoxPlotChart />
-      </div>
-
-      <div v-else-if="currentTab === 'area'" class="single-chart-view">
-          <TestAreaChart />
-      </div>
-
-      <div v-else-if="currentTab === 'select-bar-chart'" class="single-chart-view">
-          <TestSelectBarChart />
-      </div>
-
-      <div v-else-if="currentTab === 'select-bar-chart-with-bar-graph'" class="single-chart-view">
-        <TestSelectBarChartWithBarGraph />
-      </div>
-
-      <div v-else-if="currentTab === 'monthly-bar'" class="single-chart-view">
-        <TestMonthlyBarChart />
-      </div>
-
-      <div v-else-if="currentTab === 'us-choropleth-map'" class="single-chart-view">
-        <TestUsChoroplethMap />
-      </div>
-
-      <!-- Add new component tabs here -->
-
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import TestBarChart from './TestBarChart.vue'
-import TestScatterChart from './TestScatterChart.vue'
-import TestTimeSeriesChart from "./TestTimeSeriesChart.vue";
-import TestHistogramChart from './TestHistogramChart.vue';
-import TestBoxPlotChart from './TestBoxPlotChart.vue'
-import TestAreaChart from './TestAreaChart.vue';
-import TestSelectBarChart from "./TestSelectBarChart.vue";
-import TestSelectBarChartWithBarGraph from "./TestSelectBarChartWithBarGraph.vue";
-import TestMonthlyBarChart from "./TestMonthlyBarChart.vue";
-import TestPointRangeChart from "./TestPointRangeChart.vue";
-import TestUsChoroplethMap from "./TestUsChoroplethMap.vue";
+import { ref, onMounted, computed } from 'vue'
 
-// Tab configuration
-const tabs = [
-{ id: 'all', name: 'All Charts' },
-{ id: 'bar', name: 'Bar Chart' },
-{ id: 'scatter', name: 'Scatter Chart' },
-{ id: 'time-series', name: 'Times Series Chart' },
-{ id: 'point-range', name: 'Point Range Chart' },
-{ id: 'hist', name: 'Histogram Chart' },
-{ id: 'box', name: 'Box Plot Chart' },
-{ id: 'area', name: 'Area Chart' },
-{ id: 'select-bar-chart', name: 'Select Bar Chart' },
-{ id: 'select-bar-chart-with-bar-graph', name: 'Select Bar Chart with Bar Graph' },
-{ id: 'monthly-bar', name: 'Monthly Bar Chart' },
-{ id: 'us-choropleth-map', name: 'US Choropleth Map' }
+// Define a generic component type
+type ComponentType = any
 
-// Add new components here
-]
+// Define the type for tab objects
+interface TabItem {
+  id: string;
+  name: string;
+  component?: ComponentType;
+}
 
-const currentTab = ref('all')
+// Import all test components
+const modules = import.meta.glob('./Test*.vue'); //TODO: What if import.meta is not supported?
+const chartComponents = ref<ComponentType[]>([]);
+const tabs = ref<TabItem[]>([{ id: 'all', name: 'All Charts', component: null }]);
+
+const loadComponents = async () => {
+  const moduleEntries = Object.entries(modules);
+
+// Sort modules alphabetically
+  moduleEntries.sort(([pathA], [pathB]) => {
+    const nameA = pathA.replace('./', '').replace('.vue', '');
+    const nameB = pathB.replace('./', '').replace('.vue', '');
+    return nameA.localeCompare(nameB);
+  });
+
+// Process all components
+  const componentResults = await Promise.all(
+      moduleEntries.map(async ([path, importFunc]) => {
+        const componentName = path.replace('./', '').replace('.vue', '');
+        if (componentName === 'TestAllCharts') return null;
+
+        const imported = await (importFunc as () => Promise<{ default: ComponentType }>)();
+        const component = imported.default;
+
+        const prefixName = componentName
+            .replace('Test', '')
+            .replace(/([A-Z])/g, ' $1');
+        const displayName = prefixName.trim();
+        const tabId = prefixName.toLowerCase();
+
+        return {
+          id: tabId,
+          name: displayName,
+          component: component
+        };
+      })
+  )
+
+  componentResults
+      .filter(result => result !== null)
+      .forEach(info => {
+        if (info) {
+          // Add to tabs
+          tabs.value.push({
+            id: info.id,
+            name: info.name,
+            component: info.component
+          });
+
+          // Add to "All" view
+          chartComponents.value.push(info.component);
+        }
+      });
+}
+
+
+const currentTab = ref('all');
+
+// Compute the current component based on the selected tab
+const currentComponent = computed(() => {
+  const tab = tabs.value.find(t => t.id === currentTab.value);
+  return tab ? tab.component : null;
+})
+
+onMounted(() => {
+  loadComponents();
+});
 </script>
 
 <style scoped>
@@ -148,50 +125,93 @@ const currentTab = ref('all')
   padding: 20px;
   font-family: Arial, sans-serif;
 }
+
 h1 {
   text-align: center;
   margin-bottom: 20px;
 }
-h2 {
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 8px;
-  margin-top: 20px;
-  margin-bottom: 15px;
-}
-.tab-controls {
+
+.dashboard-layout {
   display: flex;
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 20px;
+  gap: 20px;
 }
-.tab-button {
-  padding: 10px 20px;
+
+/* Left sidebar menu */
+.sidebar-menu {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #ccc;
+  padding-right: 15px;
+}
+
+.menu-button {
+  padding: 12px;
+  text-align: left;
   background: none;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-left: 3px solid transparent;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 15px;
+  margin-bottom: 5px;
+  border-radius: 4px;
   transition: all 0.2s;
+  width:250px;
 }
-.tab-button:hover {
+
+.menu-button:hover {
   background-color: #f5f5f5;
 }
+
 .active-tab {
-  border-bottom: 3px solid #4CAF50;
-  font-weight: bold;
+  border-left: 3px solid #4CAF50;
+  background-color: #f0f9f0;
 }
+
+/* Main content area */
 .tab-content {
+  flex: 1;
   background-color: #fff;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
+
 .chart-component {
   margin-bottom: 40px;
   padding: 20px;
   border: 1px solid #e5e5e5;
   border-radius: 8px;
 }
+
 .chart-component:last-child {
   margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .sidebar-menu {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+  }
+
+  .menu-button {
+    border-left: none;
+    border-bottom: 3px solid transparent;
+  }
+
+  .active-tab {
+    border-left: none;
+    border-bottom: 3px solid #4CAF50;
+  }
 }
 </style>
