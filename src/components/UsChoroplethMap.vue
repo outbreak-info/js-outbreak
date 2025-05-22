@@ -1,7 +1,6 @@
 <template>
   <div class="choropleth-container" ref="container">
     <svg ref="svgRef" />
-    <div class="tooltip" ref="tooltipRef" />
   </div>
 </template>
 
@@ -21,37 +20,19 @@ const props = defineProps({
     default: 'YlGnBu'
   },
   highlightColor: {
-  type: String,
-  default: '#080808',
+    type: String,
+    default: '#080808',
   },
 });
 
 const container = ref(null);
 const svgRef = ref(null);
-const tooltipRef = ref(null);
 let resizeObserver;
-let tooltipTimeout;
 let activePath = null;
 let originalStrokeStyle = null;
 
 const calculatePlotHeight = width => (width < 768 ? Math.max(300, width * 0.7) : 600);
 const calculateLegendMargin = width => (width < 768 ? 40 : 80);
-
-const showTooltip = (event, content) => {
-  const tooltip = tooltipRef.value;
-  if (!tooltip) return;
-
-  const bounds = container.value.getBoundingClientRect();
-  tooltip.innerHTML = content;
-  tooltip.style.left = `${event.clientX - bounds.left + 10}px`;
-  tooltip.style.top = `${event.clientY - bounds.top + 10}px`;
-  tooltip.style.visibility = 'visible';
-};
-
-const hideTooltip = () => {
-  const tooltip = tooltipRef.value;
-  if (tooltip) tooltip.style.visibility = 'hidden';
-};
 
 const highlightPath = (path) => {
   if (!path) return;
@@ -98,7 +79,14 @@ const renderPlot = (width) => {
           fill: '#ffffff',
           stroke: '#000000',
           strokeWidth: 0.5,
-          ariaLabel: d => `${d.properties.NAME}<br>${props.valueLabel}: No data`
+          tip: {
+            format: {
+              fill: false,
+              stroke: false,
+              strokeWidth: false
+            }
+          },
+          title: d => `${d.properties.NAME}\n${props.valueLabel}: No data`
         }
       ),
       Plot.geo(
@@ -107,12 +95,35 @@ const renderPlot = (width) => {
           fill: d => dataMap.get(d.properties.NAME?.toLowerCase()),
           stroke: '#000000',
           strokeWidth: 0.5,
-          ariaLabel: d => {
+          tip: {
+            format: {
+              fill: props.valueLabel,
+              stroke: false,
+              strokeWidth: false
+            }
+          },
+          title: d => {
             const name = d.properties.NAME;
             const value = dataMap.get(name.toLowerCase());
-            return `${name}<br>${props.valueLabel}: ${value}`;
+            return `${name}\n${props.valueLabel}: ${value}`;
           }
         }
+      ),
+      Plot.tip(
+        features.filter(d => dataMap.has(d.properties.NAME?.toLowerCase())),
+        Plot.pointer(Plot.geo({
+          title: d => {
+            const name = d.properties.NAME;
+            const value = dataMap.get(name.toLowerCase());
+            return `${name}\n${props.valueLabel}: ${value}`;
+          }
+        }))
+      ),
+      Plot.tip(
+        features.filter(d => !dataMap.has(d.properties.NAME?.toLowerCase())),
+        Plot.pointer(Plot.geo({
+          title: d => `${d.properties.NAME}\n${props.valueLabel}: No data`
+        }))
       )
     ]
   });
@@ -121,11 +132,9 @@ const renderPlot = (width) => {
     svgRef.value.replaceWith(plot);
     svgRef.value = plot;
 
+    // hover highlighting
     const paths = plot.querySelectorAll('path');
     paths.forEach(path => {
-      const label = path.getAttribute('aria-label');
-      if (!label) return;
-
       const handleHighlight = (target) => {
         if (activePath && activePath !== target) {
           unhighlightPath(activePath);
@@ -134,42 +143,16 @@ const renderPlot = (width) => {
         highlightPath(activePath);
       };
 
-      // desktop hover
       path.addEventListener('pointerenter', e => {
-        showTooltip(e, label);
         handleHighlight(e.currentTarget);
       });
 
       path.addEventListener('pointerleave', e => {
-        hideTooltip();
         if (activePath === e.currentTarget) {
           unhighlightPath(activePath);
           activePath = null;
         }
       });
-
-      // mobile click/tap
-      path.addEventListener('click', e => {
-        e.stopPropagation();
-        showTooltip(e, label);
-        handleHighlight(e.currentTarget);
-
-        clearTimeout(tooltipTimeout);
-        tooltipTimeout = setTimeout(() => {
-          hideTooltip();
-          if (activePath) unhighlightPath(activePath);
-          activePath = null;
-        }, 3000); // auto-hide after 3s
-      });
-    });
-
-    // hide tooltip when clicking outside on mobile
-    plot.addEventListener('click', () => {
-      hideTooltip();
-      if (activePath) {
-        unhighlightPath(activePath);
-        activePath = null;
-      }
     });
   }
 };
@@ -196,7 +179,6 @@ watch(() => props.data, () => {
 
 onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
-  clearTimeout(tooltipTimeout);
 });
 </script>
 
@@ -209,20 +191,5 @@ svg {
   display: block;
   width: 100%;
   height: auto;
-}
-.tooltip {
-  position: absolute;
-  pointer-events: none;
-  background: #ffffff;
-  color: #111;
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  z-index: 10;
-  visibility: hidden;
-  transition: opacity 0.1s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>
