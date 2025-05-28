@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, shallowRef } from 'vue';
 
 // Define a generic component type
 type ComponentType = any
@@ -51,7 +51,7 @@ interface TabItem {
 
 // Import all test components
 const modules = import.meta.glob('./Test*.vue'); //TODO: What if import.meta is not supported?
-const chartComponents = ref<ComponentType[]>([]);
+const chartComponents = shallowRef<ComponentType[]>([]);
 const tabs = ref<TabItem[]>([{ id: 'all', name: 'All Charts', component: null }]);
 
 const loadComponents = async () => {
