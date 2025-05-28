@@ -3,7 +3,7 @@
     <svg :width="svgWidth" :height="svgHeight">
       <path 
         v-for="(state, index) in usGeoJson.features" 
-        :key="'state' + index"
+        :key="state.properties.NAME || index"
         :d="pathGenerator(state)"
         :fill="fillColor"
         :stroke="strokeColor"
