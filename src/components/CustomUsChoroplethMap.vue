@@ -5,9 +5,9 @@
         v-for="(state, index) in usGeoJson.features" 
         :key="'state' + index"
         :d="pathGenerator(state)"
-        fill="#e6e6fa"
-        stroke="#000"
-        stroke-width="0.5"
+        :fill="fillColor"
+        :stroke="strokeColor"
+        :stroke-width="strokeWidth"
       />
     </svg>
   </div>
@@ -17,6 +17,21 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { geoAlbersUsa, geoPath } from 'd3-geo';
 import usGeoJson from '../assets/geo/us_states.json';
+
+defineProps({
+  fillColor: {
+    type: String,
+    default: '#e6e6fa',
+  },
+  strokeColor: {
+    type: String,
+    default: '#000',
+  },
+  strokeWidth: {
+    type: Number,
+    default: 0.5,
+  }
+});
 
 const containerRef = ref(null);
 const svgWidth = ref(0);
