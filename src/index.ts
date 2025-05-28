@@ -10,6 +10,7 @@ import SelectBarChartWithBarGraph from './components/SelectBarChartWithBarGraph.
 import MonthlyBarChart from './components/MonthlyBarChart.vue'
 import PointRangeChart from "./components/PointRangeChart.vue"
 import UsChoroplethMap from './components/UsChoroplethMap.vue'
+import CustomUsChoroplethMap from './components/CustomUsChoroplethMap.vue'
 
 // Import utilities
 import { colorPalette } from './utils/colorSchemes'
@@ -28,6 +29,7 @@ export {
     MonthlyBarChart,
     PointRangeChart,
     UsChoroplethMap,
+    CustomUsChoroplethMap,
     colorPalette as outbreakInfoColorPalette,
     themeOverrides as outbreakInfoThemeOverrides
 }
@@ -46,5 +48,6 @@ export default {
         app.component('MonthlyBarChart', MonthlyBarChart)
         app.component('PointRangeChart', PointRangeChart)
         app.component('UsChoroplethMap', UsChoroplethMap)
+        app.component('CustomUsChoroplethMap', CustomUsChoroplethMap)
     }
 }
