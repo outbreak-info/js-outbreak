@@ -56,7 +56,8 @@ const chartGroupedData = ref([
   { key: '2024-07', value: 1200, group: "A" },
   { key: '2025-07', value: 500, group: "B" },
   { key: '2025-07', value: 100, group: "A" },
-  { key: '2025-05-01', value: 500, group: "D" },
-  { key: '2025-02-01', value: 100, group: "D" }
+  { key: '2025-05', value: 500, group: "D" },
+  { key: '2025-02', value: 100, group: "D" }
 ]);
+
 </script> 

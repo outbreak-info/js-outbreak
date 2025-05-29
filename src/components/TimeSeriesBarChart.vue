@@ -23,6 +23,9 @@ const props = defineProps({
   yLabel: { type: String, default: 'Count' },
   showCumulativeLine: { type: Boolean, default: false },
   binInterval: { type: String, default: 'month' },
+  tickInterval: { type: String, default: 'month' },
+  marginBottom: { type: Number, default: 50 },
+  marginLeft: { type: Number, default: 50 },
   // For pre binned data
   isPreBinned: { type: Boolean, default: false }
 });
@@ -173,11 +176,13 @@ function renderChart() {
   const chart = Plot.plot({
     height: props.height,
     width: props.width,
+    marginLeft: props.marginLeft,
+    marginBottom: props.marginBottom,
     x: {
       label: props.xLabel,
       type: "time",
       tickFormat: getTickFormat(props.binInterval),
-      ticks: props.binInterval
+      ticks: props.tickInterval
     },
     y: {
       label: props.yLabel,
