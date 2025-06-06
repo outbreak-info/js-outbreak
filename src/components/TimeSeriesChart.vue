@@ -15,7 +15,8 @@ const props = defineProps({
   height: { type: Number, default: 500 },
   width: { type: Number, default: 800 },
   xLabel: { type: String, default: 'Date' },
-  yLabel: { type: String, default: 'Count' }
+  yLabel: { type: String, default: 'Count' },
+  fontSize: { type: Number, default: 10 }
 });
 
 const chartContainer = ref(null);
@@ -36,6 +37,9 @@ function renderChart() {
   const chart = Plot.plot({
     height: props.height,
     width: props.width,
+    style: {
+      fontSize: `${props.fontSize}px`
+    },
     x: {
       label: props.xLabel,
       type: "time"
@@ -55,7 +59,8 @@ function renderChart() {
       Plot.tip(processedData, Plot.pointer({
         x: props.dateKey,
         y: props.valueKey,
-        title: d => `Date: ${d[props.dateKey].toLocaleDateString()}\n${props.yLabel}: ${d[props.valueKey]}`
+        title: d => `Date: ${d[props.dateKey].toLocaleDateString()}\n${props.yLabel}: ${d[props.valueKey]}`,
+        fontSize: props.fontSize
       }))
     ]
   });
@@ -65,6 +70,7 @@ function renderChart() {
 
 onMounted(renderChart);
 watch(() => props.data, renderChart, { deep: true });
+watch(() => props.fontSize, renderChart); 
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
