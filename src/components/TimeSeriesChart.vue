@@ -16,7 +16,11 @@ const props = defineProps({
   width: { type: Number, default: 800 },
   xLabel: { type: String, default: 'Date' },
   yLabel: { type: String, default: 'Count' },
-  fontSize: { type: Number, default: 10 }
+  fontSize: { type: Number, default: 10 },
+  marginTop: { type: Number, default: 20 },
+  marginRight: { type: Number, default: 30 },
+  marginBottom: { type: Number, default: 40 },
+  marginLeft: { type: Number, default: 40 }
 });
 
 const chartContainer = ref(null);
@@ -37,6 +41,10 @@ function renderChart() {
   const chart = Plot.plot({
     height: props.height,
     width: props.width,
+    marginTop: props.marginTop,
+    marginRight: props.marginRight,
+    marginBottom: props.marginBottom,
+    marginLeft: props.marginLeft,
     style: {
       fontSize: `${props.fontSize}px`
     },
@@ -70,7 +78,8 @@ function renderChart() {
 
 onMounted(renderChart);
 watch(() => props.data, renderChart, { deep: true });
-watch(() => props.fontSize, renderChart); 
+watch(() => props.fontSize, renderChart);
+watch(() => [props.marginTop, props.marginRight, props.marginBottom, props.marginLeft], renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
