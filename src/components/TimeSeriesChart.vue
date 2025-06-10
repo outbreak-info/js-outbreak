@@ -35,9 +35,9 @@ const props = defineProps({
 
   // Margins
   marginTop: { type: Number, default: 35 },
-  marginRight: { type: Number, default: 0 },
+  marginRight: { type: Number, default: 50 },
   marginBottom: { type: Number, default: 50 },
-  marginLeft: { type: Number, default: 140 },
+  marginLeft: { type: Number, default: 50 },
 
   // Axis styling
   xAxisLabelOffset: { type: Number, default: 35 },
