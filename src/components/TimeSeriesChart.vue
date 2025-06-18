@@ -48,6 +48,9 @@ const props = defineProps({
   // Container margins
   containerLeftMargin: { type: Number, default: 50 },
   containerRightMargin: { type: Number, default: 50 },
+
+  // Tooltip decimal places
+  tooltipDecimalPlaces: { type: Number, default: 2 },
 });
 
 const chartContainer = ref(null);
@@ -162,7 +165,9 @@ function renderChart() {
             month: "short",
             day: "numeric",
             year: "numeric",
-          })}\n${props.yLabel}: ${d[props.valueKey]}`,
+          })}\n${props.yLabel}: ${Number(d[props.valueKey]).toFixed(
+            props.tooltipDecimalPlaces
+          )}`,
         fontSize: props.fontSize,
         fill: "white",
         stroke: "#ccc",
@@ -233,6 +238,7 @@ watch(
     props.containerRightMargin,
     props.xLabel,
     props.yLabel,
+    props.tooltipDecimalPlaces,
   ],
   renderChart
 );
