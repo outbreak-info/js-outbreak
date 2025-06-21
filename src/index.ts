@@ -2,6 +2,7 @@
 import BarChart from './components/BarChart.vue'
 import ScatterChart from './components/ScatterChart.vue'
 import TimeSeriesChart from './components/TimeSeriesChart.vue'
+import HeatMapChart from './components/HeatMap.vue'
 import HistogramChart from './components/HistogramChart.vue'
 import BoxPlotChart from './components/BoxPlotChart.vue'
 import AreaChart from './components/AreaChart.vue'
@@ -20,6 +21,7 @@ export {
     BarChart,
     ScatterChart,
     TimeSeriesChart,
+    HeatMapChart,
     HistogramChart,
     BoxPlotChart,
     AreaChart,
@@ -38,6 +40,7 @@ export default {
         app.component('BarChart', BarChart)
         app.component('ScatterChart', ScatterChart)
         app.component('TimeSeriesChart', TimeSeriesChart)
+        app.component('HeatMapChart', HeatMapChart)
         app.component('HistogramChart', HistogramChart)
         app.component('BoxPlotChart', BoxPlotChart)
         app.component('AreaChart', AreaChart)

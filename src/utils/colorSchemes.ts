@@ -1,7 +1,7 @@
-import { schemeYlGnBu, interpolateRdPu } from 'd3-scale-chromatic'
+import { schemeYlGnBu } from 'd3-scale-chromatic'
 
 export const choroColorScheme = schemeYlGnBu;
-export const heatmapColorScheme = interpolateRdPu;
+export const heatmapColorScheme = "RdPu";
 
 export const defaultColor = '#3498db';
 
