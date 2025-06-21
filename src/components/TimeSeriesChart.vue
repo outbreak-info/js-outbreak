@@ -160,14 +160,14 @@ function renderChart() {
       Plot.pointer({
         x: props.dateKey,
         y: props.valueKey,
-        title: (d) =>
-          `${d[props.dateKey].toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}\n${props.yLabel}: ${Number(d[props.valueKey]).toFixed(
-            props.tooltipDecimalPlaces
-          )}`,
+        title: (d) => {
+          const date = d[props.dateKey];
+          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          const month = months[date.getUTCMonth()];
+          const day = date.getUTCDate();
+          const year = date.getUTCFullYear();
+          return `${month} ${day}, ${year}\n${props.yLabel}: ${Number(d[props.valueKey]).toFixed(props.tooltipDecimalPlaces)}`;
+        },
         fontSize: props.fontSize,
         fill: "white",
         stroke: "#ccc",
