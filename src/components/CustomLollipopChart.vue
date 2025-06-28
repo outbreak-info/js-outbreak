@@ -25,7 +25,6 @@
             text-anchor="middle"
             fill="#2c3e50"
             font-size="14px"
-            font-weight="600"
           >
             {{ yAxisLabel }}
           </text>
@@ -56,7 +55,6 @@
             y="45"
             fill="#2c3e50"
             font-size="14px"
-            font-weight="600"
           >
             {{ xAxisLabel }}
           </text>
@@ -72,7 +70,7 @@
               y="10"
               dy="0.8em"
               text-anchor="middle"
-              fill="#2c3e50"
+              :fill="hoveredPoint ? '#bdc3c7' : '#2c3e50'"
               font-size="14px"
             >
               {{ formatTime(parseTime(tick)) }}
@@ -83,10 +81,18 @@
         <!-- data points and lines -->
         <g v-for="(dataPoint, index) in data" :key="'point-' + index">
           <circle
-            :r="responsivePointRadius"
+            :r="
+              hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
+                ? `${responsivePointRadius + 2}`
+                : `${responsivePointRadius }`
+            "
             :cx="xAccessorScaled(dataPoint)"
             :cy="yAccessorScaled(dataPoint)"
-            fill="#2c3e50"
+            :fill="
+              hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
+                ? '#0570b0'
+                : '#2c3e50'
+            "
           />
           <line
             :x1="xAccessorScaled(dataPoint)"
@@ -103,13 +109,6 @@
         </g>
 
         <!-- hover effects -->
-        <circle
-          v-if="hoveredPoint"
-          :r="responsivePointRadius + 2"
-          :cx="xAccessorScaled(hoveredPoint)"
-          :cy="yAccessorScaled(hoveredPoint)"
-          fill="#0570b0"
-        />
         <text
           v-if="hoveredPoint"
           :x="xAccessorScaled(hoveredPoint)"
@@ -128,9 +127,36 @@
           text-anchor="middle"
           fill="#0570b0"
           font-size="14px"
+          font-weight="600"
         >
           {{ formatValueKey(yAccessor(hoveredPoint)) }}
         </text>
+        <g
+          v-if="hoveredPoint"
+          :transform="`translate(0, ${innerHeight})`"
+        >
+          <text
+            :x="xAccessorScaled(hoveredPoint)"
+            y="10"
+            dy="0.8em"
+            text-anchor="middle"
+            stroke="#ffffff"
+            stroke-width="4px"
+            font-size="14px"
+          >
+            {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
+          </text>
+          <text
+            :x="xAccessorScaled(hoveredPoint)"
+            y="10"
+            dy="0.8em"
+            text-anchor="middle"
+            stroke="#0570b0"
+            font-size="14px"
+          >
+            {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
+          </text>
+        </g>
       </g>
     </svg>
   </div>
