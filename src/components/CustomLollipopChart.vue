@@ -21,7 +21,7 @@
           />
           <text
             x="-12"
-            y="-10"
+            y="-25"
             text-anchor="middle"
             fill="#2c3e50"
             font-size="14px"
@@ -84,7 +84,7 @@
             :r="
               hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
                 ? `${responsivePointRadius + 2}`
-                : `${responsivePointRadius }`
+                : `${responsivePointRadius}`
             "
             :cx="xAccessorScaled(dataPoint)"
             :cy="yAccessorScaled(dataPoint)"
@@ -129,12 +129,9 @@
           font-size="14px"
           font-weight="600"
         >
-          {{ formatValueKey(yAccessor(hoveredPoint)) }}
+          {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
         </text>
-        <g
-          v-if="hoveredPoint"
-          :transform="`translate(0, ${innerHeight})`"
-        >
+        <g v-if="hoveredPoint" :transform="`translate(0, ${innerHeight})`">
           <text
             :x="xAccessorScaled(hoveredPoint)"
             y="10"
@@ -186,7 +183,7 @@ const props = defineProps({
   },
   marginTop: {
     type: Number,
-    default: 25,
+    default: 35,
   },
   marginRight: {
     type: Number,
@@ -235,7 +232,8 @@ const chartWidth = computed(() => {
 const xAccessor = (d) => d[props.dateKey];
 const yAccessor = (d) => d[props.valueKey];
 
-const formatValueKey = format(",.0f");
+const formatHoveredValueKey = format(",.0f");
+const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
 
