@@ -51,6 +51,12 @@ const props = defineProps({
 
   // Tooltip decimal places
   tooltipDecimalPlaces: { type: Number, default: 2 },
+
+  // Y-axis domain control
+  useCustomYDomain: { type: Boolean, default: false },
+  yDomainMin: { type: Number, default: 0 },
+  yDomainMax: { type: Number, default: 100 },
+  yDomainNice: { type: Boolean, default: true }, // "nice" rounding when not using custom domain
 });
 
 const chartContainer = ref(null);
@@ -90,6 +96,25 @@ const innerHeight = computed(
 
 // Computed dot color (falls back to line color if not specified)
 const effectiveDotColor = computed(() => props.dotColor || props.lineColor);
+
+// Computed y-axis configuration
+const yAxisConfig = computed(() => {
+  const config = {
+    label: props.yLabel,
+    grid: true,
+    labelOffset: props.yAxisLabelOffset,
+    tickSize: props.tickSize,
+    tickPadding: props.tickPadding,
+  };
+
+  if (props.useCustomYDomain) {
+    config.domain = [props.yDomainMin, props.yDomainMax];
+  } else {
+    config.nice = props.yDomainNice;
+  }
+
+  return config;
+});
 
 function renderChart() {
   if (!props.data || props.data.length === 0 || !chartContainer.value) return;
@@ -198,14 +223,7 @@ function renderChart() {
       tickSize: props.tickSize,
       tickPadding: props.tickPadding,
     },
-    y: {
-      label: props.yLabel,
-      grid: true,
-      labelOffset: props.yAxisLabelOffset,
-      tickSize: props.tickSize,
-      tickPadding: props.tickPadding,
-      nice: true,
-    },
+    y: yAxisConfig.value,
     marks,
   });
 
@@ -239,6 +257,10 @@ watch(
     props.xLabel,
     props.yLabel,
     props.tooltipDecimalPlaces,
+    props.useCustomYDomain,
+    props.yDomainMin,
+    props.yDomainMax,
+    props.yDomainNice,
   ],
   renderChart
 );
