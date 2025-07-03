@@ -169,50 +169,21 @@ import { quadtree } from "d3-quadtree";
 import { createDateArray } from "../utils/arrays";
 
 const props = defineProps({
-  data: {
-    type: Array,
-    required: true,
-  },
-  dateKey: {
-    type: String,
-    default: "key",
-  },
-  valueKey: {
-    type: String,
-    default: "val",
-  },
-  marginTop: {
-    type: Number,
-    default: 35,
-  },
-  marginRight: {
-    type: Number,
-    default: 5,
-  },
-  marginBottom: {
-    type: Number,
-    default: 75,
-  },
-  marginLeft: {
-    type: Number,
-    default: 140,
-  },
-  xAxisLabel: {
-    type: String,
-    default: "Date",
-  },
-  yAxisLabel: {
-    type: String,
-    default: "Value",
-  },
-  containerLeftMargin: {
-    type: Number,
-    default: 50,
-  },
-  containerRightMargin: {
-    type: Number,
-    default: 50,
-  },
+  data: { type: Array, required: true },
+  dateKey: { type: String, default: "key" },
+  valueKey: { type: String, default: "val" },
+  xAxisLabel: { type: String, default: "Date"},
+  yAxisLabel: { type: String, default: "Value"},
+
+  // Margins
+  marginTop: { type: Number, default: 35 },
+  marginRight: { type: Number, default: 25 },
+  marginBottom: { type: Number, default: 50 },
+  marginLeft: { type: Number, default: 50 },
+
+  // Container margins
+  containerLeftMargin: { type: Number, default: 50 },
+  containerRightMargin: { type: Number, default: 50 },
 });
 
 const windowWidth = ref(500);
