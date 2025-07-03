@@ -37,5 +37,8 @@
       "import": "./dist/outbreak-info.es.js",
       "require": "./dist/outbreak-info.umd.js"
     }
+  },
+  "dependencies": {
+    "d3-quadtree": "^3.0.1"
   }
 }
