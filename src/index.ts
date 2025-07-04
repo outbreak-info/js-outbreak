@@ -12,6 +12,9 @@ import TimeSeriesBarChart from "./components/TimeSeriesBarChart.vue";
 import PointRangeChart from "./components/PointRangeChart.vue";
 import UsChoroplethMap from "./components/UsChoroplethMap.vue";
 import CustomLollipopChart from "./components/CustomLollipopChart.vue";
+import LoadingSpinner from './components/LoadingSpinner.vue';
+import MultiSelectComponent from './components/MultiSelectComponent.vue';
+
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -19,22 +22,24 @@ import { themeOverrides } from "./assets/naiveThemeVariables";
 
 // Export components
 export {
-  BarChart,
-  ScatterChart,
-  TimeSeriesChart,
-  HeatMapChart,
-  HistogramChart,
-  BoxPlotChart,
-  AreaChart,
-  SelectBarChart,
-  SelectBarChartWithBarGraph,
-  TimeSeriesBarChart,
-  PointRangeChart,
-  UsChoroplethMap,
-  CustomLollipopChart,
-  colorPalette as outbreakInfoColorPalette,
-  themeOverrides as outbreakInfoThemeOverrides,
-};
+    BarChart,
+    ScatterChart,
+    TimeSeriesChart,
+    HeatMapChart,
+    HistogramChart,
+    BoxPlotChart,
+    AreaChart,
+    SelectBarChart,
+    SelectBarChartWithBarGraph,
+    TimeSeriesBarChart,
+    PointRangeChart,
+    UsChoroplethMap,
+    CustomLollipopChart,
+    LoadingSpinner,
+    MultiSelectComponent,
+    colorPalette as outbreakInfoColorPalette,
+    themeOverrides as outbreakInfoThemeOverrides
+}
 
 // Export default object for Vue.use()
 export default {
@@ -52,5 +57,7 @@ export default {
     app.component("PointRangeChart", PointRangeChart);
     app.component("UsChoroplethMap", UsChoroplethMap);
     app.component("CustomLollipopChart", CustomLollipopChart);
+    app.component('LoadingSpinner', LoadingSpinner);
+    app.component('MultiSelectComponent', MultiSelectComponent);
   },
 };
