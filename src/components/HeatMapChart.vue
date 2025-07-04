@@ -9,10 +9,13 @@ import * as Plot from '@observablehq/plot';
 
 const props = defineProps({
   data: { type: Array, required: true },
-  height: { type: Number, default: 500 },
-  width: { type: Number, default: 800 },
+  domain: { type: Array, default: [] },
+  cellWidth: { type: Number, default: 20 },
+  cellHeight: { type: Number, default: 20 },
   marginLeft: { type: Number, default: 50 },
+  marginRight: { type: Number, default: 50 },
   marginBottom: { type: Number, default: 50 },
+  marginTop: { type: Number, default: 50 },
   colorScheme: { type: String, default: heatmapColorScheme },
   x: { type: String, default: 'x' },
   y: { type: String, default: 'y' },
@@ -30,19 +33,33 @@ function renderChart() {
 
   chartContainer.value.innerHTML = '';
 
+  const nCellsX = new Set(props.data.map(d => d[props.x])).size;
+  const nCellsY = new Set(props.data.map(d => d[props.y])).size;
+
+  const chartWidth = 30 + nCellsX * props.cellWidth + props.marginLeft + props.marginRight;
+  const chartHeight = 30 + nCellsY * props.cellHeight + props.marginBottom + props.marginTop;
+
+  // Legend properties
+  const colorLegend = {type: "linear", scheme: heatmapColorScheme, legend: true, label: props.legendLabel}
+  if (props.domain.length > 0) {
+    colorLegend.domain = props.domain;
+  }
+
   // Create chart
   const chart = Plot.plot({
     marginLeft: props.marginLeft,
-    marginRight: props.marginRight,
-    width: props.width,
-    height: props.height,
+    marginTop: props.marginTop,
+    marginBottom: props.marginBottom,
+    width: chartWidth,
+    height: chartHeight,
     padding: 0,
     grid: true,
     x: {label: props.xLabel},
     y: {label: props.yLabel},
-    color: {type: "linear", scheme: heatmapColorScheme, legend: true, label: props.legendLabel},
+    color: colorLegend,
     legend: true,
     marks: [
+      Plot.axisX({anchor: "bottom", tickRotate: 45, textAnchor: "start"}),
       Plot.cell(props.data, {
         x: props.x,
         y: props.y,
@@ -51,12 +68,13 @@ function renderChart() {
         rx: 4,
         ry: 4
       }),
+      Plot.axisX({anchor: "top", tickRotate: 315, textAnchor: "start"}),
       Plot.tip(props.data, Plot.pointer({
         x: props.x,
         y: props.y,
         title: d => `${d[props.val].toFixed(
             props.tooltipDecimalPlaces
-        )}}`,
+        )}`,
       }))
     ]
   })
