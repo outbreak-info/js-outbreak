@@ -4,7 +4,7 @@
       <n-form-item v-if="label" :label="label">
         <div class="select-button-row">
           <n-select
-            v-model:value="selectedValue"
+            v-model:value="selectedPrimitiveValues"
             multiple
             :options="resolvedOptions"
             :placeholder="placeholder"
@@ -16,8 +16,7 @@
             :style="{ width: width }"
             @update:value="handleChange"
           />
-          <n-button 
-            v-if="showButton"
+          <n-button
             type="primary"
             size="medium"
             @click="handleButtonClick"
@@ -28,7 +27,7 @@
       </n-form-item>
       <div v-else class="select-button-row">
         <n-select
-          v-model:value="selectedValue"
+          v-model:value="selectedPrimitiveValues"
           multiple
           :options="resolvedOptions"
           :placeholder="placeholder"
@@ -40,8 +39,7 @@
           :style="{ width: width }"
           @update:value="handleChange"
         />
-        <n-button 
-          v-if="showButton"
+        <n-button
           type="primary"
           size="medium"
           @click="handleButtonClick"
@@ -66,16 +64,15 @@ const props = defineProps({
   placeholder: { type: String, default: 'Select options' },
   filterable: { type: Boolean, default: true },
   clearable: { type: Boolean, default: true },
-  loading: { type: Boolean, default: false },
   maxTagCount: { type: Number, default: undefined },
-  showButton: { type: Boolean, default: false },
   buttonText: { type: String, default: 'Apply' },
   width: { type: String, default: '300px' },
 })
 
 const emit = defineEmits(['update:modelValue', 'optionsLoaded', 'optionsError', 'buttonClick'])
 
-const selectedValue = ref<(string | number)[]>([...(props.modelValue as (string | number)[])])
+const selectedValue = ref<SelectOption[]>([])
+const selectedPrimitiveValues = ref<(string | number)[]>([...(props.modelValue as (string | number)[])])
 const isLoading = ref(false)
 const dynamicOptions = ref<SelectOption[]>([])
 
@@ -86,8 +83,10 @@ const resolvedOptions = computed((): SelectOption[] => {
   return dynamicOptions.value
 })
 
-const handleChange = (value: any[]) => {
-  selectedValue.value = value
+
+const handleChange = (value: any[], option: SelectOption[]) => {
+  selectedPrimitiveValues.value = value
+  selectedValue.value = option
   emit('update:modelValue', value)
 }
 
@@ -113,7 +112,7 @@ const loadOptionsFromFunction = async () => {
 }
 
 watch(() => props.modelValue, (newValue) => {
-  selectedValue.value = [...(newValue as (string | number)[])]
+  selectedPrimitiveValues.value = [...(newValue as (string | number)[])]
 }, { deep: true })
 
 watch(() => props.optionsFunction, () => {
