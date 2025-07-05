@@ -21,4 +21,5 @@ declare module "outbreakInfo" {
   export const PointRangeChart: DefineComponent<{}, {}, any>;
   export const UsChoroplethMap: DefineComponent<{}, {}, any>;
   export const CustomLollipopChart: DefineComponent<{}, {}, any>;
+  export const CustomTimeSeriesChart: DefineComponent<{}, {}, any>;
 }
