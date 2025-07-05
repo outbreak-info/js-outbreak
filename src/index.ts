@@ -14,6 +14,7 @@ import UsChoroplethMap from "./components/UsChoroplethMap.vue";
 import CustomLollipopChart from "./components/CustomLollipopChart.vue";
 import LoadingSpinner from './components/LoadingSpinner.vue';
 import MultiSelectComponent from './components/MultiSelectComponent.vue';
+import DumbbellChart from './components/DumbbellChart.vue';
 
 
 // Import utilities
@@ -37,6 +38,7 @@ export {
     CustomLollipopChart,
     LoadingSpinner,
     MultiSelectComponent,
+    DumbbellChart,
     colorPalette as outbreakInfoColorPalette,
     themeOverrides as outbreakInfoThemeOverrides
 }
@@ -59,5 +61,6 @@ export default {
     app.component("CustomLollipopChart", CustomLollipopChart);
     app.component('LoadingSpinner', LoadingSpinner);
     app.component('MultiSelectComponent', MultiSelectComponent);
+    app.component('DumbbellChart', DumbbellChart);
   },
 };
