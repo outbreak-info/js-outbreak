@@ -6,7 +6,7 @@ import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import { quadtree } from "d3-quadtree";
 import { createDateArray } from "../utils/arrays";
-import { line, curveMonotoneX } from "d3-shape";
+import { line, curveBundle } from "d3-shape";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -118,7 +118,7 @@ const lineGenerator = computed(() =>
     .defined(function (d) {
       return !Number.isNaN(d.valueKey);
     })
-    .curve(curveMonotoneX)
+    .curve(curveBundle)
 );
 
 const quadtreeInstance = computed(() =>
