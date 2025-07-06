@@ -68,7 +68,7 @@ const handleResize = () => {
 const xAccessor = (d) => d[props.dateKey];
 const yAccessor = (d) => d[props.valueKey];
 
-const formatHoveredValueKey = format(",.0f");
+const formatHoveredValueKey = format(",.2f");
 const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
@@ -279,6 +279,64 @@ const handleMouseLeave = () => {
             :cy="yAccessorScaled(dataPoint)"
             fill="#2c3e50"
           />
+        </g>
+
+        <!-- hover effects -->
+        <circle
+          v-if="hoveredPoint"
+          :r="width > 600 ? 6 : 5"
+          :cx="xAccessorScaled(hoveredPoint)"
+          :cy="yAccessorScaled(hoveredPoint)"
+          fill="#0570b0"
+        />
+        <text
+          v-if="hoveredPoint"
+          :x="xAccessorScaled(hoveredPoint)"
+          :y="yAccessorScaled(hoveredPoint) - 10"
+          text-anchor="middle"
+          stroke="#ffffff"
+          stroke-width="4px"
+          font-size="14px"
+        >
+          {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
+        </text>
+        <text
+          v-if="hoveredPoint"
+          :x="xAccessorScaled(hoveredPoint)"
+          :y="yAccessorScaled(hoveredPoint) - 10"
+          text-anchor="middle"
+          stroke="#0570b0"
+          stroke-width="1px"
+          font-size="14px"
+        >
+          {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
+        </text>
+        <g
+          v-if="hoveredPoint"
+          :transform="`translate(${xScale(
+            xAccessor(hoveredPoint)
+          )}, ${innerHeight})`"
+        >
+          <text
+            y="10"
+            dy="0.8em"
+            text-anchor="middle"
+            stroke="#ffffff"
+            stroke-width="4px"
+            font-size="14px"
+          >
+            {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
+          </text>
+          <text
+            y="10"
+            dy="0.8em"
+            text-anchor="middle"
+            stroke="#0570b0"
+            stroke-width="1px"
+            font-size="14px"
+          >
+            {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
+          </text>
         </g>
       </g>
     </svg>
