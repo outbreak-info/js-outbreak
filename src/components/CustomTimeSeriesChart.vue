@@ -1,11 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { scaleLinear, scaleBand } from "d3-scale";
-import { max } from "d3-array";
+import { min, max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import { quadtree } from "d3-quadtree";
 import { createDateArray } from "../utils/arrays";
+import { line, curveBundle } from "d3-shape";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -13,7 +14,16 @@ const props = defineProps({
   valueKey: { type: String, default: "val" },
   xAxisLabel: { type: String, default: "Date" },
   yAxisLabel: { type: String, default: "Value" },
-  height: { type: Number, default: 135 },
+  height: { type: Number, default: 300 },
+
+  // Y-scale domain props
+  yDomainType: {
+    type: String,
+    default: "auto",
+    validator: (value) => ["auto", "custom"].includes(value),
+  },
+  yDomainMin: { type: Number, default: null },
+  yDomainMax: { type: Number, default: null },
 
   // Margins
   marginTop: { type: Number, default: 35 },
@@ -58,21 +68,10 @@ const handleResize = () => {
 const xAccessor = (d) => d[props.dateKey];
 const yAccessor = (d) => d[props.valueKey];
 
-const formatHoveredValueKey = format(",.0f");
+const formatHoveredValueKey = format(",.2f");
 const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
-
-const responsivePointRadius = computed(() => {
-  if (width.value < 400) return 2;
-  if (width.value < 600) return 3;
-  return 4;
-});
-
-const responsiveStrokeWidth = computed(() => {
-  if (width.value < 400) return "1px";
-  return "2px";
-});
 
 const marginTop = props.marginTop;
 const marginRight = props.marginRight;
@@ -93,15 +92,34 @@ const xScale = computed(() =>
   scaleBand().domain(xScaleDomain.value).range([0, innerWidth.value])
 );
 
+const yScaleDomain = computed(() => {
+  if (props.yDomainType === "custom") {
+    const minVal =
+      props.yDomainMin !== null ? props.yDomainMin : min(props.data, yAccessor);
+    const maxVal =
+      props.yDomainMax !== null ? props.yDomainMax : max(props.data, yAccessor);
+    return [minVal, maxVal];
+  } else {
+    return [min(props.data, yAccessor), max(props.data, yAccessor)];
+  }
+});
+
 const yScale = computed(() =>
-  scaleLinear()
-    .domain([0, max(props.data, yAccessor)])
-    .range([innerHeight.value, 0])
-    .nice()
+  scaleLinear().domain(yScaleDomain.value).range([innerHeight.value, 0]).nice()
 );
 
 const xAccessorScaled = computed(() => (d) => xScale.value(xAccessor(d)));
 const yAccessorScaled = computed(() => (d) => yScale.value(yAccessor(d)));
+
+const lineGenerator = computed(() =>
+  line()
+    .x(xAccessorScaled.value)
+    .y(yAccessorScaled.value)
+    .defined(function (d) {
+      return !Number.isNaN(d.valueKey);
+    })
+    .curve(curveBundle)
+);
 
 const quadtreeInstance = computed(() =>
   quadtree()
@@ -109,6 +127,8 @@ const quadtreeInstance = computed(() =>
     .y((d) => yScale.value(yAccessor(d)))
     .addAll(props.data)
 );
+
+const chartLine = computed(() => lineGenerator.value(props.data));
 
 const yTicks = computed(() => {
   const numberOfYTicks = Math.floor(innerHeight.value / 40);
@@ -163,7 +183,7 @@ const handleMouseLeave = () => {
   <div class="chart-container" :style="containerMargins">
     <svg
       role="img"
-      :aria-label="`Lollipop chart showing ${yAxisLabel} over time`"
+      :aria-label="`Line chart showing ${yAxisLabel} over time`"
       :width="width - containerMarginLeft - containerMarginRight"
       :height="height"
       @mousemove="handleMouseMove"
@@ -239,37 +259,36 @@ const handleMouseLeave = () => {
           </g>
         </g>
 
-        <!-- data points and lines -->
-        <g v-for="(dataPoint, index) in data" :key="'point-' + index">
+        <!-- line -->
+        <path
+          class="line"
+          :d="chartLine"
+          stroke="#bdc3c7"
+          stroke-width="3px"
+          fill="none"
+          stroke-linecap="round"
+        />
+
+        <!-- point -->
+        <g>
           <circle
-            :r="
-              hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
-                ? `${responsivePointRadius + 2}`
-                : `${responsivePointRadius}`
-            "
+            v-for="(dataPoint, index) in data"
+            :key="'point-' + index"
+            :r="width > 600 ? 4 : 3"
             :cx="xAccessorScaled(dataPoint)"
             :cy="yAccessorScaled(dataPoint)"
-            :fill="
-              hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
-                ? '#0570b0'
-                : '#2c3e50'
-            "
-          />
-          <line
-            :x1="xAccessorScaled(dataPoint)"
-            :x2="xAccessorScaled(dataPoint)"
-            :y1="yAccessorScaled(dataPoint)"
-            :y2="yScale(0)"
-            :stroke="
-              hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
-                ? '#0570b0'
-                : '#2c3e50'
-            "
-            :stroke-width="responsiveStrokeWidth"
+            fill="#2c3e50"
           />
         </g>
 
         <!-- hover effects -->
+        <circle
+          v-if="hoveredPoint"
+          :r="width > 600 ? 6 : 5"
+          :cx="xAccessorScaled(hoveredPoint)"
+          :cy="yAccessorScaled(hoveredPoint)"
+          fill="#0570b0"
+        />
         <text
           v-if="hoveredPoint"
           :x="xAccessorScaled(hoveredPoint)"
@@ -279,22 +298,26 @@ const handleMouseLeave = () => {
           stroke-width="4px"
           font-size="14px"
         >
-          {{ formatValueKey(yAccessor(hoveredPoint)) }}
+          {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
         </text>
         <text
           v-if="hoveredPoint"
           :x="xAccessorScaled(hoveredPoint)"
           :y="yAccessorScaled(hoveredPoint) - 10"
           text-anchor="middle"
-          fill="#0570b0"
+          stroke="#0570b0"
+          stroke-width="1px"
           font-size="14px"
-          font-weight="600"
         >
           {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
         </text>
-        <g v-if="hoveredPoint" :transform="`translate(0, ${innerHeight})`">
+        <g
+          v-if="hoveredPoint"
+          :transform="`translate(${xScale(
+            xAccessor(hoveredPoint)
+          )}, ${innerHeight})`"
+        >
           <text
-            :x="xAccessorScaled(hoveredPoint)"
             y="10"
             dy="0.8em"
             text-anchor="middle"
@@ -305,11 +328,11 @@ const handleMouseLeave = () => {
             {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
           </text>
           <text
-            :x="xAccessorScaled(hoveredPoint)"
             y="10"
             dy="0.8em"
             text-anchor="middle"
             stroke="#0570b0"
+            stroke-width="1px"
             font-size="14px"
           >
             {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
