@@ -24,6 +24,34 @@
         @buttonClick="handleAsyncButtonClick"
       />
     </div>
+
+    <div class="test-section">
+      <h2>Single Select Mode</h2>
+      <MultiSelectComponent 
+        v-model="singleSelected" 
+        :options="staticOptions"
+        label="Select Single Item"
+        :multiple="false"
+        :showButton="true"
+        buttonText="Apply Single Selection"
+        @buttonClick="handleSingleButtonClick"
+        @update:modelValue="handleSingleUpdate"
+      />
+    </div>
+
+    <div class="test-section">
+      <h2>Single Select Mode without button</h2>
+      <MultiSelectComponent
+          v-model="singleSelectedNoButton"
+          :options="staticOptions"
+          label="Select Single Item"
+          :multiple="false"
+          :showButton="false"
+          buttonText="Apply Single Selection"
+          @buttonClick="handleSingleButtonClick"
+          @update:modelValue="handleSingleUpdate"
+      />
+    </div>
   </div>
 </template>
 
@@ -33,6 +61,8 @@ import MultiSelectComponent from '../../../src/components/MultiSelectComponent.v
 
 const staticSelected = ref([])
 const asyncSelected = ref([])
+const singleSelected = ref('')
+const singleSelectedNoButton = ref('')
 
 const staticOptions = [
   { label: "Category A", value: "cat_a" },
@@ -47,6 +77,14 @@ const handleButtonClick = (selectedValues: any[]) => {
 
 const handleAsyncButtonClick = (selectedValues: any[]) => {
   console.log('Async button clicked with values:', selectedValues)
+}
+
+const handleSingleButtonClick = (selectedValue: any) => {
+  console.log('Single button clicked with value:', selectedValue)
+}
+
+const handleSingleUpdate = (selectedValue: any) => {
+  console.log('Single update with value:', selectedValue)
 }
 
 const loadAsyncOptions = async () => {

@@ -1,22 +1,23 @@
 <template>
   <n-config-provider :theme-overrides="themeOverrides">
     <div>
-      <n-form-item v-if="label" :label="label">
+      <n-form-item>
         <div class="select-button-row">
           <n-select
             v-model:value="selectedPrimitiveValues"
-            multiple
+            :multiple="multiple"
             :options="resolvedOptions"
             :placeholder="placeholder"
             :filterable="filterable"
             :clearable="clearable"
             :loading="isLoading"
-            :max-tag-count="maxTagCount"
+            :max-tag-count="multiple ? maxTagCount : undefined"
             size="medium"
             :style="{ width: width }"
             @update:value="handleChange"
           />
           <n-button
+            v-if="showButton"
             type="primary"
             size="medium"
             @click="handleButtonClick"
@@ -25,28 +26,6 @@
           </n-button>
         </div>
       </n-form-item>
-      <div v-else class="select-button-row">
-        <n-select
-          v-model:value="selectedPrimitiveValues"
-          multiple
-          :options="resolvedOptions"
-          :placeholder="placeholder"
-          :filterable="filterable"
-          :clearable="clearable"
-          :loading="isLoading"
-          :max-tag-count="maxTagCount"
-          size="medium"
-          :style="{ width: width }"
-          @update:value="handleChange"
-        />
-        <n-button
-          type="primary"
-          size="medium"
-          @click="handleButtonClick"
-        >
-          {{ buttonText }}
-        </n-button>
-      </div>
     </div>
   </n-config-provider>
 </template>
@@ -57,22 +36,23 @@ import { NSelect, NFormItem, NConfigProvider, NButton, type SelectOption } from 
 import { themeOverrides } from "../assets/naiveThemeVariables"
 
 const props = defineProps({
-  modelValue: { type: Array, default: () => [] },
+  modelValue: { type: [Array, String, Number], default: () => [] },
   options: { type: Array, default: () => [] },
   optionsFunction: { type: Function, default: null },
-  label: { type: String, default: '' },
   placeholder: { type: String, default: 'Select options' },
   filterable: { type: Boolean, default: true },
   clearable: { type: Boolean, default: true },
   maxTagCount: { type: Number, default: undefined },
   buttonText: { type: String, default: 'Apply' },
   width: { type: String, default: '300px' },
+  multiple: { type: Boolean, default: true },
+  showButton: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['update:modelValue', 'optionsLoaded', 'optionsError', 'buttonClick'])
 
-const selectedValue = ref<SelectOption[]>([])
-const selectedPrimitiveValues = ref<(string | number)[]>([...(props.modelValue as (string | number)[])])
+const selectedValue = ref<SelectOption[] | SelectOption | null>([])
+
 const isLoading = ref(false)
 const dynamicOptions = ref<SelectOption[]>([])
 
@@ -83,8 +63,10 @@ const resolvedOptions = computed((): SelectOption[] => {
   return dynamicOptions.value
 })
 
+const selectedPrimitiveValues = ref<(string | number)[] | string | number>(props.multiple ? [...(props.modelValue as (string | number)[])] : (props.modelValue as string | number))
 
-const handleChange = (value: any[], option: SelectOption[]) => {
+
+const handleChange = (value: any[] | any, option: SelectOption[] | SelectOption | null) => {
   selectedPrimitiveValues.value = value
   selectedValue.value = option
   emit('update:modelValue', value)
@@ -112,7 +94,7 @@ const loadOptionsFromFunction = async () => {
 }
 
 watch(() => props.modelValue, (newValue) => {
-  selectedPrimitiveValues.value = [...(newValue as (string | number)[])]
+  selectedPrimitiveValues.value = props.multiple ? [...(newValue as (string | number)[])] : (newValue as string | number)
 }, { deep: true })
 
 watch(() => props.optionsFunction, () => {
