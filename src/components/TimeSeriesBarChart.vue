@@ -26,7 +26,7 @@ const props = defineProps({
   tickInterval: { type: String, default: 'month' },
   marginBottom: { type: Number, default: 50 },
   marginLeft: { type: Number, default: 50 },
-  rangeColor: { type: [], default: colorPalette },
+  rangeColor: { type: Array, default: colorPalette },
   // For pre binned data
   isPreBinned: { type: Boolean, default: false }
 });
@@ -139,7 +139,7 @@ function renderChart() {
         Plot.binX({y: "sum"}, {
           x: "date",
           y: "value",
-          fill: props.groupKey,
+          fill: "group",
           interval: props.binInterval,
           tip: true,
           title: d => `${timeFormat(getTickFormat(props.binInterval))(d.date)}\n${d.value.toLocaleString()}\n${d.group}`
