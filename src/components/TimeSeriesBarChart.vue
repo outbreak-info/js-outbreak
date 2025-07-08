@@ -26,6 +26,7 @@ const props = defineProps({
   tickInterval: { type: String, default: 'month' },
   marginBottom: { type: Number, default: 50 },
   marginLeft: { type: Number, default: 50 },
+  rangeColor: { type: [], default: colorPalette },
   // For pre binned data
   isPreBinned: { type: Boolean, default: false }
 });
@@ -190,7 +191,7 @@ function renderChart() {
     },
     color: {
       legend: true,
-      range: colorPalette
+      range: props.rangeColor
     },
     marks
   });
