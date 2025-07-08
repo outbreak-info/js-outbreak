@@ -1,6 +1,6 @@
 <template>
   <n-config-provider :theme-overrides="themeOverrides">
-    <n-spin size="medium" :description="props.description" />
+    <n-spin size="medium" :description="props.description" class="m-1 d-flex justify-content-center" />
   </n-config-provider>
 </template>
 
