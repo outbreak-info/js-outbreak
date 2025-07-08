@@ -16,6 +16,8 @@ import LoadingSpinner from "./components/LoadingSpinner.vue";
 import MultiSelectComponent from "./components/MultiSelectComponent.vue";
 import DumbbellChart from "./components/DumbbellChart.vue";
 import CustomTimeSeriesChart from "./components/CustomTimeSeriesChart.vue";
+import TextInput from "./components/TextInput.vue";
+import Divider from "./components/Divider.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -40,6 +42,8 @@ export {
   MultiSelectComponent,
   DumbbellChart,
   CustomTimeSeriesChart,
+  TextInput,
+  Divider,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -64,5 +68,7 @@ export default {
     app.component("MultiSelectComponent", MultiSelectComponent);
     app.component("DumbbellChart", DumbbellChart);
     app.component("CustomTimeSeriesChart", CustomTimeSeriesChart);
+    app.component("TextInput", TextInput);
+    app.component("Divider", Divider);
   },
 };
