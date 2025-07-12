@@ -1,6 +1,6 @@
 <template>
   <div class="test-container">
-    <h1>US Choropleth Map Component Test</h1>
+    <h1>Custom US Choropleth Map Component Test</h1>
     <CustomUsChoroplethMap />
   </div>
 </template>
