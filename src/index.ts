@@ -18,6 +18,7 @@ import DumbbellChart from "./components/DumbbellChart.vue";
 import CustomTimeSeriesChart from "./components/CustomTimeSeriesChart.vue";
 import TextInput from "./components/TextInput.vue";
 import Divider from "./components/Divider.vue";
+import CustomUsChoroplethMap from "./components/CustomUsChoroplethMap.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -44,6 +45,7 @@ export {
   CustomTimeSeriesChart,
   TextInput,
   Divider,
+  CustomUsChoroplethMap,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -70,5 +72,6 @@ export default {
     app.component("CustomTimeSeriesChart", CustomTimeSeriesChart);
     app.component("TextInput", TextInput);
     app.component("Divider", Divider);
+    app.component("CustomUsChoroplethMap", CustomUsChoroplethMap);
   },
 };
