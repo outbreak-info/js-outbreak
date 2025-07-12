@@ -20,6 +20,7 @@ const containerMargins = computed(() => ({
 
 const width = ref(500);
 const height = computed(() => (width.value / 960) * 600);
+const hoveredState = ref(null);
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
@@ -50,17 +51,54 @@ const projection = computed(() =>
 );
 
 const pathGenerator = computed(() => geoPath().projection(projection.value));
+
+const handleMouseEnter = (feature) => {
+  hoveredState.value = feature.properties.NAME;
+};
+
+const handleMouseLeave = () => {
+  hoveredState.value = null;
+};
+
+const nonHoveredStatesFeatures = computed(() =>
+  usGeoJson.features.filter(
+    (state) => state.properties.NAME !== hoveredState.value
+  )
+);
+
+const hoveredStateFeature = computed(() =>
+  usGeoJson.features.find(
+    (state) => state.properties.NAME === hoveredState.value
+  )
+);
 </script>
 
 <template>
   <div class="choropleth-container" :style="containerMargins">
     <svg :width="renderedWidth" :height="renderedHeight">
+      <!-- Non-hovered states -->
       <path
-        v-for="(state, index) in usGeoJson.features"
-        :key="state.properties.NAME || index"
-        :d="pathGenerator(state)"
+        v-for="(feature, index) in nonHoveredStatesFeatures"
+        :key="feature.properties.NAME || index"
+        :d="pathGenerator(feature)"
         fill="#ffffff"
         stroke="#000000"
+        stroke-width="1"
+        style="cursor: pointer"
+        @mouseenter="handleMouseEnter(feature)"
+        @mouseleave="handleMouseLeave"
+      />
+      <!-- Hovered state -->
+      <path
+        v-if="hoveredStateFeature"
+        :key="hoveredStateFeature.properties.NAME + '-hovered'"
+        :d="pathGenerator(hoveredStateFeature)"
+        fill="#fff5ee"
+        stroke="#ff6347"
+        stroke-width="3"
+        style="cursor: pointer"
+        @mouseenter="handleMouseEnter(hoveredStateFeature)"
+        @mouseleave="handleMouseLeave"
       />
     </svg>
   </div>
