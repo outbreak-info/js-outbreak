@@ -131,6 +131,55 @@ const hoveredStateFeature = computed(() =>
     (state) => state.properties.NAME === hoveredState.value
   )
 );
+
+// Tooltip inline styles
+const tooltipWrapperStyle = computed(() => ({
+  left: xPosition.value + "px",
+  top: yPosition.value + "px",
+  width: "160px",
+  background: "#ffffff",
+  boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",
+  borderRadius: "3px",
+  position: "absolute",
+  padding: "0.5em",
+  textAlign: "left",
+  fontSize: "13px",
+  lineHeight: "18px",
+  zIndex: 1,
+  color: "#2c3e50",
+  pointerEvents: "none",
+}));
+
+const tooltipTitleStyle = {
+  fontWeight: "700",
+  fontSize: "14px",
+  lineHeight: "16px",
+};
+
+const tooltipDividerStyle = {
+  borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+  marginTop: "5px",
+  marginBottom: "5px",
+};
+
+const tooltipGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr auto",
+  fontWeight: "400",
+  marginBottom: "5px",
+};
+
+const tooltipBarStyle = computed(() => ({
+  position: "absolute",
+  height: "7px",
+  width: "100%",
+  bottom: "0",
+  left: "0",
+  background: hoveredState.value
+    ? colorScale.value(dataLookup.value[hoveredState.value])
+    : "transparent",
+}));
 </script>
 
 <template>
@@ -182,32 +231,19 @@ const hoveredStateFeature = computed(() =>
     </svg>
   </div>
   <!-- Tooltip -->
-  <div
-    v-if="hoveredState && eventPosition"
-    class="tooltip-wrapper"
-    :style="{
-      left: `${xPosition}px`,
-      top: `${yPosition}px`,
-      width: '160px',
-    }"
-  >
-    <div class="title">
+  <div v-if="hoveredState && eventPosition" :style="tooltipWrapperStyle">
+    <div :style="tooltipTitleStyle">
       {{ hoveredState }}
-      <hr class="divider" />
+      <hr :style="tooltipDividerStyle" />
     </div>
-    <div class="grid">
+    <div :style="tooltipGridStyle">
       <span>Prevalence (%)</span>
-      <span class="data">
+      <span>
         {{ formatPrevalence(hoveredState) }}
       </span>
     </div>
     <div>
-      <span
-        class="bar"
-        :style="{
-          background: `${colorScale(dataLookup[hoveredState])}`,
-        }"
-      />
+      <span :style="tooltipBarStyle" />
     </div>
   </div>
 </template>
@@ -215,44 +251,5 @@ const hoveredStateFeature = computed(() =>
 <style scoped>
 .choropleth-container {
   position: relative;
-}
-.tooltip-wrapper {
-  background: #ffffff;
-  box-shadow: 1px 2px 7px rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-  position: absolute;
-  padding: 0.5em;
-  text-align: left;
-  font-size: 14px;
-  line-height: 18px;
-  z-index: 1;
-  color: #2c3e50;
-  pointer-events: none;
-}
-.title {
-  font-weight: 700;
-  font-size: 14px;
-  line-height: 16px;
-}
-.divider {
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  margin-top: 5px;
-  margin-bottom: 5px;
-}
-.grid {
-  display: grid;
-  row-gap: 1px;
-  grid-template-columns: 1fr auto;
-  column-gap: 15px;
-  font-weight: 400;
-  margin-bottom: 10px;
-}
-.bar {
-  position: absolute;
-  height: 7px;
-  width: 100%;
-  bottom: 0;
-  left: 0;
 }
 </style>
