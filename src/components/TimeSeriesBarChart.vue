@@ -8,7 +8,7 @@ import { defaultColor, colorPalette } from '../utils/colorSchemes';
 import * as Plot from '@observablehq/plot';
 import { sum, rollup } from 'd3-array';
 import { timeFormat, timeParse } from 'd3-time-format';
-import { timeMonth, timeMonths, timeDay, timeYear } from 'd3-time';
+import { timeMonth, timeDay, timeYear } from 'd3-time';
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -26,9 +26,11 @@ const props = defineProps({
   tickInterval: { type: String, default: 'month' },
   marginBottom: { type: Number, default: 50 },
   marginLeft: { type: Number, default: 50 },
+  marginTop: { type: Number, default: 20 },
   rangeColor: { type: Array, default: colorPalette },
-  // For pre binned data
-  isPreBinned: { type: Boolean, default: false }
+  isPreBinned: { type: Boolean, default: false },
+  xTickMin: { type: [Date, String], default: null },
+  xTickMax: { type: [Date, String], default: null }
 });
 
 const chartContainer = ref(null);
@@ -179,11 +181,18 @@ function renderChart() {
     width: props.width,
     marginLeft: props.marginLeft,
     marginBottom: props.marginBottom,
+    marginTop: props.marginTop,
     x: {
       label: props.xLabel,
       type: "time",
       tickFormat: getTickFormat(props.binInterval),
-      ticks: props.tickInterval
+      ticks: props.tickInterval,
+      ...(props.xTickMin && props.xTickMax ? { 
+        domain: [
+          props.xTickMin instanceof Date ? props.xTickMin : new Date(props.xTickMin),
+          props.xTickMax instanceof Date ? props.xTickMax : new Date(props.xTickMax)
+        ]
+      } : {})
     },
     y: {
       label: props.yLabel,

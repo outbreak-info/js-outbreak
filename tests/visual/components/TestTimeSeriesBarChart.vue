@@ -23,6 +23,14 @@
         binInterval="year"
     />
 
+    With X-axis limits - only 2024
+    <TimeSeriesBarChart
+      :data="chartData"
+      :xTickMin="'2024-01-01'"
+      :xTickMax="'2024-12-31'"
+      :showCumulativeLine="true"
+    />
+
   </div>
 </template>
 
