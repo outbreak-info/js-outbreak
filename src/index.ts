@@ -10,6 +10,7 @@ import SelectBarChart from "./components/SelectBarChart.vue";
 import SelectBarChartWithBarGraph from "./components/SelectBarChartWithBarGraph.vue";
 import TimeSeriesBarChart from "./components/TimeSeriesBarChart.vue";
 import PointRangeChart from "./components/PointRangeChart.vue";
+import TimeSeriesPointRangeChart from "./components/TimeSeriesPointRangeChart.vue";
 import UsChoroplethMap from "./components/UsChoroplethMap.vue";
 import CustomLollipopChart from "./components/CustomLollipopChart.vue";
 import LoadingSpinner from "./components/LoadingSpinner.vue";
@@ -36,6 +37,7 @@ export {
   SelectBarChartWithBarGraph,
   TimeSeriesBarChart,
   PointRangeChart,
+  TimeSeriesPointRangeChart,
   UsChoroplethMap,
   CustomLollipopChart,
   LoadingSpinner,
@@ -62,6 +64,7 @@ export default {
     app.component("SelectBarChartWithBarGraph", SelectBarChartWithBarGraph);
     app.component("TimeSeriesBarChart", TimeSeriesBarChart);
     app.component("PointRangeChart", PointRangeChart);
+    app.component("TimeSeriesPointRangeChart", TimeSeriesPointRangeChart);
     app.component("UsChoroplethMap", UsChoroplethMap);
     app.component("CustomLollipopChart", CustomLollipopChart);
     app.component("LoadingSpinner", LoadingSpinner);
