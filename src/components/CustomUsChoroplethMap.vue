@@ -1,9 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { geoAlbersUsa, geoPath } from "d3-geo";
-import { scaleThreshold } from "d3-scale";
-import { schemeYlGnBu } from "d3-scale-chromatic";
+import { scaleThreshold, scaleLinear } from "d3-scale";
+import { ylGnBuDiscrete11 } from "../utils/colorSchemes";
 import { format } from "d3-format";
+import { min, max } from "d3-array";
 import usGeoJson from "../assets/geo/us_states.json";
 
 const props = defineProps({
@@ -30,6 +31,8 @@ const hoveredState = ref(null);
 const eventPosition = ref(null);
 const xPosition = ref(null);
 const yPosition = ref(null);
+
+const formatLegendValue = format(".2s");
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
@@ -63,8 +66,8 @@ const pathGenerator = computed(() => geoPath().projection(projection.value));
 
 const colorScale = computed(() =>
   scaleThreshold()
-    .domain([0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
-    .range(schemeYlGnBu[9])
+    .domain([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+    .range(ylGnBuDiscrete11)
 );
 
 // Create data lookup map
@@ -132,6 +135,29 @@ const hoveredStateFeature = computed(() =>
   )
 );
 
+const legendWidth = 300;
+const legendHeight = 45;
+const undetectedRectWidth = 25;
+const rectHeight = 15;
+
+const rangeMin = 12;
+const rangeMax = 288;
+
+const legendScale = scaleLinear()
+  .domain([min(colorScale.value.domain()), max(colorScale.value.domain())])
+  .rangeRound([rangeMin, rangeMax]);
+
+const colorBands = colorScale.value.range().map((color) => {
+  const d = colorScale.value.invertExtent(color);
+
+  if (d[0] == null) d[0] = legendScale.domain()[0];
+  if (d[1] == null) d[1] = legendScale.domain()[1];
+
+  return d;
+});
+
+const ticks = colorScale.value.domain();
+
 // Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
   left: xPosition.value + "px",
@@ -184,6 +210,71 @@ const tooltipBarStyle = computed(() => ({
 
 <template>
   <div class="choropleth-container" :style="containerMargins">
+    <div class="legend-wrapper">
+      <div class="content-wrapper">
+        <div class="title">
+          <span>prevalence (%)</span>
+        </div>
+        <svg role="img" :width="legendWidth" :height="legendHeight">
+          <g>
+            <rect
+              v-for="band in colorBands"
+              :x="legendScale(band[0])"
+              :width="legendScale(band[1]) - legendScale(band[0])"
+              :height="rectHeight"
+              :fill="colorScale(band[0])"
+            />
+            <g
+              v-for="tick in ticks"
+              :transform="`translate(${legendScale(tick)}, 0)`"
+            >
+              <text
+                y="18"
+                dy="0.8em"
+                text-anchor="middle"
+                fill="#2c3e50"
+                font-size="14px"
+              >
+                {{ tick == 0 ? tick : formatLegendValue(tick) }}
+              </text>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="no-data">
+        <svg width="125" height="24">
+          <defs>
+            <pattern
+              id="legendDiagonalHatch"
+              width="5"
+              height="5"
+              patternTransform="rotate(45 0 0)"
+              patternUnits="userSpaceOnUse"
+            >
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="10"
+                :style="`stroke:#a9a9a9; stroke-width:2`"
+              />
+            </pattern>
+          </defs>
+          <rect
+            x="5"
+            y="2"
+            :width="undetectedRectWidth"
+            :height="rectHeight"
+            fill="url(#legendDiagonalHatch)"
+            stroke="#888"
+            stroke-width="0.5"
+          />
+          <text x="40" y="12" dy="0.1em" fill="#2c3e50" font-size="14px">
+            no data
+          </text>
+        </svg>
+      </div>
+    </div>
     <svg :width="renderedWidth" :height="renderedHeight">
       <defs>
         <pattern
@@ -251,5 +342,20 @@ const tooltipBarStyle = computed(() => ({
 <style scoped>
 .choropleth-container {
   position: relative;
+}
+.legend-wrapper {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.title {
+  margin-bottom: 5px;
+  text-align: left;
+  font-size: 14px;
+  margin-left: 10px;
+}
+.no-data {
+  margin-left: 7px;
 }
 </style>
