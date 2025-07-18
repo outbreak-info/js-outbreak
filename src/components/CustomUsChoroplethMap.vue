@@ -158,6 +158,36 @@ const colorBands = colorScale.value.range().map((color) => {
 
 const ticks = colorScale.value.domain();
 
+// Choropleth container inline styles
+const choroplethContainerStyle = computed(() => ({
+  position: "relative",
+  ...containerMargins.value,
+}));
+
+// Legend inline styles
+const legendWrapperStyle = {
+  display: "flex",
+  flexFlow: "row wrap",
+  alignItems: "center",
+  marginBottom: "0px",
+};
+
+const legendStyle = {
+  marginLeft: "0px",
+  marginRight: "0px",
+};
+
+const titleStyle = {
+  marginBottom: "5px",
+  textAlign: "left",
+  fontSize: "14px",
+  marginLeft: "10px",
+};
+
+const noDataStyle = {
+  marginLeft: "7px",
+};
+
 // Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
   left: xPosition.value + "px",
@@ -209,10 +239,11 @@ const tooltipBarStyle = computed(() => ({
 </script>
 
 <template>
-  <div class="choropleth-container" :style="containerMargins">
-    <div class="legend-wrapper">
-      <div class="content-wrapper">
-        <div class="title">
+  <div class="choropleth-container" :style="choroplethContainerStyle">
+    <!-- Legend -->
+    <div class="legend-wrapper" :style="legendWrapperStyle">
+      <div class="legend" :style="legendStyle">
+        <div class="title" :style="titleStyle">
           <span>prevalence (%)</span>
         </div>
         <svg role="img" :width="legendWidth" :height="legendHeight">
@@ -241,7 +272,7 @@ const tooltipBarStyle = computed(() => ({
           </g>
         </svg>
       </div>
-      <div class="no-data">
+      <div class="no-data" :style="noDataStyle">
         <svg width="125" height="24">
           <defs>
             <pattern
@@ -275,6 +306,8 @@ const tooltipBarStyle = computed(() => ({
         </svg>
       </div>
     </div>
+
+    <!-- Map -->
     <svg :width="renderedWidth" :height="renderedHeight">
       <defs>
         <pattern
@@ -321,6 +354,7 @@ const tooltipBarStyle = computed(() => ({
       />
     </svg>
   </div>
+
   <!-- Tooltip -->
   <div v-if="hoveredState && eventPosition" :style="tooltipWrapperStyle">
     <div :style="tooltipTitleStyle">
@@ -338,24 +372,3 @@ const tooltipBarStyle = computed(() => ({
     </div>
   </div>
 </template>
-
-<style scoped>
-.choropleth-container {
-  position: relative;
-}
-.legend-wrapper {
-  display: flex;
-  flex-flow: row wrap;
-  align-items: center;
-  margin-bottom: 5px;
-}
-.title {
-  margin-bottom: 5px;
-  text-align: left;
-  font-size: 14px;
-  margin-left: 10px;
-}
-.no-data {
-  margin-left: 7px;
-}
-</style>
