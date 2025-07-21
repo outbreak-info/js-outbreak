@@ -13,6 +13,7 @@ import usGeoJson from "../assets/geo/us_states.json";
 const props = defineProps({
   data: { type: Array, required: true },
   valueKey: { type: String, default: "value" },
+  hatchPatternString: { type: String, default: "no data" },
 
   // Container margins
   containerMarginTop: { type: Number, default: 0 },
@@ -89,7 +90,7 @@ const formatPrevalence = (stateName) => {
   if (value !== undefined) {
     return format(".2f")(value);
   }
-  return "no data";
+  return props.hatchPatternString;
 };
 
 const getStateFill = (stateName) => {
@@ -289,7 +290,7 @@ const tooltipBarStyle = computed(() => ({
             stroke-width="0.5"
           />
           <text x="40" y="12" dy="0.1em" fill="#2c3e50" font-size="14px">
-            no data
+            {{ hatchPatternString }}
           </text>
         </svg>
       </div>
