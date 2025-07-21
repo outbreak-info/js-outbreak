@@ -43,3 +43,26 @@ export const ylGnBuDiscrete11 = [
   "#1c3185",
   "#081d58",
 ];
+
+// Diagonal hatch pattern
+export const diagonalHatchPatternDef = (
+  patternId = "diagonalHatch",
+  strokeColor = "#a9a9a9",
+  strokeWidth = 2
+) => `
+  <pattern
+    id="${patternId}"
+    width="5"
+    height="5"
+    patternTransform="rotate(45 0 0)"
+    patternUnits="userSpaceOnUse"
+  >
+    <line
+      x1="0"
+      y1="0"
+      x2="0"
+      y2="10"
+      style="stroke:${strokeColor}; stroke-width:${strokeWidth}"
+    />
+  </pattern>
+`;

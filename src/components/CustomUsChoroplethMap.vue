@@ -2,7 +2,10 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { geoAlbersUsa, geoPath } from "d3-geo";
 import { scaleThreshold, scaleLinear } from "d3-scale";
-import { ylGnBuDiscrete11 } from "../utils/colorSchemes";
+import {
+  ylGnBuDiscrete11,
+  diagonalHatchPatternDef,
+} from "../utils/colorSchemes";
 import { format } from "d3-format";
 import { min, max } from "d3-array";
 import usGeoJson from "../assets/geo/us_states.json";
@@ -247,6 +250,7 @@ const tooltipBarStyle = computed(() => ({
           <span>prevalence (%)</span>
         </div>
         <svg role="img" :width="legendWidth" :height="legendHeight">
+          <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')"></defs>
           <g>
             <rect
               v-for="band in colorBands"
@@ -274,23 +278,7 @@ const tooltipBarStyle = computed(() => ({
       </div>
       <div class="no-data" :style="noDataStyle">
         <svg width="125" height="24">
-          <defs>
-            <pattern
-              id="legendDiagonalHatch"
-              width="5"
-              height="5"
-              patternTransform="rotate(45 0 0)"
-              patternUnits="userSpaceOnUse"
-            >
-              <line
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="10"
-                :style="`stroke:#a9a9a9; stroke-width:2`"
-              />
-            </pattern>
-          </defs>
+          <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')"></defs>
           <rect
             x="5"
             y="2"
@@ -309,23 +297,7 @@ const tooltipBarStyle = computed(() => ({
 
     <!-- Map -->
     <svg :width="renderedWidth" :height="renderedHeight">
-      <defs>
-        <pattern
-          id="diagonalHatch"
-          width="5"
-          height="5"
-          patternTransform="rotate(45 0 0)"
-          patternUnits="userSpaceOnUse"
-        >
-          <line
-            x1="0"
-            y1="0"
-            x2="0"
-            y2="10"
-            :style="`stroke:#a9a9a9; stroke-width:2`"
-          />
-        </pattern>
-      </defs>
+      <defs v-html="diagonalHatchPatternDef('diagonalHatch')"></defs>
 
       <!-- Non-hovered states -->
       <path
