@@ -118,7 +118,17 @@ const getStateStrokeWidth = (stateName) => {
 const handleMouseEnter = (event, feature) => {
   hoveredState.value = feature.properties.NAME;
   eventPosition.value = { x: event.pageX, y: event.pageY };
-  xPosition.value = eventPosition.value.x - 120;
+  if (width.value >= 800) {
+    xPosition.value =
+      eventPosition.value.x >= 400
+        ? eventPosition.value.x - 150
+        : eventPosition.value.x - 20;
+  } else {
+    xPosition.value =
+      eventPosition.value.x >= 250
+        ? eventPosition.value.x - 100
+        : eventPosition.value.x - 10;
+  }
   yPosition.value = eventPosition.value.y + 50;
 };
 
@@ -141,7 +151,7 @@ const hoveredStateFeature = computed(() =>
 
 const legendWidth = 300;
 const legendHeight = 45;
-const undetectedRectWidth = 25;
+const rectWidth = 25;
 const rectHeight = 15;
 
 const rangeMin = 12;
@@ -283,7 +293,7 @@ const tooltipBarStyle = computed(() => ({
           <rect
             x="5"
             y="2"
-            :width="undetectedRectWidth"
+            :width="rectWidth"
             :height="rectHeight"
             fill="url(#legendDiagonalHatch)"
             stroke="#888"
