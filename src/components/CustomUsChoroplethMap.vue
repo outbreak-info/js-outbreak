@@ -13,7 +13,28 @@ import usGeoJson from "../assets/geo/us_states.json";
 const props = defineProps({
   data: { type: Array, required: true },
   valueKey: { type: String, default: "value" },
+  colorKey: { type: String, default: null }, // Defaults to valueKey if not provided
+  secondaryValue: { type: String },
   hatchPatternString: { type: String, default: "no data" },
+
+  // Color scale configuration
+  colorDomain: {
+    type: Array,
+    default: () => [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+  },
+  colorRange: { type: Array, default: () => ylGnBuDiscrete11 },
+
+  // Tooltip configuration
+  tooltipFields: {
+    type: Array,
+    default: () => [
+      { label: "Prevalence", key: "prevalence", formatter: ".2f", suffix: "%" },
+      { label: "Samples", key: "num_samples", formatter: ",.0f" },
+    ],
+  },
+
+  // Legend configuration
+  legendTitle: { type: String, default: "prevalence (%)" },
 
   // Container margins
   containerMarginTop: { type: Number, default: 0 },
@@ -68,35 +89,27 @@ const projection = computed(() =>
 
 const pathGenerator = computed(() => geoPath().projection(projection.value));
 
+const actualColorKey = computed(() => props.colorKey || props.valueKey);
+
 const colorScale = computed(() =>
-  scaleThreshold()
-    .domain([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
-    .range(ylGnBuDiscrete11)
+  scaleThreshold().domain(props.colorDomain).range(props.colorRange)
 );
 
 // Create data lookup map
 const dataLookup = computed(() => {
   const lookup = {};
   props.data.forEach((item) => {
-    if (item.state && item[props.valueKey] !== undefined) {
-      lookup[item.state] = item[props.valueKey];
+    if (item.state) {
+      lookup[item.state] = item;
     }
   });
   return lookup;
 });
 
-const formatPrevalence = (stateName) => {
-  const value = dataLookup.value[stateName];
-  if (value !== undefined) {
-    return format(".2f")(value);
-  }
-  return props.hatchPatternString;
-};
-
 const getStateFill = (stateName) => {
-  const value = dataLookup.value[stateName];
-  if (value !== undefined) {
-    return colorScale.value(value);
+  const stateData = dataLookup.value[stateName];
+  if (stateData && stateData[actualColorKey.value] !== undefined) {
+    return colorScale.value(stateData[actualColorKey.value]);
   }
   return "url(#diagonalHatch)";
 };
@@ -114,6 +127,42 @@ const getStateStrokeWidth = (stateName) => {
   }
   return 1;
 };
+
+const formatFieldValue = (value, formatter, suffix = "") => {
+  if (value === undefined || value === null) {
+    return props.hatchPatternString;
+  }
+
+  let formattedValue;
+
+  if (formatter) {
+    try {
+      formattedValue = format(formatter)(value);
+    } catch (e) {
+      formattedValue = value.toString();
+    }
+  } else {
+    formattedValue = value.toString();
+  }
+
+  return formattedValue + suffix;
+};
+
+const tooltipData = computed(() => {
+  if (!hoveredState.value) return [];
+
+  const stateData = dataLookup.value[hoveredState.value];
+  if (!stateData) return [];
+
+  return props.tooltipFields.map((field) => ({
+    label: field.label,
+    value: formatFieldValue(
+      stateData[field.key],
+      field.formatter,
+      field.suffix || ""
+    ),
+  }));
+});
 
 const handleMouseEnter = (event, feature) => {
   hoveredState.value = feature.properties.NAME;
@@ -206,7 +255,7 @@ const noDataStyle = {
 const tooltipWrapperStyle = computed(() => ({
   left: xPosition.value + "px",
   top: yPosition.value + "px",
-  width: "160px",
+  width: "140px",
   background: "#ffffff",
   boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",
   borderRadius: "3px",
@@ -240,16 +289,22 @@ const tooltipGridStyle = {
   marginBottom: "5px",
 };
 
-const tooltipBarStyle = computed(() => ({
-  position: "absolute",
-  height: "7px",
-  width: "100%",
-  bottom: "0",
-  left: "0",
-  background: hoveredState.value
-    ? colorScale.value(dataLookup.value[hoveredState.value])
-    : "transparent",
-}));
+const tooltipBarStyle = computed(() => {
+  const stateData = dataLookup.value[hoveredState.value];
+  const value = stateData ? stateData[actualColorKey.value] : null;
+
+  return {
+    position: "absolute",
+    height: "7px",
+    width: "100%",
+    bottom: "0",
+    left: "0",
+    background:
+      value !== null && value !== undefined
+        ? colorScale.value(value)
+        : "transparent",
+  };
+});
 </script>
 
 <template>
@@ -258,7 +313,7 @@ const tooltipBarStyle = computed(() => ({
     <div class="legend-wrapper" :style="legendWrapperStyle">
       <div class="legend" :style="legendStyle">
         <div class="title" :style="titleStyle">
-          <span>prevalence (%)</span>
+          <span>{{ legendTitle }}</span>
         </div>
         <svg role="img" :width="legendWidth" :height="legendHeight">
           <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')"></defs>
@@ -345,10 +400,10 @@ const tooltipBarStyle = computed(() => ({
       <hr :style="tooltipDividerStyle" />
     </div>
     <div :style="tooltipGridStyle">
-      <span>Prevalence (%)</span>
-      <span>
-        {{ formatPrevalence(hoveredState) }}
-      </span>
+      <template v-for="field in tooltipData" :key="field.label">
+        <span>{{ field.label }}</span>
+        <span>{{ field.value }}</span>
+      </template>
     </div>
     <div>
       <span :style="tooltipBarStyle" />
