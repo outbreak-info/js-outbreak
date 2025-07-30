@@ -223,7 +223,7 @@ const ticks = colorScale.value.domain();
 
 const mapAriaLabel = computed(
   () =>
-    `Interactive choropleth map showing ${props.valueKey} data across the United States. Hover over states to see detailed information.`
+    `Interactive choropleth map showing ${props.valueKey} data across the United States. Hover over states for detailed information.`
 );
 
 console.log("test", mapAriaLabel.value);
