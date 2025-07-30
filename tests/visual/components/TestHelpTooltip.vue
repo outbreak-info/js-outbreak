@@ -8,11 +8,14 @@
         <HelpTooltip text="Help text" />
       </p>
       
+      <h3>Heading</h3>
+      <h1>H1 Heading <HelpTooltip text="Help for H1 heading" verticalAlign="middle" /></h1>
+      <h2>H2 Heading <HelpTooltip text="Help for H2 heading" verticalAlign="middle" /></h2>
+
       <h3>Different Placements</h3>
       <div>
         <span>Top: <HelpTooltip text="Tooltip on top" placement="top" /></span>
         <span>Right: <HelpTooltip text="Tooltip on right" placement="right" /></span>
-        <span>Right-start: <HelpTooltip text="Tooltip on right-start" placement="right-start" /></span>
       </div>
       
       <h3>Different Sizes</h3>
