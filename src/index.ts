@@ -20,6 +20,7 @@ import CustomTimeSeriesChart from "./components/CustomTimeSeriesChart.vue";
 import TextInput from "./components/TextInput.vue";
 import Divider from "./components/Divider.vue";
 import CustomUsChoroplethMap from "./components/CustomUsChoroplethMap.vue";
+import HelpTooltip from "./components/HelpTooltip.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -48,6 +49,7 @@ export {
   TextInput,
   Divider,
   CustomUsChoroplethMap,
+  HelpTooltip,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -76,5 +78,6 @@ export default {
     app.component("TextInput", TextInput);
     app.component("Divider", Divider);
     app.component("CustomUsChoroplethMap", CustomUsChoroplethMap);
+    app.component("HelpTooltip", HelpTooltip);
   },
 };
