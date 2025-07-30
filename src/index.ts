@@ -21,6 +21,8 @@ import TextInput from "./components/TextInput.vue";
 import Divider from "./components/Divider.vue";
 import CustomUsChoroplethMap from "./components/CustomUsChoroplethMap.vue";
 import HelpTooltip from "./components/HelpTooltip.vue";
+import TabsWrapper from "./components/TabsWrapper.vue";
+import InfoComponent from "./components/InfoComponent.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -50,6 +52,8 @@ export {
   Divider,
   CustomUsChoroplethMap,
   HelpTooltip,
+  TabsWrapper,
+  InfoComponent,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -79,5 +83,7 @@ export default {
     app.component("Divider", Divider);
     app.component("CustomUsChoroplethMap", CustomUsChoroplethMap);
     app.component("HelpTooltip", HelpTooltip);
+    app.component("TabsWrapper", TabsWrapper);
+    app.component("InfoComponent", InfoComponent);
   },
 };
