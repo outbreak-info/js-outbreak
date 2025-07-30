@@ -177,13 +177,18 @@ const handleMouseMove = (e) => {
 const handleMouseLeave = () => {
   hoveredPoint.value = null;
 };
+
+const ariaLabel = computed(
+  () =>
+    `Line chart showing ${props.yAxisLabel} over time. Hover over chart for detailed information.`
+);
 </script>
 
 <template>
   <div class="chart-container" :style="containerMargins">
     <svg
       role="img"
-      :aria-label="`Line chart showing ${yAxisLabel} over time`"
+      :aria-label="ariaLabel"
       :width="width - containerMarginLeft - containerMarginRight"
       :height="height"
       @mousemove="handleMouseMove"
