@@ -8,14 +8,18 @@
       :closable="closable"
       @close="handleClose"
     >
+      <n-icon size="25" style="display: inline;vertical-align: middle">
+        <BookInformation24Regular />
+      </n-icon>
       <slot></slot>
     </n-card>
   </n-config-provider>
 </template>
 
 <script setup lang="ts">
-import { NCard, NConfigProvider } from 'naive-ui'
+import {NCard, NConfigProvider, NIcon} from 'naive-ui'
 import { themeOverrides } from '../assets/naiveThemeVariables'
+import { BookInformation24Regular } from "@vicons/fluent";
 
 defineProps({
   bordered: { type: Boolean, default: true },
