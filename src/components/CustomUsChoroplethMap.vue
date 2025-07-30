@@ -221,6 +221,13 @@ const colorBands = colorScale.value.range().map((color) => {
 
 const ticks = colorScale.value.domain();
 
+const mapAriaLabel = computed(
+  () =>
+    `Interactive choropleth map showing ${props.valueKey} data across the United States. Hover over states to see detailed information.`
+);
+
+console.log("test", mapAriaLabel.value);
+
 // Choropleth container inline styles
 const choroplethContainerStyle = computed(() => ({
   position: "relative",
@@ -362,7 +369,11 @@ const tooltipBarStyle = computed(() => {
     </div>
 
     <!-- Map -->
-    <svg :width="renderedWidth" :height="renderedHeight">
+    <svg
+      :width="renderedWidth"
+      :height="renderedHeight"
+      :aria-label="mapAriaLabel"
+    >
       <defs v-html="diagonalHatchPatternDef('diagonalHatch')"></defs>
 
       <!-- Non-hovered states -->
