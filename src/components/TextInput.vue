@@ -1,27 +1,30 @@
 <template>
   <n-config-provider :theme-overrides="themeOverrides">
     <div>
-      <n-input
-        v-model:value="inputValue"
-        :placeholder="placeholder"
-        :style="{ width: width }"
-        size="medium"
-      />
-      <n-button
-        type="primary"
-        size="medium"
-        :loading="loading"
-        @click="handleButtonClick"
-      >
-        {{ buttonText }}
-      </n-button>
+      <n-form-item :label=props.label>
+        <n-input
+          v-model:value="inputValue"
+          :placeholder="placeholder"
+          :style="{ width: width }"
+          size="medium"
+        />
+        <n-button
+          v-if="showButton"
+          type="primary"
+          size="medium"
+          :loading="loading"
+          @click="handleButtonClick"
+        >
+          {{ buttonText }}
+        </n-button>
+      </n-form-item>
     </div>
   </n-config-provider>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { NInput, NButton, NConfigProvider } from 'naive-ui'
+import {NInput, NButton, NConfigProvider, NFormItem} from 'naive-ui'
 import { themeOverrides } from "../assets/naiveThemeVariables"
 
 const props = defineProps({
@@ -29,7 +32,9 @@ const props = defineProps({
   buttonText: { type: String, default: 'Submit' },
   width: { type: String, default: '300px' },
   modelValue: { type: String, default: '' },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  showButton: { type: Boolean, default: true },
+  label: { type: String, default: '' }
 })
 
 const emit = defineEmits(['submit', 'update:modelValue'])

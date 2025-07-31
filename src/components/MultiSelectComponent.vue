@@ -1,7 +1,7 @@
 <template>
   <n-config-provider :theme-overrides="themeOverrides">
     <div>
-      <n-form-item>
+      <n-form-item :label=props.label>
         <div class="select-button-row">
           <n-select
             v-model:value="selectedPrimitiveValues"
@@ -47,6 +47,7 @@ const props = defineProps({
   width: { type: String, default: '300px' },
   multiple: { type: Boolean, default: true },
   showButton: { type: Boolean, default: true },
+  label: { type: String, default: '' }
 })
 
 const emit = defineEmits(['update:modelValue', 'optionsLoaded', 'optionsError', 'buttonClick'])
