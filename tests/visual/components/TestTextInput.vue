@@ -5,6 +5,8 @@
     <TextInput 
       placeholder="Enter your message..."
       buttonText="Submit"
+      :modelValue="inputValue"
+      @update:modelValue="inputValue = $event"
       @submit="handleSubmit"
     />
     <p v-if="submittedValue">{{ submittedValue }}</p>
@@ -16,9 +18,10 @@ import { ref } from 'vue'
 import TextInput from '../../../src/components/TextInput.vue'
 
 const submittedValue = ref('')
+const inputValue = ref('Initial value')
 
 const handleSubmit = (value: string) => {
-  console.log('Submitted value:', value)
+  console.log(inputValue.value);
   submittedValue.value = `You entered: ${value}`
 }
 </script>
