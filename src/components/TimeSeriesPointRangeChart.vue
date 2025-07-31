@@ -192,7 +192,7 @@ function renderChart() {
       title: d => {
         const dateLabel = props.isPreBinned ? d.dateBin : timeFormat(getTickFormat(props.binInterval))(d.date);
         const groupLabel = d.group ? `\nGroup: ${d.group}` : '';
-        return `Date: ${dateLabel}\nMedian: ${d["median"]}\nQ1: ${d["q1"]}\nQ3: ${d["q3"]}${groupLabel}`;
+        return `Date: ${dateLabel}\nMedian: ${d["median"].toFixed(2)}\nQ1: ${d["q1"].toFixed(2)}\nQ3: ${d["q3"].toFixed(2)}${groupLabel}`;
       },
     }))
   );

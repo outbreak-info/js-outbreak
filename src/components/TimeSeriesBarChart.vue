@@ -143,8 +143,12 @@ function renderChart() {
           y: "value",
           fill: "group",
           interval: props.binInterval,
-          tip: true,
-          title: d => `${timeFormat(getTickFormat(props.binInterval))(d.date)}\n${d.value.toLocaleString()}\n${d.group}`
+          tip: {
+            format: {
+              x: (d) => timeFormat(getTickFormat(props.binInterval))(d),
+              y: (d) => d.toLocaleString()
+            }
+          }
         }));
   } else {
     binPlot = Plot.rectY(processedData, Plot.binX({ y: "sum" }, {
@@ -152,8 +156,12 @@ function renderChart() {
       y: "value",
       interval: props.binInterval,
       fill: props.barColor,
-      tip: true,
-      title: d => `${timeFormat(getTickFormat(props.binInterval))(d.date)}\n${d.value.toLocaleString()}`
+      tip: {
+        format: {
+          x: (d) => timeFormat(getTickFormat(props.binInterval))(d),
+          y: (d) => d.toLocaleString()
+        }
+      }
     }));
   }
 
