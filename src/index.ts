@@ -24,6 +24,7 @@ import HelpTooltip from "./components/HelpTooltip.vue";
 import TabsWrapper from "./components/TabsWrapper.vue";
 import InfoComponent from "./components/InfoComponent.vue";
 import ButtonComponent from "./components/ButtonComponent.vue";
+import CheckBox from "./components/CheckBox.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -56,6 +57,7 @@ export {
   TabsWrapper,
   InfoComponent,
   ButtonComponent,
+  CheckBox,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -88,5 +90,6 @@ export default {
     app.component("TabsWrapper", TabsWrapper);
     app.component("InfoComponent", InfoComponent);
     app.component("ButtonComponent", ButtonComponent);
+    app.component("CheckBox", CheckBox);
   },
 };

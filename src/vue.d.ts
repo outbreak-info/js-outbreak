@@ -23,4 +23,9 @@ declare module "outbreakInfo" {
   export const CustomLollipopChart: DefineComponent<{}, {}, any>;
   export const CustomTimeSeriesChart: DefineComponent<{}, {}, any>;
   export const CustomUsChoroplethMap: DefineComponent<{}, {}, any>;
+  export const HelpTooltip: DefineComponent<{}, {}, any>;
+  export const TabsWrapper: DefineComponent<{}, {}, any>;
+  export const InfoComponent: DefineComponent<{}, {}, any>;
+  export const ButtonComponent: DefineComponent<{}, {}, any>;
+  export const CheckBox: DefineComponent<{}, {}, any>;
 }
