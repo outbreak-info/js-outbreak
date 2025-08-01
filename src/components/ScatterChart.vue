@@ -22,7 +22,10 @@ const props = defineProps({
   yGrid: { type: Boolean, default: true },
   logScale: { type: Boolean, default: false },
   tipFormatString: { type: String, default: '' },
-  titleKey: { type: String, default: 'key' }
+  titleKey: { type: String, default: 'key' },
+  showMinMaxXLabels: { type: Boolean, default: false },
+  minXLabel: { type: String, default: 'Decreasing' },
+  maxXLabel: { type: String, default: 'Increasing' }
 });
 
 const chartContainer = ref(null);
@@ -43,7 +46,7 @@ function renderChart() {
   chartContainer.value.innerHTML = '';
   
   const xConfig = {
-    label: props.xLabel,
+    label: props.showMinMaxXLabels ? null : props.xLabel,
     grid: props.xGrid
   };
   
@@ -55,8 +58,39 @@ function renderChart() {
   if (props.logScale) {
     yConfig.type = 'log';
   }
+
+  const marks = [
+    Plot.ruleY([(props.logScale) ? 1 : 0]),
+    Plot.ruleX([0]),
+    Plot.dot(props.data, { 
+      x: props.xKey,
+      y: props.yKey,
+      fill: props.pointColor
+    }),
+    Plot.tip(props.data, Plot.pointer({
+      x: props.xKey,
+      y: props.yKey,
+      title: getTipFormat
+    }))
+  ];
   
-  // Create chart
+  if (props.showMinMaxXLabels) {
+    marks.push(
+      Plot.axisX({
+        anchor: "bottom",
+        labelAnchor: "left",
+        labelArrow: "left",
+        label: props.minXLabel
+      }),
+      Plot.axisX({
+        anchor: "bottom",
+        labelAnchor: "right",
+        labelArrow: "right",
+        label: props.maxXLabel
+      })
+    );
+  }
+  
   const chart = Plot.plot({
     marginLeft: props.marginLeft,
     marginBottom: props.marginBottom,
@@ -64,20 +98,7 @@ function renderChart() {
     width: props.width,
     x: xConfig,
     y: yConfig,
-    marks: [
-      Plot.ruleY([(props.logScale) ? 1 : 0]),
-      Plot.ruleX([0]),
-      Plot.dot(props.data, { 
-        x: props.xKey,
-        y: props.yKey,
-        fill: props.pointColor
-      }),
-      Plot.tip(props.data, Plot.pointer({
-        x: props.xKey,
-        y: props.yKey,
-        title: getTipFormat
-      }))
-    ]
+    marks: marks
   });
   
   chartContainer.value.appendChild(chart);
@@ -88,6 +109,9 @@ watch(() => props.data, renderChart, { deep: true });
 watch(() => props.logScale, renderChart);
 watch(() => props.xKey, renderChart);
 watch(() => props.yKey, renderChart);
+watch(() => props.showMinMaxXLabels, renderChart);
+watch(() => props.minXLabel, renderChart);
+watch(() => props.maxXLabel, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {

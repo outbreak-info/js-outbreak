@@ -28,6 +28,22 @@
         :logScale="true"
       />
     </div>
+    
+    <div>
+      <h2>Scatter Plot with Min/Max X-Axis Labels</h2>
+      <ScatterChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        xKey="valueX"
+        yKey="valueY"
+        xLabel="valueX"
+        yLabel="valueY"
+        :showMinMaxXLabels="true"
+        minXLabel="Start"
+        maxXLabel="End"
+      />
+    </div>
   </div>
 </template>
 
