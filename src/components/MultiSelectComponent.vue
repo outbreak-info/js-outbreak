@@ -36,6 +36,30 @@ import {ref, computed, watch, onMounted, type PropType} from 'vue'
 import { NSelect, NFormItem, NConfigProvider, NButton } from 'naive-ui'
 import { themeOverrides } from "../assets/naiveThemeVariables"
 
+function deepEqual(a: any, b: any, visited = new WeakSet()): boolean {
+  if (a === b) return true
+  if (a == null || b == null) return a === b
+  if (typeof a !== typeof b) return false
+  if (typeof a !== 'object') return a === b
+  
+  if (visited.has(a) || visited.has(b)) return a === b
+  visited.add(a)
+  visited.add(b)
+  
+  if (Array.isArray(a) !== Array.isArray(b)) return false
+  
+  const keysA = Object.keys(a)
+  const keysB = Object.keys(b)
+  if (keysA.length !== keysB.length) return false
+  
+  for (const key of keysA) {
+    if (!keysB.includes(key)) return false
+    if (!deepEqual(a[key], b[key], visited)) return false
+  }
+  
+  return true
+}
+
 interface ExtendedSelectOption<T=any> {
   label: string,
   value: T
@@ -84,7 +108,7 @@ const selectedPrimitiveValues = computed({
     if (props.multiple) {
       return (selectedValue.value as ExtendedSelectOption[]).map(selected =>
           resolvedOptions.value.findIndex(option =>
-              JSON.stringify(option.value) === JSON.stringify(selected.value)
+              deepEqual(option.value, selected.value)
           )
       )
     } else {
@@ -93,7 +117,7 @@ const selectedPrimitiveValues = computed({
         return null // If n-select is cleared, this will ensure label is null
       }
       return resolvedOptions.value.findIndex(option =>
-          JSON.stringify(option.value) === JSON.stringify(selected.value)
+          deepEqual(option.value, selected.value)
       )
     }
   },
