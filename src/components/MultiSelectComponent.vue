@@ -2,11 +2,11 @@
   <n-config-provider :theme-overrides="themeOverrides">
     <div>
       <n-form-item :label=props.label>
-        <div class="select-button-row">
+        <div style="display: flex;">
           <n-select
             v-model:value="selectedPrimitiveValues"
             :multiple="multiple"
-            :options="resolvedOptions"
+            :options="primitiveValueOptions"
             :placeholder="placeholder"
             :filterable="filterable"
             :clearable="clearable"
@@ -21,6 +21,7 @@
             type="primary"
             size="medium"
             @click="handleButtonClick"
+            style="margin-left: 10px;"
           >
             {{ buttonText }}
           </n-button>
@@ -31,13 +32,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { NSelect, NFormItem, NConfigProvider, NButton, type SelectOption } from 'naive-ui'
+import {ref, computed, watch, onMounted, type PropType} from 'vue'
+import { NSelect, NFormItem, NConfigProvider, NButton } from 'naive-ui'
 import { themeOverrides } from "../assets/naiveThemeVariables"
 
+interface ExtendedSelectOption<T=any> {
+  label: string,
+  value: T
+}
+
 const props = defineProps({
-  modelValue: { type: [Array, String, Number], default: () => [] },
-  options: { type: Array, default: () => [] },
+  modelValue: { type: [Array, Object] as PropType<ExtendedSelectOption[] | ExtendedSelectOption>, default: () => [] },
+  options: { type: Array as PropType<ExtendedSelectOption[]>, default: () => [] },
   optionsFunction: { type: Function, default: null },
   placeholder: { type: String, default: 'Select options' },
   filterable: { type: Boolean, default: true },
@@ -52,25 +58,83 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'optionsLoaded', 'optionsError', 'buttonClick'])
 
-const selectedValue = ref<SelectOption[] | SelectOption | null>([])
+const selectedValue = ref<ExtendedSelectOption[] | ExtendedSelectOption | null>([])
+const dynamicOptions = ref<ExtendedSelectOption[]>([])
 
 const isLoading = ref(false)
-const dynamicOptions = ref<SelectOption[]>([])
 
-const resolvedOptions = computed((): SelectOption[] => {
+const resolvedOptions = computed((): ExtendedSelectOption[] => {
   if (props.options && props.options.length > 0) {
-    return props.options as SelectOption[]
+    return props.options as ExtendedSelectOption[]
   }
   return dynamicOptions.value
 })
 
-const selectedPrimitiveValues = ref<(string | number)[] | string | number>(props.multiple ? [...(props.modelValue as (string | number)[])] : (props.modelValue as string | number))
+const primitiveValueOptions = computed(() => {
+  return resolvedOptions.value.map((option, index) => ({
+    label: option.label,
+    value: index
+  }))
+})
+
+const selectedPrimitiveValues = computed({
+  get: () => {
+    if (!selectedValue.value) return props.multiple ? [] : null
+
+    if (props.multiple) {
+      return (selectedValue.value as ExtendedSelectOption[]).map(selected =>
+          resolvedOptions.value.findIndex(option =>
+              JSON.stringify(option.value) === JSON.stringify(selected.value)
+          )
+      )
+    } else {
+      const selected = selectedValue.value as ExtendedSelectOption
+      if (!selected.value || !selected.label || selected.value === null || selected.label === "" || resolvedOptions.value.length === 0) {
+        return null // If n-select is cleared, this will ensure label is null
+      }
+      return resolvedOptions.value.findIndex(option =>
+          JSON.stringify(option.value) === JSON.stringify(selected.value)
+      )
+    }
+  },
+  set: (primitiveValues) => {
+    if (!primitiveValues) {
+      selectedValue.value = props.multiple ? [] : null
+      return
+    }
+
+    if (props.multiple) {
+      // Map indices back to values
+      selectedValue.value = (primitiveValues as number[]).map(index =>
+          resolvedOptions.value[index]
+      )
+    } else {
+      // Map single index back to ExtendedSelectOption object
+      selectedValue.value = resolvedOptions.value[primitiveValues as number]
+    }
+  }
+})
 
 
-const handleChange = (value: any[] | any, option: SelectOption[] | SelectOption | null) => {
-  selectedPrimitiveValues.value = value
-  selectedValue.value = option
-  emit('update:modelValue', value)
+const handleChange = (value: any) => {
+  if (value === null || value === undefined) {
+    if (props.multiple) {
+      selectedValue.value = [] as ExtendedSelectOption[];
+    } else {
+      selectedValue.value = {
+        label: "",
+        value: null
+      } as ExtendedSelectOption
+    }
+  } else if (props.multiple) {
+    selectedValue.value = (value as number[]).map(index => resolvedOptions.value[index])
+  } else {
+    const index = value as number
+    selectedValue.value = (index >= 0 && index < resolvedOptions.value.length)
+        ? resolvedOptions.value[index]
+        : { label: "", value: null } as ExtendedSelectOption
+  }
+  emit('update:modelValue', selectedValue.value)
 }
 
 const handleButtonClick = () => {
@@ -79,7 +143,7 @@ const handleButtonClick = () => {
 
 const loadOptionsFromFunction = async () => {
   if (!props.optionsFunction) return
-  
+
   isLoading.value = true
   try {
     const result = await props.optionsFunction()
@@ -95,8 +159,9 @@ const loadOptionsFromFunction = async () => {
 }
 
 watch(() => props.modelValue, (newValue) => {
-  selectedPrimitiveValues.value = props.multiple ? [...(newValue as (string | number)[])] : (newValue as string | number)
-}, { deep: true })
+  if(props.modelValue !== null)
+    selectedValue.value = newValue
+}, { deep: true, immediate: true })
 
 watch(() => props.optionsFunction, () => {
   loadOptionsFromFunction()
@@ -110,9 +175,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.select-button-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
+
 </style>

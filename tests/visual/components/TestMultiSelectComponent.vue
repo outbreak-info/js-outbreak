@@ -47,10 +47,22 @@
           label="Select Single Item"
           :multiple="false"
           :showButton="false"
-          buttonText="Apply Single Selection"
-          @buttonClick="handleSingleButtonClick"
           @update:modelValue="handleSingleUpdate"
       />
+    </div>
+
+    <div class="test-section">
+      <h2>Single Object Select Mode without button</h2>
+      <MultiSelectComponent
+          v-model="staticSelectedObject"
+          :options="staticOptionsObjects"
+          label="Select Single Item"
+          :multiple="false"
+          :showButton="false"
+          @update:modelValue="handleSingleUpdate"
+      />
+
+      {{ JSON.stringify(staticSelectedObject) }}
     </div>
   </div>
 </template>
@@ -63,6 +75,12 @@ const staticSelected = ref([])
 const asyncSelected = ref([])
 const singleSelected = ref('')
 const singleSelectedNoButton = ref('')
+const staticSelectedObject = ref(null)
+// { label: "Category A", value: {"attr1": "a", "attr2": "1"} }
+const staticSelectedObjects = ref([
+  {"attr1": "a", "attr2": "1"},
+  {"attr1": "b", "attr2": "2"}
+])
 
 const staticOptions = [
   { label: "Category A", value: "cat_a" },
@@ -99,5 +117,13 @@ const loadAsyncOptions = async () => {
     }, 2000)
   })
 }
+
+const staticOptionsObjects = [
+  { label: "Category A", value: {"attr1": "a", "attr2": "1"} },
+  { label: "Category B", value: {"attr1": "b", "attr2": "2"} },
+  { label: "Category C", value: {"attr1": "c", "attr2": "3"} },
+  { label: "Category D", value: {"attr1": "d", "attr2": "4"} },
+]
+
 </script>
 
