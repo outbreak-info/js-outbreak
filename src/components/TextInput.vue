@@ -31,7 +31,7 @@ const props = defineProps({
   placeholder: { type: String, default: 'Enter text' },
   buttonText: { type: String, default: 'Submit' },
   width: { type: String, default: '300px' },
-  modelValue: { type: String, default: '' },
+  modelValue: { type: String || Number, default: 0 },
   loading: { type: Boolean, default: false },
   showButton: { type: Boolean, default: true },
   label: { type: String, default: '' }
