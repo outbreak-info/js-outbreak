@@ -296,6 +296,10 @@ const tooltipGridStyle = {
   marginBottom: "5px",
 };
 
+const tooltipDataStyle = {
+  textAlign: "right",
+};
+
 const tooltipBarStyle = computed(() => {
   const stateData = dataLookup.value[hoveredState.value];
   const value = stateData ? stateData[actualColorKey.value] : null;
@@ -413,7 +417,7 @@ const tooltipBarStyle = computed(() => {
     <div :style="tooltipGridStyle">
       <template v-for="field in tooltipData" :key="field.label">
         <span>{{ field.label }}</span>
-        <span>{{ field.value }}</span>
+        <span :style="tooltipDataStyle">{{ field.value }}</span>
       </template>
     </div>
     <div>
