@@ -26,6 +26,10 @@ const props = defineProps({
   containerMarginRight: { type: Number, default: 10 },
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
+
+  // Color props
+  lollipopColor: { type: String, default: "#d13b62" },
+  hoverColor: { type: String, default: "#000dcb" },
 });
 
 const width = ref(500);
@@ -256,8 +260,8 @@ const ariaLabel = computed(
             :cy="yAccessorScaled(dataPoint)"
             :fill="
               hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
-                ? '#0570b0'
-                : '#2c3e50'
+                ? hoverColor
+                : lollipopColor
             "
           />
           <line
@@ -267,8 +271,8 @@ const ariaLabel = computed(
             :y2="yScale(0)"
             :stroke="
               hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
-                ? '#0570b0'
-                : '#2c3e50'
+                ? hoverColor
+                : lollipopColor
             "
             :stroke-width="responsiveStrokeWidth"
           />
@@ -291,7 +295,7 @@ const ariaLabel = computed(
           :x="xAccessorScaled(hoveredPoint)"
           :y="yAccessorScaled(hoveredPoint) - 10"
           text-anchor="middle"
-          fill="#0570b0"
+          :fill="hoverColor"
           font-size="14px"
           font-weight="600"
         >
@@ -314,7 +318,7 @@ const ariaLabel = computed(
             y="10"
             dy="0.8em"
             text-anchor="middle"
-            stroke="#0570b0"
+            :fill="hoverColor"
             font-size="14px"
           >
             {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}

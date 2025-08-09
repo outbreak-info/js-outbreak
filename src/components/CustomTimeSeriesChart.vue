@@ -36,6 +36,11 @@ const props = defineProps({
   containerMarginRight: { type: Number, default: 10 },
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
+
+  // Color props
+  pointColor: { type: String, default: "#d13b62" },
+  lineColor: { type: String, default: "#bdc3c7" },
+  hoverColor: { type: String, default: "#000dcb" },
 });
 
 const width = ref(500);
@@ -268,7 +273,7 @@ const ariaLabel = computed(
         <path
           class="line"
           :d="chartLine"
-          stroke="#bdc3c7"
+          :stroke="lineColor"
           stroke-width="3px"
           fill="none"
           stroke-linecap="round"
@@ -282,7 +287,7 @@ const ariaLabel = computed(
             :r="width > 600 ? 4 : 3"
             :cx="xAccessorScaled(dataPoint)"
             :cy="yAccessorScaled(dataPoint)"
-            fill="#2c3e50"
+            :fill="pointColor"
           />
         </g>
 
@@ -292,7 +297,7 @@ const ariaLabel = computed(
           :r="width > 600 ? 6 : 5"
           :cx="xAccessorScaled(hoveredPoint)"
           :cy="yAccessorScaled(hoveredPoint)"
-          fill="#0570b0"
+          :fill="hoverColor"
         />
         <text
           v-if="hoveredPoint"
@@ -310,7 +315,7 @@ const ariaLabel = computed(
           :x="xAccessorScaled(hoveredPoint)"
           :y="yAccessorScaled(hoveredPoint) - 10"
           text-anchor="middle"
-          stroke="#0570b0"
+          :stroke="hoverColor"
           stroke-width="1px"
           font-size="14px"
         >
@@ -336,7 +341,7 @@ const ariaLabel = computed(
             y="10"
             dy="0.8em"
             text-anchor="middle"
-            stroke="#0570b0"
+            :stroke="hoverColor"
             stroke-width="1px"
             font-size="14px"
           >
