@@ -320,6 +320,7 @@ const ariaLabel = computed(
             text-anchor="middle"
             :fill="hoverColor"
             font-size="14px"
+            font-weight="600"
           >
             {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
           </text>
