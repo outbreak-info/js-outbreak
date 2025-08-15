@@ -226,8 +226,6 @@ const mapAriaLabel = computed(
     `Interactive choropleth map showing ${props.valueKey} data across the United States. Hover over states for detailed information.`
 );
 
-console.log("test", mapAriaLabel.value);
-
 // Choropleth container inline styles
 const choroplethContainerStyle = computed(() => ({
   position: "relative",
