@@ -1,8 +1,5 @@
 // create array of consecutive dates
 export const createDateArray = (startDateStr, endDateStr) => {
-  console.log("start", startDateStr);
-  console.log("end", endDateStr);
-
   const result = [];
 
   const parseDate = (str) => {
