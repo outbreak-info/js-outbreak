@@ -34,6 +34,7 @@ const props = defineProps({
   selectBarColor: { type: String, default: colorPalette[2] },
   fieldName: { type: String, default: null },
   selectedBarKey: { type: Object, default: () => ({key: null, value: null}) },
+  xTickFrequency: { type: Number, default: null }
 });
 
 const emit = defineEmits(['bar-selected']);
@@ -141,9 +142,10 @@ const renderChart = () => {
         });
 
     // Add X axis
+    const xAxis = props.xTickFrequency ? d3.axisBottom(x).ticks(props.xTickFrequency) : d3.axisBottom(x);
     g.append('g')
         .attr('transform', `translate(0,${height})`)
-        .call(d3.axisBottom(x));
+        .call(xAxis);
 
     // Add Y axis
     g.append('g')
@@ -194,7 +196,11 @@ const renderChart = () => {
         .call(d3.axisBottom(x))
         .selectAll('text')
         .attr('transform', 'rotate(-45)')
-        .style('text-anchor', 'end');
+        .style('text-anchor', 'end')
+        .style('display', (d, i) => {
+          // Show every nth label based on xTickFrequency, or show all if not specified
+          return props.xTickFrequency && i % props.xTickFrequency !== 0 ? 'none' : 'block';
+        });
 
     // Add Y axis
     g.append('g')
