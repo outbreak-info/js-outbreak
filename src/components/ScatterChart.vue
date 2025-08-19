@@ -23,6 +23,7 @@ const props = defineProps({
   logScale: { type: Boolean, default: false },
   tipFormatString: { type: String, default: '' },
   titleKey: { type: String, default: 'key' },
+  additionalAnnotationKeys: { type: Array, default: () => [] },
   showMinMaxXLabels: { type: Boolean, default: false },
   minXLabel: { type: String, default: 'Decreasing' },
   maxXLabel: { type: String, default: 'Increasing' },
@@ -34,10 +35,17 @@ const chartContainer = ref(null);
 
 function getTipFormat(d) {
   if (props.tipFormatString) {
-    return props.tipFormatString
+    let tipFormat = props.tipFormatString
       .replace('{x}', d[props.xKey])
       .replace('{y}', d[props.yKey])
       .replace('{key}', d[props.titleKey]);
+    
+    // Handle multiple additional annotations
+    props.additionalAnnotationKeys.forEach((key, index) => {
+      tipFormat = tipFormat.replace(`{additional${index}}`, d[key]);
+    });
+    
+    return tipFormat;
   }
   return `${props.xKey}: ${d[props.xKey]}\n${props.yKey}: ${d[props.yKey]}`;
 }
@@ -124,6 +132,7 @@ watch(() => props.minXLabel, renderChart);
 watch(() => props.maxXLabel, renderChart);
 watch(() => props.xDomain, renderChart, { deep: true });
 watch(() => props.yDomain, renderChart, { deep: true });
+watch(() => props.additionalAnnotationsKeys, renderChart, { deep: true });
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
