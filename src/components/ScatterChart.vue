@@ -25,7 +25,9 @@ const props = defineProps({
   titleKey: { type: String, default: 'key' },
   showMinMaxXLabels: { type: Boolean, default: false },
   minXLabel: { type: String, default: 'Decreasing' },
-  maxXLabel: { type: String, default: 'Increasing' }
+  maxXLabel: { type: String, default: 'Increasing' },
+  xDomain: { type: Array, default: undefined },
+  yDomain: { type: Array, default: undefined }
 });
 
 const chartContainer = ref(null);
@@ -50,10 +52,18 @@ function renderChart() {
     grid: props.xGrid
   };
   
+  if (props.xDomain && !props.xDomain.some(val => val === null)) {
+    xConfig.domain = props.xDomain;
+  }
+  
   const yConfig = {
     label: props.yLabel,
     grid: props.yGrid
   };
+  
+  if (props.yDomain && !props.yDomain.some(val => val === null)) {
+    yConfig.domain = props.yDomain;
+  }
   
   if (props.logScale) {
     yConfig.type = 'log';
@@ -112,6 +122,8 @@ watch(() => props.yKey, renderChart);
 watch(() => props.showMinMaxXLabels, renderChart);
 watch(() => props.minXLabel, renderChart);
 watch(() => props.maxXLabel, renderChart);
+watch(() => props.xDomain, renderChart, { deep: true });
+watch(() => props.yDomain, renderChart, { deep: true });
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
