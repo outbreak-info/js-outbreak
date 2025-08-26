@@ -16,11 +16,13 @@ const props = defineProps({
   marginTop: { type: Number, default: 50 },
   marginBottom: { type: Number, default: 50 },
   barColor: { type: String, default: defaultColor },
+  xKey: { type: String, default: 'value' },
+  yKey: { type: String, default: 'key' },
   xLabel: { type: String, default: 'value' },
   yLabel: { type: String, default: 'key' },
   sortOrder: { type: String, default: 'desc' },
   groupBy: { type: String, default: '' },
-  colorBy: { type: String, default: '' }
+  colorBy: { type: String, default: '' } // Use barColor to color bars by category and colorBy to set BOTH fill and tick label to attribute. Change this in the future?
 });
 
 const chartContainer = ref(null);
@@ -71,13 +73,14 @@ function renderChart() {
         },
         marks: [
           Plot.barX(props.data, {
-            y: props.colorBy || "key", 
-            x: "value", 
+            y: props.colorBy || props.yKey,
+            x: props.xKey,
             fx: props.groupBy, 
             fill: props.colorBy || props.barColor, 
-            sort: getSortOrder(props.sortOrder, props.horizontal)
+            sort: getSortOrder(props.sortOrder, props.horizontal),
+            tip: true
           }),
-          Plot.ruleX([0])
+          Plot.ruleX([0]),
         ]
       })
     : Plot.plot({
@@ -95,11 +98,12 @@ function renderChart() {
         },
         marks: [
           Plot.barY(props.data, {
-            x: props.colorBy || "key", 
-            y: "value", 
+            x: props.colorBy || props.yKey,
+            y: props.xKey,
             fx: props.groupBy, 
             fill: props.colorBy || props.barColor, 
-            sort: getSortOrder(props.sortOrder, props.horizontal)
+            sort: getSortOrder(props.sortOrder, props.horizontal),
+            tip: true
           }),
           Plot.ruleY([0])
         ]

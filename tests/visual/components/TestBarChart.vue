@@ -21,7 +21,7 @@
         yLabel="value"
     />
 
-    Color by cat1 (no sort)
+    Color by cat2 (no sort)
     <BarChart
         :data="chartData"
         :width="width"
@@ -33,7 +33,7 @@
         sortOrder="None"
     />
 
-    Grouped by cat2, colored by cat1
+    Grouped by cat1, colored by cat2
     <BarChart
         :data="chartData"
         :width="width"
@@ -58,26 +58,26 @@ const height = ref(400)
 const currentColor = colorPalette[7];
 
 const chartData = ref([
-  {"key": "A", "value": 15, "cat1": "A", "cat2": "1"},
-  {"key": "B", "value": 7, "cat1": "A", "cat2": "2"},
-  {"key": "C", "value": 12, "cat1": "A", "cat2": "2"},
-  {"key": "D", "value": 9, "cat1": "A", "cat2": "2"},
-  {"key": "E", "value": 18, "cat1": "A", "cat2": "2"},
-  {"key": "F", "value": 3, "cat1": "B", "cat2": "2"},
-  {"key": "G", "value": 14, "cat1": "B", "cat2": "2"},
-  {"key": "H", "value": 5, "cat1": "B", "cat2": "2"},
-  {"key": "I", "value": 11, "cat1": "B", "cat2": "2"},
-  {"key": "J", "value": 2, "cat1": "B", "cat2": "2"},
-  {"key": "K", "value": 17, "cat1": "B", "cat2": "2"},
-  {"key": "L", "value": 8, "cat1": "B", "cat2": "1"},
-  {"key": "M", "value": 19, "cat1": "B", "cat2": "1"},
-  {"key": "N", "value": 6, "cat1": "C", "cat2": "1"},
-  {"key": "O", "value": 13, "cat1": "C", "cat2": "1"},
-  {"key": "P", "value": 1, "cat1": "C", "cat2": "1"},
-  {"key": "Q", "value": 16, "cat1": "C", "cat2": "1"},
-  {"key": "R", "value": 4, "cat1": "C", "cat2": "1"},
-  {"key": "S", "value": 10, "cat1": "D", "cat2": "1"},
-  {"key": "T", "value": 20, "cat1": "D", "cat2": "1"}
+  {"key": "A", "value": 15, "cat1": "A", "cat2": "A1"},
+  {"key": "B", "value": 7, "cat1": "A", "cat2": "B2"},
+  {"key": "C", "value": 12, "cat1": "A", "cat2": "B2"},
+  {"key": "D", "value": 9, "cat1": "A", "cat2": "B2"},
+  {"key": "E", "value": 18, "cat1": "A", "cat2": "B2"},
+  {"key": "F", "value": 3, "cat1": "B", "cat2": "B2"},
+  {"key": "G", "value": 14, "cat1": "B", "cat2": "B2"},
+  {"key": "H", "value": 5, "cat1": "B", "cat2": "B2"},
+  {"key": "I", "value": 11, "cat1": "B", "cat2": "B2"},
+  {"key": "J", "value": 2, "cat1": "B", "cat2": "B2"},
+  {"key": "K", "value": 17, "cat1": "B", "cat2": "B2"},
+  {"key": "L", "value": 8, "cat1": "B", "cat2": "A1"},
+  {"key": "M", "value": 19, "cat1": "B", "cat2": "A1"},
+  {"key": "N", "value": 6, "cat1": "C", "cat2": "A1"},
+  {"key": "O", "value": 13, "cat1": "C", "cat2": "A1"},
+  {"key": "P", "value": 1, "cat1": "C", "cat2": "A1"},
+  {"key": "Q", "value": 16, "cat1": "C", "cat2": "A1"},
+  {"key": "R", "value": 4, "cat1": "C", "cat2": "A1"},
+  {"key": "S", "value": 10, "cat1": "D", "cat2": "A1"},
+  {"key": "T", "value": 20, "cat1": "D", "cat2": "A1"}
 ])
 
 const randomizeData = () => {
