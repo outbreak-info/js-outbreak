@@ -26,6 +26,7 @@ import InfoComponent from "./components/InfoComponent.vue";
 import ButtonComponent from "./components/ButtonComponent.vue";
 import CheckBox from "./components/CheckBox.vue";
 import TagComponent from "./components/TagComponent.vue";
+import CollapseWrapper from "./components/CollapseWrapper.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -60,6 +61,7 @@ export {
   ButtonComponent,
   CheckBox,
   TagComponent,
+  CollapseWrapper,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -94,5 +96,6 @@ export default {
     app.component("ButtonComponent", ButtonComponent);
     app.component("CheckBox", CheckBox);
     app.component("TagComponent", TagComponent);
+    app.component("CollapseWrapper", CollapseWrapper);
   },
 };
