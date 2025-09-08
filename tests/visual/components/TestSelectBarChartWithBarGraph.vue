@@ -7,6 +7,7 @@
       fieldName="test-field"
       :selectedItem="selectedItem"
       @item-selected="itemSelected"
+      :nItems="8"
   />
 </template>
 

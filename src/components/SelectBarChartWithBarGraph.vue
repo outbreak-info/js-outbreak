@@ -7,7 +7,7 @@
           v-model:value="selectedValue" />
     </n-form-item>
     <br />
-    <SelectBarChart @bar-selected="hostBarSelected" :xTickFrequency="props.xTickFrequency" :selectedBarKey="localSelectedItem" :data="chartData.slice(0, 10)" :fieldName="props.fieldName" v-bind="$attrs" />
+    <SelectBarChart @bar-selected="hostBarSelected" :xTickFrequency="props.xTickFrequency" :selectedBarKey="localSelectedItem" :data="chartData.slice(0, props.nItems)" :fieldName="props.fieldName" v-bind="$attrs" />
   </n-config-provider>
 </template>
 
@@ -56,7 +56,8 @@ const props = defineProps({
   fieldName: { type: String, default: "Field" },
   data: { type: Array, default: () => [] },
   selectedItem: { type: Object, default: () => ({ key: null, value: null }) },
-  xTickFrequency: { type: Number, default: null }
+  xTickFrequency: { type: Number, default: null },
+  nItems: { type: Number, default: 10 }
 })
 
 const emit = defineEmits(['item-selected']);
