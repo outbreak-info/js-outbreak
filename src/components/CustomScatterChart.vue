@@ -49,6 +49,10 @@ const props = defineProps({
 
 const width = ref(500);
 const hoveredPoint = ref(null);
+const xPosition = ref(null);
+const yPosition = ref(null);
+const tooltipXPosition = ref(null);
+const tooltipYPosition = ref(null);
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -138,17 +142,67 @@ const yTicks = computed(() => {
 });
 
 const handleMouseMove = (e) => {
-  const xPosition = e.offsetX - marginLeft;
-  const yPosition = e.offsetY - marginTop;
-  const foundPoint = quadtreeInstance.value.find(xPosition, yPosition);
+  xPosition.value = e.offsetX - marginLeft;
+  yPosition.value = e.offsetY - marginTop;
+  const foundPoint = quadtreeInstance.value.find(
+    xPosition.value,
+    yPosition.value
+  );
 
   if (foundPoint) {
     hoveredPoint.value = foundPoint;
+    tooltipXPosition.value = xScale.value(xAccessor(hoveredPoint.value));
+    tooltipYPosition.value = yScale.value(yAccessor(hoveredPoint.value));
   }
 };
 
 const handleMouseLeave = () => {
   hoveredPoint.value = null;
+};
+
+// Tooltip inline styles
+const tooltipWrapperStyle = computed(() => ({
+  left: 0,
+  top: 0,
+  transform: `translate(${tooltipXPosition.value + marginLeft + 200}px, ${
+    tooltipYPosition.value + marginTop + 100
+  }px)`,
+  width: "140px",
+  background: "#ffffff",
+  boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",
+  borderRadius: "3px",
+  position: "absolute",
+  padding: "0.5em",
+  textAlign: "left",
+  fontSize: "13px",
+  lineHeight: "18px",
+  zIndex: 1,
+  color: "#2c3e50",
+  pointerEvents: "none",
+}));
+
+const tooltipTitleStyle = {
+  fontWeight: "700",
+  fontSize: "14px",
+  lineHeight: "16px",
+};
+
+const tooltipDividerStyle = {
+  borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+  marginTop: "5px",
+  marginBottom: "5px",
+};
+
+const tooltipGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr auto",
+  fontWeight: "400",
+  marginBottom: "5px",
+};
+
+const tooltipDataStyle = {
+  textAlign: "right",
 };
 
 const ariaLabel = computed(
@@ -258,6 +312,20 @@ const ariaLabel = computed(
         />
       </g>
     </svg>
+  </div>
+
+  <!-- Tooltip -->
+  <div v-if="hoveredPoint" :style="tooltipWrapperStyle">
+    <div :style="tooltipTitleStyle">
+      title
+      <hr :style="tooltipDividerStyle" />
+    </div>
+    <div :style="tooltipGridStyle">
+      <span> {{ xAxisLabel }} </span>
+      <span :style="tooltipDataStyle"> {{ xAccessor(hoveredPoint) }} </span>
+      <span> {{ yAxisLabel }} </span>
+      <span :style="tooltipDataStyle"> {{ yAccessor(hoveredPoint) }} </span>
+    </div>
   </div>
 </template>
 
