@@ -42,11 +42,13 @@ const props = defineProps({
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
 
-  // Color prop
+  // Color props
   pointColor: { type: String, default: "#d13b62" },
+  hoverColor: { type: String, default: "#000dcb" },
 });
 
 const width = ref(500);
+const hoveredPoint = ref(null);
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -135,9 +137,22 @@ const yTicks = computed(() => {
   return yScale.value.ticks(numberOfYTicks);
 });
 
+const handleMouseMove = (e) => {
+  const xPosition = e.offsetX - marginLeft;
+  const yPosition = e.offsetY - marginTop;
+  const foundPoint = quadtreeInstance.value.find(xPosition, yPosition);
+
+  if (foundPoint) {
+    hoveredPoint.value = foundPoint;
+  }
+};
+
+const handleMouseLeave = () => {
+  hoveredPoint.value = null;
+};
+
 const ariaLabel = computed(
-  () =>
-    `Scatter plot showing ${props.yAxisLabel} versus ${props.xAxisLabel}.`
+  () => `Scatter plot showing ${props.yAxisLabel} versus ${props.xAxisLabel}.`
 );
 </script>
 
@@ -148,6 +163,8 @@ const ariaLabel = computed(
       :aria-label="ariaLabel"
       :width="width - containerMarginLeft - containerMarginRight"
       :height="height"
+      @mousemove="handleMouseMove"
+      @mouseleave="handleMouseLeave"
     >
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
         <!-- y-axis -->
@@ -230,6 +247,15 @@ const ariaLabel = computed(
             :fill="pointColor"
           />
         </g>
+
+        <!-- hover effects -->
+        <circle
+          v-if="hoveredPoint"
+          :r="width > 600 ? 6 : 5"
+          :cx="xAccessorScaled(hoveredPoint)"
+          :cy="yAccessorScaled(hoveredPoint)"
+          :fill="hoverColor"
+        />
       </g>
     </svg>
   </div>
