@@ -142,8 +142,14 @@ const yTicks = computed(() => {
 });
 
 const handleMouseMove = (e) => {
+  // Use offset coordinates for finding the point (relative to SVG)
   xPosition.value = e.offsetX - marginLeft;
   yPosition.value = e.offsetY - marginTop;
+
+  // Use page coordinates for tooltip positioning
+  const pageX = e.pageX;
+  const pageY = e.pageY;
+
   const foundPoint = quadtreeInstance.value.find(
     xPosition.value,
     yPosition.value
@@ -151,8 +157,13 @@ const handleMouseMove = (e) => {
 
   if (foundPoint) {
     hoveredPoint.value = foundPoint;
-    tooltipXPosition.value = xScale.value(xAccessor(hoveredPoint.value));
-    tooltipYPosition.value = yScale.value(yAccessor(hoveredPoint.value));
+
+    if (width.value >= 800) {
+      tooltipXPosition.value = pageX >= 400 ? pageX - 150 : pageX - 20;
+    } else {
+      tooltipXPosition.value = pageX >= 250 ? pageX - 100 : pageX - 10;
+    }
+    tooltipYPosition.value = pageY + 20;
   }
 };
 
@@ -160,13 +171,15 @@ const handleMouseLeave = () => {
   hoveredPoint.value = null;
 };
 
-// Tooltip inline styles
+// Chart container inline styles
+const chartContainerStyle = computed(() => ({
+  position: "relative",
+  ...containerMargins.value,
+}));
+
 const tooltipWrapperStyle = computed(() => ({
-  left: 0,
-  top: 0,
-  transform: `translate(${tooltipXPosition.value + marginLeft + 200}px, ${
-    tooltipYPosition.value + marginTop + 100
-  }px)`,
+  left: tooltipXPosition.value + "px",
+  top: tooltipYPosition.value + "px",
   width: "140px",
   background: "#ffffff",
   boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",
@@ -211,7 +224,7 @@ const ariaLabel = computed(
 </script>
 
 <template>
-  <div class="chart-container" :style="containerMargins">
+  <div class="chart-container" :style="chartContainerStyle">
     <svg
       role="img"
       :aria-label="ariaLabel"
@@ -328,9 +341,3 @@ const ariaLabel = computed(
     </div>
   </div>
 </template>
-
-<style scoped>
-.chart-container {
-  position: relative;
-}
-</style>
