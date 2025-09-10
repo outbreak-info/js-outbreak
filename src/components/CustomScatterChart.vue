@@ -10,6 +10,7 @@ const props = defineProps({
   yKey: { type: String, default: "yValue" },
   xAxisLabel: { type: String, default: "x value" },
   yAxisLabel: { type: String, default: "y value" },
+  callToAction: { type: String, default: "Click to learn more" },
   height: { type: Number, default: 300 },
 
   // X-scale domain props
@@ -65,17 +66,12 @@ onMounted(() => {
   window.addEventListener("resize", handleResize);
   handleResize();
 });
-
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
 });
 
 const handleResize = () => {
-  if (window.innerWidth >= 1000) {
-    width.value = 1000;
-  } else {
-    width.value = window.innerWidth;
-  }
+  width.value = window.innerWidth >= 1000 ? 1000 : window.innerWidth;
 };
 
 const xAccessor = (d) => d[props.xKey];
@@ -171,12 +167,25 @@ const handleMouseLeave = () => {
   hoveredPoint.value = null;
 };
 
+const handlePointClick = () => {
+  if (hoveredPoint.value?.link) {
+    window.open(hoveredPoint.value.link, "_blank");
+  }
+};
+
+const handleKeyDown = (e) => {
+  if (e.key === "Enter" && hoveredPoint.value?.link) {
+    window.open(hoveredPoint.value.link, "_blank");
+  }
+};
+
 // Chart container inline styles
 const chartContainerStyle = computed(() => ({
   position: "relative",
   ...containerMargins.value,
 }));
 
+// Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
   left: tooltipXPosition.value + "px",
   top: tooltipYPosition.value + "px",
@@ -189,9 +198,8 @@ const tooltipWrapperStyle = computed(() => ({
   textAlign: "left",
   fontSize: "13px",
   lineHeight: "18px",
-  zIndex: 1,
+  zIndex: 1000,
   color: "#2c3e50",
-  pointerEvents: "none",
 }));
 
 const tooltipTitleStyle = {
@@ -202,7 +210,6 @@ const tooltipTitleStyle = {
 
 const tooltipDividerStyle = {
   borderTop: "1px solid rgba(0, 0, 0, 0.1)",
-  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
   marginTop: "5px",
   marginBottom: "5px",
 };
@@ -214,9 +221,9 @@ const tooltipGridStyle = {
   marginBottom: "5px",
 };
 
-const tooltipDataStyle = {
-  textAlign: "right",
-};
+const tooltipDataStyle = { textAlign: "right" };
+
+const tooltipCallToActionStyle = { fontSize: "12px" };
 
 const ariaLabel = computed(
   () => `Scatter plot showing ${props.yAxisLabel} versus ${props.xAxisLabel}.`
@@ -224,7 +231,12 @@ const ariaLabel = computed(
 </script>
 
 <template>
-  <div class="chart-container" :style="chartContainerStyle">
+  <div
+    class="chart-container"
+    :style="chartContainerStyle"
+    @keydown="handleKeyDown"
+    tabindex="0"
+  >
     <svg
       role="img"
       :aria-label="ariaLabel"
@@ -232,6 +244,7 @@ const ariaLabel = computed(
       :height="height"
       @mousemove="handleMouseMove"
       @mouseleave="handleMouseLeave"
+      @click="handlePointClick"
     >
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
         <!-- y-axis -->
@@ -303,7 +316,7 @@ const ariaLabel = computed(
           </g>
         </g>
 
-        <!-- point -->
+        <!-- points -->
         <g>
           <circle
             v-for="(dataPoint, index) in data"
@@ -329,15 +342,16 @@ const ariaLabel = computed(
 
   <!-- Tooltip -->
   <div v-if="hoveredPoint" :style="tooltipWrapperStyle">
-    <div :style="tooltipTitleStyle">
-      title
-      <hr :style="tooltipDividerStyle" />
-    </div>
+    <div :style="tooltipTitleStyle">{{ hoveredPoint.name }}</div>
+    <hr :style="tooltipDividerStyle" />
     <div :style="tooltipGridStyle">
-      <span> {{ xAxisLabel }} </span>
-      <span :style="tooltipDataStyle"> {{ xAccessor(hoveredPoint) }} </span>
-      <span> {{ yAxisLabel }} </span>
-      <span :style="tooltipDataStyle"> {{ yAccessor(hoveredPoint) }} </span>
+      <span>{{ xAxisLabel }}</span>
+      <span :style="tooltipDataStyle">{{ xAccessor(hoveredPoint) }}</span>
+      <span>{{ yAxisLabel }}</span>
+      <span :style="tooltipDataStyle">{{ yAccessor(hoveredPoint) }}</span>
+    </div>
+    <div :style="tooltipCallToActionStyle">
+      {{ callToAction }}
     </div>
   </div>
 </template>
