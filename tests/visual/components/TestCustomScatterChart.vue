@@ -166,5 +166,9 @@ const chartData = ref([
     yValue: 9,
     link: "https://en.wikipedia.org/wiki/NATO_phonetic_alphabet#Zulu",
   },
+  {
+    xValue: 1,
+    yValue: 1,
+  },
 ]);
 </script>

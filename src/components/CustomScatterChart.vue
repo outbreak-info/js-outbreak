@@ -218,12 +218,14 @@ const tooltipGridStyle = {
   display: "grid",
   gridTemplateColumns: "1fr auto",
   fontWeight: "400",
-  marginBottom: "5px",
 };
 
 const tooltipDataStyle = { textAlign: "right" };
 
-const tooltipCallToActionStyle = { fontSize: "12px" };
+const tooltipCallToActionStyle = {
+  fontSize: "12px",
+  marginTop: "5px",
+};
 
 const ariaLabel = computed(
   () => `Scatter plot showing ${props.yAxisLabel} versus ${props.xAxisLabel}.`
@@ -342,7 +344,7 @@ const ariaLabel = computed(
 
   <!-- Tooltip -->
   <div v-if="hoveredPoint" :style="tooltipWrapperStyle">
-    <div :style="tooltipTitleStyle">{{ hoveredPoint.name }}</div>
+    <div :style="tooltipTitleStyle">{{ hoveredPoint.name ? hoveredPoint.name : 'Point info' }}</div>
     <hr :style="tooltipDividerStyle" />
     <div :style="tooltipGridStyle">
       <span>{{ xAxisLabel }}</span>
@@ -350,7 +352,7 @@ const ariaLabel = computed(
       <span>{{ yAxisLabel }}</span>
       <span :style="tooltipDataStyle">{{ yAccessor(hoveredPoint) }}</span>
     </div>
-    <div :style="tooltipCallToActionStyle">
+    <div v-if="hoveredPoint.link" :style="tooltipCallToActionStyle">
       {{ callToAction }}
     </div>
   </div>
