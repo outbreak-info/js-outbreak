@@ -54,6 +54,10 @@ const xPosition = ref(null);
 const yPosition = ref(null);
 const tooltipXPosition = ref(null);
 const tooltipYPosition = ref(null);
+const isTouchDevice = ref(false);
+const showRipple = ref(false);
+const rippleX = ref(0);
+const rippleY = ref(0);
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -62,16 +66,43 @@ const containerMargins = computed(() => ({
   marginLeft: props.containerMarginLeft + "px",
 }));
 
+// Device detection
+const detectTouchDevice = () => {
+  // Check for coarse pointer (touch devices)
+  const hasCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  // Check for touch support
+  const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  // Consider small screens as mobile
+  const isSmallScreen = window.innerWidth < 768;
+  
+  return hasCoarsePointer || (hasTouchSupport && isSmallScreen);
+};
+
 onMounted(() => {
   window.addEventListener("resize", handleResize);
+  document.addEventListener("click", handleOutsideClick);
   handleResize();
+  isTouchDevice.value = detectTouchDevice();
 });
+
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
+  document.removeEventListener("click", handleOutsideClick);
 });
 
 const handleResize = () => {
   width.value = window.innerWidth >= 1000 ? 1000 : window.innerWidth;
+  isTouchDevice.value = detectTouchDevice();
+};
+
+// Handle clicks outside the chart to close tooltip on mobile
+const handleOutsideClick = (e) => {
+  if (isTouchDevice.value && hoveredPoint.value) {
+    const chartContainer = e.target.closest('.chart-container');
+    if (!chartContainer) {
+      hoveredPoint.value = null;
+    }
+  }
 };
 
 const xAccessor = (d) => d[props.xKey];
@@ -137,51 +168,90 @@ const yTicks = computed(() => {
   return yScale.value.ticks(numberOfYTicks);
 });
 
+const showRippleEffect = (pageX, pageY) => {
+  rippleX.value = pageX;
+  rippleY.value = pageY;
+  showRipple.value = true;
+  
+  setTimeout(() => {
+    showRipple.value = false;
+  }, 300);
+};
+
+const findPointFromEvent = (e) => {
+  const offsetX = e.offsetX - marginLeft;
+  const offsetY = e.offsetY - marginTop;
+  
+  return quadtreeInstance.value.find(offsetX, offsetY);
+};
+
+const updateTooltipPosition = (pageX, pageY) => {
+  if (width.value >= 800) {
+    tooltipXPosition.value = pageX >= 400 ? pageX - 150 : pageX - 20;
+  } else {
+    tooltipXPosition.value = pageX >= 250 ? pageX - 100 : pageX - 10;
+  }
+  tooltipYPosition.value = pageY + 20;
+};
+
 const handleMouseMove = (e) => {
-  // Use offset coordinates for finding the point (relative to SVG)
-  xPosition.value = e.offsetX - marginLeft;
-  yPosition.value = e.offsetY - marginTop;
-
-  // Use page coordinates for tooltip positioning
-  const pageX = e.pageX;
-  const pageY = e.pageY;
-
-  const foundPoint = quadtreeInstance.value.find(
-    xPosition.value,
-    yPosition.value
-  );
-
+  if (isTouchDevice.value) return;
+  
+  const foundPoint = findPointFromEvent(e);
+  
   if (foundPoint) {
     hoveredPoint.value = foundPoint;
-
-    if (width.value >= 800) {
-      tooltipXPosition.value = pageX >= 400 ? pageX - 150 : pageX - 20;
-    } else {
-      tooltipXPosition.value = pageX >= 250 ? pageX - 100 : pageX - 10;
-    }
-    tooltipYPosition.value = pageY + 20;
+    updateTooltipPosition(e.pageX, e.pageY);
   }
 };
 
 const handleMouseLeave = () => {
-  hoveredPoint.value = null;
+  if (!isTouchDevice.value) {
+    hoveredPoint.value = null;
+  }
 };
 
-const handlePointClick = () => {
-  if (hoveredPoint.value?.link) {
-    window.open(hoveredPoint.value.link, "_blank");
+const handlePointClick = (e) => {
+  if (isTouchDevice.value) {
+    // Touch device behavior: show tooltip
+    e.preventDefault();
+    
+    const foundPoint = findPointFromEvent(e);
+    
+    if (foundPoint) {
+      // If same point is already selected, hide tooltip
+      if (hoveredPoint.value === foundPoint) {
+        hoveredPoint.value = null;
+      } else {
+        hoveredPoint.value = foundPoint;
+        updateTooltipPosition(e.pageX, e.pageY);
+        showRippleEffect(e.pageX, e.pageY);
+      }
+    } else {
+      hoveredPoint.value = null;
+    }
+  } else {
+    // Desktop behavior: open link
+    if (hoveredPoint.value?.link) {
+      window.open(hoveredPoint.value.link, "_blank");
+    }
   }
 };
 
 const handleKeyDown = (e) => {
-  if (e.key === "Enter" && hoveredPoint.value?.link) {
+  if (e.key === "Enter" && hoveredPoint.value?.link && !isTouchDevice.value) {
     window.open(hoveredPoint.value.link, "_blank");
+  }
+  
+  if (e.key === "Escape" && hoveredPoint.value) {
+    hoveredPoint.value = null;
   }
 };
 
 // Chart container inline styles
 const chartContainerStyle = computed(() => ({
   position: "relative",
+  cursor: isTouchDevice.value ? "pointer" : "default",
   ...containerMargins.value,
 }));
 
@@ -227,8 +297,25 @@ const tooltipCallToActionStyle = {
   marginTop: "5px",
 };
 
+// Ripple effect styles
+const rippleStyle = computed(() => ({
+  position: "fixed",
+  left: rippleX.value - 25 + "px",
+  top: rippleY.value - 25 + "px",
+  width: "50px",
+  height: "50px",
+  borderRadius: "50%",
+  background: "rgba(0, 13, 203, 0.3)",
+  transform: showRipple.value ? "scale(1)" : "scale(0)",
+  transition: "transform 0.3s ease-out",
+  pointerEvents: "none",
+  zIndex: 999,
+}));
+
 const ariaLabel = computed(
-  () => `Scatter plot showing ${props.yAxisLabel} versus ${props.xAxisLabel}.`
+  () => `Scatter plot showing ${props.yAxisLabel} versus ${props.xAxisLabel}. ${
+    isTouchDevice.value ? "Tap points to see details." : "Hover over points for details, click to visit links."
+  }`
 );
 </script>
 
@@ -340,9 +427,12 @@ const ariaLabel = computed(
         />
       </g>
     </svg>
+
+    <!-- ripple effect for touch feedback -->
+    <div v-if="showRipple && isTouchDevice" :style="rippleStyle"></div>
   </div>
 
-  <!-- Tooltip -->
+  <!-- tooltip -->
   <div v-if="hoveredPoint" :style="tooltipWrapperStyle">
     <div :style="tooltipTitleStyle">{{ hoveredPoint.name ? hoveredPoint.name : 'Point info' }}</div>
     <hr :style="tooltipDividerStyle" />
@@ -352,7 +442,7 @@ const ariaLabel = computed(
       <span>{{ yAxisLabel }}</span>
       <span :style="tooltipDataStyle">{{ yAccessor(hoveredPoint) }}</span>
     </div>
-    <div v-if="hoveredPoint.link" :style="tooltipCallToActionStyle">
+    <div v-if="hoveredPoint.link && !isTouchDevice" :style="tooltipCallToActionStyle">
       {{ callToAction }}
     </div>
   </div>
