@@ -37,81 +37,72 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, markRaw } from 'vue';
 
-// Define a generic component type
-type ComponentType = any
+// Generic type for imported components
+type ComponentType = any;
 
-// Define the type for tab objects
+// Type for tabs
 interface TabItem {
   id: string;
   name: string;
   component?: ComponentType;
 }
 
-// Import all test components
-const modules = import.meta.glob('./Test*.vue'); //TODO: What if import.meta is not supported?
+// Dynamically import all Test*.vue components in the same folder
+const modules = import.meta.glob('./Test*.vue');
+
+// Reactive arrays for tabs and chart components
 const chartComponents = ref<ComponentType[]>([]);
 const tabs = ref<TabItem[]>([{ id: 'all', name: 'All Charts', component: null }]);
 
+// Load components dynamically
 const loadComponents = async () => {
   const moduleEntries = Object.entries(modules);
 
-// Sort modules alphabetically
+  // Sort alphabetically
   moduleEntries.sort(([pathA], [pathB]) => {
     const nameA = pathA.replace('./', '').replace('.vue', '');
     const nameB = pathB.replace('./', '').replace('.vue', '');
     return nameA.localeCompare(nameB);
   });
 
-// Process all components
   const componentResults = await Promise.all(
-      moduleEntries.map(async ([path, importFunc]) => {
-        const componentName = path.replace('./', '').replace('.vue', '');
-        if (componentName === 'TestAllCharts') return null;
+    moduleEntries.map(async ([path, importFunc]) => {
+      const componentName = path.replace('./', '').replace('.vue', '');
+      if (componentName === 'TestAllCharts') return null;
 
-        const imported = await (importFunc as () => Promise<{ default: ComponentType }>)();
-        const component = imported.default;
+      const imported = await (importFunc as () => Promise<{ default: ComponentType }>)();
+      // Prevent Vue from making the component reactive
+      const component = markRaw(imported.default);
 
-        const prefixName = componentName
-            .replace('Test', '')
-            .replace(/([A-Z])/g, ' $1');
-        const displayName = prefixName.trim();
-        const tabId = prefixName.toLowerCase();
+      const prefixName = componentName
+        .replace('Test', '')
+        .replace(/([A-Z])/g, ' $1');
+      const displayName = prefixName.trim();
+      const tabId = prefixName.toLowerCase();
 
-        return {
-          id: tabId,
-          name: displayName,
-          component: component
-        };
-      })
-  )
+      return { id: tabId, name: displayName, component };
+    })
+  );
 
-  componentResults
-      .filter(result => result !== null)
-      .forEach(info => {
-        if (info) {
-          // Add to tabs
-          tabs.value.push({
-            id: info.id,
-            name: info.name,
-            component: info.component
-          });
+  // Add to tabs and chartComponents
+  componentResults.filter(Boolean).forEach(info => {
+    if (info) {
+      tabs.value.push(info);
+      chartComponents.value.push(info.component);
+    }
+  });
+};
 
-          // Add to "All" view
-          chartComponents.value.push(info.component);
-        }
-      });
-}
-
-
+// Current selected tab
 const currentTab = ref('all');
 
-// Compute the current component based on the selected tab
+// Compute the current component for single-chart view
 const currentComponent = computed(() => {
   const tab = tabs.value.find(t => t.id === currentTab.value);
   return tab ? tab.component : null;
-})
+});
 
 onMounted(() => {
   loadComponents();
@@ -156,7 +147,7 @@ h1 {
   margin-bottom: 5px;
   border-radius: 4px;
   transition: all 0.2s;
-  width:250px;
+  width: 250px;
 }
 
 .menu-button:hover {
