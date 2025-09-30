@@ -28,11 +28,11 @@ import CheckBox from "./components/CheckBox.vue";
 import TagComponent from "./components/TagComponent.vue";
 import CollapseWrapper from "./components/CollapseWrapper.vue";
 import CustomScatterChart from "./components/CustomScatterChart.vue";
+import CustomHeatmap from "./components/CustomHeatmap.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
 import { themeOverrides } from "./assets/naiveThemeVariables";
-
 
 // Export components
 export {
@@ -65,6 +65,7 @@ export {
   TagComponent,
   CollapseWrapper,
   CustomScatterChart,
+  CustomHeatmap,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -101,6 +102,6 @@ export default {
     app.component("TagComponent", TagComponent);
     app.component("CollapseWrapper", CollapseWrapper);
     app.component("CustomScatterChart", CustomScatterChart);
-
+    app.component("CustomHeatmap", CustomHeatmap);
   },
 };
