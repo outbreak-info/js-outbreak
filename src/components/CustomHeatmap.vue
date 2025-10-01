@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { scaleThreshold, scaleLinear } from "d3-scale";
+import { scaleThreshold, scaleLinear, scaleBand } from "d3-scale";
 import {
   rdPuDiscrete11,
   diagonalHatchPatternDef,
@@ -9,8 +9,8 @@ import { format } from "d3-format";
 import { min, max } from "d3-array";
 
 const props = defineProps({
-  hatchPatternString: { type: String, default: "not detected" },
-
+  data: { type: Array, required: true },
+  
   // Color scale configuration
   colorDomain: {
     type: Array,
@@ -19,8 +19,9 @@ const props = defineProps({
   colorRange: { type: Array, default: () => rdPuDiscrete11 },
 
   // Legend configuration
-  legendTitle: { type: String, default: "mutation prevalence in lineage (%)" },
   showLegend: { type: Boolean, default: true },
+  legendTitle: { type: String, default: "mutation prevalence in lineage (%)" },
+  hatchPatternString: { type: String, default: "not detected" },
 
   // Container margins
   containerMarginTop: { type: Number, default: 0 },
@@ -36,7 +37,18 @@ const containerMargins = computed(() => ({
   marginLeft: props.containerMarginLeft + "px",
 }));
 
+const margin = {
+  top: 5,
+  right: 45,
+  bottom: 5,
+  left: 90,
+};
+
 const width = ref(500);
+const innerWidth = computed(
+  () =>
+    width.value - margin.left - margin.right - props.containerMarginLeft - props.containerMarginRight,
+);
 
 const formatLegendValue = format(".2s");
 
@@ -63,11 +75,83 @@ const colorScale = computed(() =>
   scaleThreshold().domain(props.colorDomain).range(props.colorRange)
 );
 
+const colorAccessor = (d) => d.prevalence;
+const xAccessor = (d) => d.collection_date;
+const yAccessor = (d) => d.name;
+
+const dates = computed(() =>
+  [...new Set(props.data.map(xAccessor))]
+  .sort((a, b) => {
+    return a.localeCompare(b);
+  }),
+);
+
+const lineages = computed(() =>
+  [...new Set(props.data.map(yAccessor))]
+  .sort((a, b) => {
+    return a.localeCompare(b);
+  }),
+);
+
+const generateDataToBeRendered = (dates, lineages, data) => {
+  const lookup = new Map(
+    data.map(d => [`${d.collection_date}-${d.name}`, d])
+  );
+
+  const result = [];
+
+  for (const date of dates) {
+    for (const lineage of lineages) {
+      const key = `${date}-${lineage}`;
+      if (lookup.has(key)) {
+        result.push(lookup.get(key));
+      } else {
+        result.push({
+          prevalence: -1,
+          collection_date: date,
+          name: lineage,
+        });
+      }
+    }
+  }
+
+  return result.sort(
+    (a, b) => new Date(a.collection_date) - new Date(b.collection_date)
+  );
+}
+
+const dataToBeRendered = computed(() => generateDataToBeRendered(dates.value, lineages.value, props.data));
+
+console.log("new", dataToBeRendered.value);
+
+const xScale = computed(() =>
+  scaleBand()
+    .domain(dates.value)
+    .range([0, innerWidth.value])
+    .paddingInner(0.15),
+);
+
+const height = computed(() =>
+  lineages.value.length > 2
+    ? rowHeight * lineages.value.length + (5 * lineages.value.length - 1)
+    : rowHeight * lineages.value.length + 15,
+);
+
+const innerHeight = computed(() => height.value - margin.top - margin.bottom);
+
+const yScale = computed(() =>
+  scaleBand()
+    .domain(lineages.value)
+    .range([0, innerHeight.value])
+    .paddingInner(0),
+);
+
+const rowHeight = 20;
+
 const legendWidth = 300;
 const legendHeight = 45;
 const rectWidth = 25;
 const rectHeight = 15;
-
 const rangeMin = 12;
 const rangeMax = 288;
 
@@ -118,7 +202,7 @@ const noDataStyle = {
 </script>
 
 <template>
-  <div class="heatmap-container" :style="choroplethContainerStyle">
+  <div class="heatmap-container" :style="heatmapContainerStyle">
     <!-- Legend -->
     <div v-if="showLegend" class="legend-wrapper" :style="legendWrapperStyle">
       <div class="legend" :style="legendStyle">
@@ -169,6 +253,72 @@ const noDataStyle = {
           </text>
         </svg>
       </div>
+    </div>
+    <!-- Grid -->
+    <div class="grid-wrapper">
+      <svg
+        class="grid"
+        :width="width - containerMarginLeft - containerMarginRight"
+        :height="height"
+      >
+        <g :transform="`translate(${margin.left}, ${margin.top})`">
+          <defs>
+            <pattern
+              id="diagonalHatch"
+              width="5"
+              height="5"
+              patternTransform="rotate(45 0 0)"
+              patternUnits="userSpaceOnUse"
+            >
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="10"
+                :style="`stroke:#a9a9a9; stroke-width:2`"
+              />
+            </pattern>
+          </defs>
+          <g v-for="lineage in lineages">
+            <text
+              class="lineage-label"
+              text-anchor="end"
+              x="-10"
+              :y="yScale(lineage) + yScale.bandwidth() / 2"
+              dy=".30em"
+              fill="#2c3e50"
+              font-size="14px"
+              font-weight="'s400"
+            >
+              {{ lineage }}
+            </text>
+            <g v-for="(dataPoint, index) in dataToBeRendered.filter((element) => element.name == lineage)">
+              <rect 
+                v-if="dataPoint.prevalence > 0"
+                class="cell detected"
+                :key="'lineage-' + index"
+                :aria-label="`date: ${dataPoint.collection_date}, prevalence: ${dataPoint.prevalence}%`"
+                :x="xScale(xAccessor(dataPoint))"
+                :y="yScale(lineage)"
+                :width="xScale.bandwidth()"
+                :height="rowHeight"
+                :fill=colorScale(colorAccessor(dataPoint)) 
+                stroke="#a9a9a9"
+              />
+              <rect 
+                v-else
+                class="cell"
+                :x="xScale(xAccessor(dataPoint))"
+                :y="yScale(lineage)"
+                :width="xScale.bandwidth()"
+                :height="rowHeight"
+                fill="url(#diagonalHatch)"
+                stroke="#a9a9a9"
+              />
+            </g>
+          </g>
+        </g>
+      </svg>
     </div>
   </div>
 </template>
