@@ -44,13 +44,11 @@ const margin = {
   left: 90,
 };
 
-const width = ref(500);
-const innerWidth = computed(
-  () =>
-    width.value - margin.left - margin.right - props.containerMarginLeft - props.containerMarginRight,
-);
+const containerWidth = ref(500);
 
-const formatLegendValue = format(".2s");
+const maxCellWidth = 20;
+const cellHeight = 20;
+const cellPadding = 0.15;
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
@@ -63,13 +61,11 @@ onUnmounted(() => {
 
 const handleResize = () => {
   if (window.innerWidth >= 1000) {
-    width.value = 1000;
+    containerWidth.value = 1000;
   } else {
-    width.value = window.innerWidth;
+    containerWidth.value = window.innerWidth;
   }
 };
-
-const actualColorKey = computed(() => props.colorKey || props.valueKey);
 
 const colorScale = computed(() =>
   scaleThreshold().domain(props.colorDomain).range(props.colorRange)
@@ -122,19 +118,49 @@ const generateDataToBeRendered = (dates, lineages, data) => {
 
 const dataToBeRendered = computed(() => generateDataToBeRendered(dates.value, lineages.value, props.data));
 
-console.log("new", dataToBeRendered.value);
-
-const xScale = computed(() =>
-  scaleBand()
-    .domain(dates.value)
-    .range([0, innerWidth.value])
-    .paddingInner(0.15),
+// Calculate available width for cells
+const availableWidth = computed(() =>
+  containerWidth.value - margin.left - margin.right - props.containerMarginLeft - props.containerMarginRight
 );
+
+// Calculate cell width based on available space and max constraint
+const cellWidth = computed(() => {
+  const numDates = dates.value.length;
+  if (numDates === 0) return maxCellWidth;
+  
+  // Calculate space needed if max width is used
+  const maxWidthNeeded = numDates * maxCellWidth + (numDates - 1) * maxCellWidth * cellPadding;
+  
+  // If max width fits, use it; otherwise scale down proportionally to fit
+  if (maxWidthNeeded <= availableWidth.value) {
+    return maxCellWidth;
+  } else {
+    return availableWidth.value / (numDates + (numDates - 1) * cellPadding);
+  }
+});
+
+const innerWidth = computed(() => availableWidth.value);
+
+const width = computed(() =>
+  containerWidth.value
+);
+
+const xScale = computed(() => {
+  const numDates = dates.value.length;
+  const actualCellWidth = Math.min(cellWidth.value, maxCellWidth);
+  const padding = actualCellWidth * cellPadding;
+  const totalWidth = numDates * actualCellWidth + (numDates - 1) * padding;
+  
+  return scaleBand()
+    .domain(dates.value)
+    .range([0, totalWidth])
+    .paddingInner(cellPadding);
+});
 
 const height = computed(() =>
   lineages.value.length > 2
-    ? rowHeight * lineages.value.length + (5 * lineages.value.length - 1)
-    : rowHeight * lineages.value.length + 15,
+    ? cellHeight * lineages.value.length + (5 * lineages.value.length - 1)
+    : cellHeight * lineages.value.length + 15,
 );
 
 const innerHeight = computed(() => height.value - margin.top - margin.bottom);
@@ -145,8 +171,6 @@ const yScale = computed(() =>
     .range([0, innerHeight.value])
     .paddingInner(0),
 );
-
-const rowHeight = 20;
 
 const legendWidth = 300;
 const legendHeight = 45;
@@ -169,6 +193,8 @@ const colorBands = colorScale.value.range().map((color) => {
 });
 
 const ticks = colorScale.value.domain();
+
+const formatLegendValue = format(".2s");
 
 // Heatmap container inline styles
 const heatmapContainerStyle = computed(() => ({
@@ -255,10 +281,10 @@ const noDataStyle = {
       </div>
     </div>
     <!-- Grid -->
-    <div class="grid-wrapper">
+    <div class="grid-wrapper" :style="gridWrapperStyle">
       <svg
         class="grid"
-        :width="width - containerMarginLeft - containerMarginRight"
+        :width="width"
         :height="height"
       >
         <g :transform="`translate(${margin.left}, ${margin.top})`">
@@ -301,7 +327,7 @@ const noDataStyle = {
                 :x="xScale(xAccessor(dataPoint))"
                 :y="yScale(lineage)"
                 :width="xScale.bandwidth()"
-                :height="rowHeight"
+                :height="cellHeight"
                 :fill=colorScale(colorAccessor(dataPoint)) 
                 stroke="#a9a9a9"
               />
@@ -311,7 +337,7 @@ const noDataStyle = {
                 :x="xScale(xAccessor(dataPoint))"
                 :y="yScale(lineage)"
                 :width="xScale.bandwidth()"
-                :height="rowHeight"
+                :height="cellHeight"
                 fill="url(#diagonalHatch)"
                 stroke="#a9a9a9"
               />
