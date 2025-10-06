@@ -28,6 +28,12 @@ const props = defineProps({
   legendTitle: { type: String, default: "(%)" },
   hatchPatternString: { type: String, default: "not detected" },
 
+   // Chart margins
+  marginTop: { type: Number, default: 5 },
+  marginRight: { type: Number, default: 45 },
+  marginBottom: { type: Number, default: 5 },
+  marginLeft: { type: Number, default: 90 },
+
   // Container margins
   containerMarginTop: { type: Number, default: 0 },
   containerMarginRight: { type: Number, default: 10 },
@@ -35,19 +41,19 @@ const props = defineProps({
   containerMarginLeft: { type: Number, default: 10 },
 });
 
+const margin = computed(() => ({
+  top: props.marginTop,
+  right: props.marginRight,
+  bottom: props.marginBottom,
+  left: props.marginLeft,
+}));
+
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
   marginRight: props.containerMarginRight + "px",
   marginBottom: props.containerMarginBottom + "px",
   marginLeft: props.containerMarginLeft + "px",
 }));
-
-const margin = {
-  top: 5,
-  right: 45,
-  bottom: 5,
-  left: 90,
-};
 
 const containerWidth = ref(500);
 
@@ -124,7 +130,7 @@ const dataToBeRendered = computed(() => generateDataToBeRendered(columnLabels.va
 
 // Calculate available width for cells
 const availableWidth = computed(() =>
-  containerWidth.value - margin.left - margin.right - props.containerMarginLeft - props.containerMarginRight
+  containerWidth.value - margin.value.left - margin.value.right - props.containerMarginLeft - props.containerMarginRight
 );
 
 // Calculate cell width based on available space and max constraint
@@ -167,7 +173,7 @@ const height = computed(() =>
     : cellHeight * rowLabels.value.length + 15,
 );
 
-const innerHeight = computed(() => height.value - margin.top - margin.bottom);
+const innerHeight = computed(() => height.value - margin.value.top - margin.value.bottom);
 
 const yScale = computed(() =>
   scaleBand()
