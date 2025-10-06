@@ -110,10 +110,9 @@ const generateDataToBeRendered = (dates, lineages, data) => {
       }
     }
   }
-
-  return result.sort(
-    (a, b) => new Date(a.collection_date) - new Date(b.collection_date)
-  );
+  return result.sort((a, b) => {
+    a.collection_date.localeCompare(b.collection_date)
+  });
 }
 
 const dataToBeRendered = computed(() => generateDataToBeRendered(dates.value, lineages.value, props.data));
