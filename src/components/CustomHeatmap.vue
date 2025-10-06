@@ -11,6 +11,11 @@ import { min, max } from "d3-array";
 const props = defineProps({
   data: { type: Array, required: true },
   
+  // Property key configuration
+  rowKey: { type: String, default: "rowValue" },
+  columnKey: { type: String, default: "columnValue" },
+  colorKey: { type: String, default: "colorValue" },
+  
   // Color scale configuration
   colorDomain: {
     type: Array,
@@ -20,7 +25,7 @@ const props = defineProps({
 
   // Legend configuration
   showLegend: { type: Boolean, default: true },
-  legendTitle: { type: String, default: "mutation prevalence in lineage (%)" },
+  legendTitle: { type: String, default: "(%)" },
   hatchPatternString: { type: String, default: "not detected" },
 
   // Container margins
@@ -71,51 +76,51 @@ const colorScale = computed(() =>
   scaleThreshold().domain(props.colorDomain).range(props.colorRange)
 );
 
-const colorAccessor = (d) => d.prevalence;
-const xAccessor = (d) => d.collection_date;
-const yAccessor = (d) => d.name;
+const colorAccessor = (d) => d[props.colorKey];
+const xAccessor = (d) => d[props.columnKey];
+const yAccessor = (d) => d[props.rowKey];
 
-const dates = computed(() =>
+const columnLabels = computed(() =>
   [...new Set(props.data.map(xAccessor))]
   .sort((a, b) => {
     return a.localeCompare(b);
   }),
 );
 
-const lineages = computed(() =>
+const rowLabels = computed(() =>
   [...new Set(props.data.map(yAccessor))]
   .sort((a, b) => {
     return a.localeCompare(b);
   }),
 );
 
-const generateDataToBeRendered = (dates, lineages, data) => {
+const generateDataToBeRendered = (columnLabels, rowLabels, data) => {
   const lookup = new Map(
-    data.map(d => [`${d.collection_date}-${d.name}`, d])
+    data.map(d => [`${d[props.columnKey]}-${d[props.rowKey]}`, d])
   );
 
   const result = [];
 
-  for (const date of dates) {
-    for (const lineage of lineages) {
-      const key = `${date}-${lineage}`;
+  for (const columnLabel of columnLabels) {
+    for (const rowLabel of rowLabels) {
+      const key = `${columnLabel}-${rowLabel}`;
       if (lookup.has(key)) {
         result.push(lookup.get(key));
       } else {
         result.push({
-          prevalence: -1,
-          collection_date: date,
-          name: lineage,
+          [props.colorKey]: -1,
+          [props.columnKey]: columnLabel,
+          [props.rowKey]: rowLabel,
         });
       }
     }
   }
   return result.sort((a, b) => {
-    a.collection_date.localeCompare(b.collection_date)
+    return a[props.columnKey].localeCompare(b[props.columnKey]);
   });
 }
 
-const dataToBeRendered = computed(() => generateDataToBeRendered(dates.value, lineages.value, props.data));
+const dataToBeRendered = computed(() => generateDataToBeRendered(columnLabels.value, rowLabels.value, props.data));
 
 // Calculate available width for cells
 const availableWidth = computed(() =>
@@ -124,17 +129,17 @@ const availableWidth = computed(() =>
 
 // Calculate cell width based on available space and max constraint
 const cellWidth = computed(() => {
-  const numDates = dates.value.length;
-  if (numDates === 0) return maxCellWidth;
+  const numColumns = columnLabels.value.length;
+  if (numColumns === 0) return maxCellWidth;
   
   // Calculate space needed if max width is used
-  const maxWidthNeeded = numDates * maxCellWidth + (numDates - 1) * maxCellWidth * cellPadding;
+  const maxWidthNeeded = numColumns * maxCellWidth + (numColumns - 1) * maxCellWidth * cellPadding;
   
   // If max width fits, use it; otherwise scale down proportionally to fit
   if (maxWidthNeeded <= availableWidth.value) {
     return maxCellWidth;
   } else {
-    return availableWidth.value / (numDates + (numDates - 1) * cellPadding);
+    return availableWidth.value / (numColumns + (numColumns - 1) * cellPadding);
   }
 });
 
@@ -145,28 +150,28 @@ const width = computed(() =>
 );
 
 const xScale = computed(() => {
-  const numDates = dates.value.length;
+  const numColumns = columnLabels.value.length;
   const actualCellWidth = Math.min(cellWidth.value, maxCellWidth);
   const padding = actualCellWidth * cellPadding;
-  const totalWidth = numDates * actualCellWidth + (numDates - 1) * padding;
+  const totalWidth = numColumns * actualCellWidth + (numColumns - 1) * padding;
   
   return scaleBand()
-    .domain(dates.value)
+    .domain(columnLabels.value)
     .range([0, totalWidth])
     .paddingInner(cellPadding);
 });
 
 const height = computed(() =>
-  lineages.value.length > 2
-    ? cellHeight * lineages.value.length + (5 * lineages.value.length - 1)
-    : cellHeight * lineages.value.length + 15,
+  rowLabels.value.length > 2
+    ? cellHeight * rowLabels.value.length + (5 * rowLabels.value.length - 1)
+    : cellHeight * rowLabels.value.length + 15,
 );
 
 const innerHeight = computed(() => height.value - margin.top - margin.bottom);
 
 const yScale = computed(() =>
   scaleBand()
-    .domain(lineages.value)
+    .domain(rowLabels.value)
     .range([0, innerHeight.value])
     .paddingInner(0),
 );
@@ -280,7 +285,7 @@ const noDataStyle = {
       </div>
     </div>
     <!-- Grid -->
-    <div class="grid-wrapper" :style="gridWrapperStyle">
+    <div class="grid-wrapper">
       <svg
         class="grid"
         :width="width"
@@ -304,27 +309,27 @@ const noDataStyle = {
               />
             </pattern>
           </defs>
-          <g v-for="lineage in lineages">
+          <g v-for="rowLabel in rowLabels">
             <text
-              class="lineage-label"
+              class="row-label"
               text-anchor="end"
               x="-10"
-              :y="yScale(lineage) + yScale.bandwidth() / 2"
+              :y="yScale(rowLabel) + yScale.bandwidth() / 2"
               dy=".30em"
               fill="#2c3e50"
               font-size="14px"
               font-weight="'s400"
             >
-              {{ lineage }}
+              {{ rowLabel }}
             </text>
-            <g v-for="(dataPoint, index) in dataToBeRendered.filter((element) => element.name == lineage)">
+            <g v-for="(dataPoint, index) in dataToBeRendered.filter((element) => element[props.rowKey] == rowLabel)">
               <rect 
-                v-if="dataPoint.prevalence > 0"
+                v-if="dataPoint[props.colorKey] > 0"
                 class="cell detected"
-                :key="'lineage-' + index"
-                :aria-label="`date: ${dataPoint.collection_date}, prevalence: ${dataPoint.prevalence}%`"
+                :key="'row-' + index"
+                :aria-label="`${props.rowKey}: ${rowLabel}, ${props.columnKey}: ${dataPoint[props.columnKey]}, ${props.colorKey}: ${dataPoint[props.colorKey]}%`"
                 :x="xScale(xAccessor(dataPoint))"
-                :y="yScale(lineage)"
+                :y="yScale(rowLabel)"
                 :width="xScale.bandwidth()"
                 :height="cellHeight"
                 :fill=colorScale(colorAccessor(dataPoint)) 
@@ -334,7 +339,7 @@ const noDataStyle = {
                 v-else
                 class="cell"
                 :x="xScale(xAccessor(dataPoint))"
-                :y="yScale(lineage)"
+                :y="yScale(rowLabel)"
                 :width="xScale.bandwidth()"
                 :height="cellHeight"
                 fill="url(#diagonalHatch)"
