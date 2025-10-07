@@ -202,7 +202,7 @@ const colorBands = colorScale.value.range().map((color) => {
   return d;
 });
 
-const ticks = colorScale.value.domain();
+const legendTicks = colorScale.value.domain();
 
 const formatLegendValue = format(".2s");
 
@@ -256,8 +256,8 @@ const noDataStyle = {
               :fill="colorScale(band[0])"
             />
             <g
-              v-for="tick in ticks"
-              :transform="`translate(${legendScale(tick)}, 0)`"
+              v-for="legendTick in legendTicks"
+              :transform="`translate(${legendScale(legendTick)}, 0)`"
             >
               <text
                 y="18"
@@ -266,7 +266,7 @@ const noDataStyle = {
                 fill="#2c3e50"
                 font-size="14px"
               >
-                {{ tick == 0 ? tick : formatLegendValue(tick) }}
+                {{ legendTick == 0 ? legendTick : formatLegendValue(legendTick) }}
               </text>
             </g>
           </g>
