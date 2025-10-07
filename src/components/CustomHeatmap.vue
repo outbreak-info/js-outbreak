@@ -189,6 +189,8 @@ const rectHeight = 15;
 const rangeMin = 12;
 const rangeMax = 288;
 
+const axisHeight = 50;
+
 const legendScale = scaleLinear()
   .domain([min(colorScale.value.domain()), max(colorScale.value.domain())])
   .rangeRound([rangeMin, rangeMax]);
@@ -205,6 +207,8 @@ const colorBands = colorScale.value.range().map((color) => {
 const legendTicks = colorScale.value.domain();
 
 const formatLegendValue = format(".2s");
+
+const allXTicks = computed(() => xScale.value.domain());
 
 // Heatmap container inline styles
 const heatmapContainerStyle = computed(() => ({
@@ -290,6 +294,34 @@ const noDataStyle = {
         </svg>
       </div>
     </div>
+    <!-- x axis -->
+    <div class="axis-wrapper">
+      <svg
+        role="img"
+        class="axis"
+        :width="width"
+        :height="axisHeight"
+      >
+        <g :transform="`translate(${margin.left}, 50)`">
+          <g
+            v-for="(xTick, index) in allXTicks"
+            :key="'xtick-' + index"
+            :transform="`translate(${xScale(xTick) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              x="0"
+              y="0"
+              text-anchor="start"
+              fill="#2c3e50"
+              font-size="12px"
+              transform="rotate(-45)"
+            >
+              {{ xTick }}
+            </text>
+          </g>
+        </g>
+      </svg>
+    </div>
     <!-- Grid -->
     <div class="grid-wrapper">
       <svg
@@ -324,7 +356,7 @@ const noDataStyle = {
               dy=".30em"
               fill="#2c3e50"
               font-size="14px"
-              font-weight="'s400"
+              font-weight="400"
             >
               {{ rowLabel }}
             </text>
