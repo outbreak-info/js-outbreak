@@ -62,6 +62,10 @@ const cellHeight = 20;
 const cellPadding = 0.15;
 
 const hoveredCell = ref(null);
+const xPosition = ref(null);
+const yPosition = ref(null);
+
+const formatColorKey = format(',.2f');
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
@@ -214,10 +218,14 @@ const allXTicks = computed(() => xScale.value.domain());
 
 const handleMouseEnter = (d) => {
   hoveredCell.value = d;
+  xPosition.value = xScale.value(xAccessor(hoveredCell.value));
+  yPosition.value = yScale.value(yAccessor(hoveredCell.value));
 };
 
 const handleMouseLeave = () => {
   hoveredCell.value = null;
+  xPosition.value = null;
+  yPosition.value = null;
 };
 
 // Heatmap container inline styles
@@ -249,6 +257,59 @@ const titleStyle = {
 const noDataStyle = {
   marginLeft: "7px",
 };
+
+// Tooltip inline styles
+const tooltipWrapperStyle = computed(() => ({
+  transform: `translate(${xPosition.value}px, ${yPosition.value}px)`,
+  width: "140px",
+  background: "#ffffff",
+  boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",
+  borderRadius: "3px",
+  position: "absolute",
+  padding: "0.5em",
+  textAlign: "left",
+  fontSize: "13px",
+  lineHeight: "18px",
+  zIndex: 1,
+  color: "#2c3e50",
+  pointerEvents: "none",
+}));
+
+const tooltipTitleStyle = {
+  fontWeight: "700",
+  fontSize: "14px",
+  lineHeight: "16px",
+};
+
+const tooltipDividerStyle = {
+  borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+  marginTop: "5px",
+  marginBottom: "5px",
+};
+
+const tooltipGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr auto",
+  fontWeight: "400",
+  marginBottom: "5px",
+};
+
+const tooltipDataStyle = {
+  textAlign: "right",
+};
+
+const tooltipBarStyle = computed(() => {
+  return {
+    position: "absolute",
+    height: "7px",
+    width: "100%",
+    bottom: "0",
+    left: "0",
+    background: hoveredCell.value !== null ? colorScale.value(colorAccessor(hoveredCell.value)) 
+        : "transparent",
+  };
+});
 </script>
 
 <template>
@@ -400,6 +461,20 @@ const noDataStyle = {
           </g>
         </g>
       </svg>
+    </div>
+  </div>
+  <!-- Tooltip -->
+  <div v-if="hoveredCell" :style="tooltipWrapperStyle">
+    <div :style="tooltipTitleStyle">
+      {{ hoveredCell.rowValue }} &#183; {{ hoveredCell.columnValue }} 
+      <hr :style="tooltipDividerStyle" />
+    </div>
+    <div :style="tooltipGridStyle">
+      <span>{{ colorKey }}</span>
+      <span class="data">{{ formatColorKey(hoveredCell.colorValue) }}</span>
+    </div>
+    <div>
+      <span :style="tooltipBarStyle" />
     </div>
   </div>
 </template>
