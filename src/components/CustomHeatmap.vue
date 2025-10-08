@@ -61,6 +61,8 @@ const maxCellWidth = 20;
 const cellHeight = 20;
 const cellPadding = 0.15;
 
+const hoveredCell = ref(null);
+
 onMounted(() => {
   window.addEventListener("resize", handleResize);
   handleResize();
@@ -210,6 +212,14 @@ const formatLegendValue = format(".2s");
 
 const allXTicks = computed(() => xScale.value.domain());
 
+const handleMouseEnter = (d) => {
+  hoveredCell.value = d;
+};
+
+const handleMouseLeave = () => {
+  hoveredCell.value = null;
+};
+
 // Heatmap container inline styles
 const heatmapContainerStyle = computed(() => ({
   position: "relative",
@@ -312,8 +322,9 @@ const noDataStyle = {
               x="0"
               y="0"
               text-anchor="start"
-              fill="#2c3e50"
-              font-size="12px"
+              :fill="(hoveredCell && xTick === hoveredCell.columnValue) ?'#000dcb' : '#2c3e50'"
+              :font-size="(hoveredCell && xTick === hoveredCell.columnValue) ? '13px' : '12px'"
+              :font-weight="(hoveredCell && xTick === hoveredCell.columnValue) ? '700' : '400'"
               transform="rotate(-45)"
             >
               {{ xTick }}
@@ -354,9 +365,9 @@ const noDataStyle = {
               x="-10"
               :y="yScale(rowLabel) + yScale.bandwidth() / 2"
               dy=".30em"
-              fill="#2c3e50"
+              :fill="(hoveredCell && rowLabel === hoveredCell.rowValue) ? '#000dcb' : '#2c3e50'"
               font-size="14px"
-              font-weight="400"
+              :font-weight="(hoveredCell && rowLabel === hoveredCell.rowValue) ? '700' : '400'"
             >
               {{ rowLabel }}
             </text>
@@ -372,6 +383,8 @@ const noDataStyle = {
                 :height="cellHeight"
                 :fill=colorScale(colorAccessor(dataPoint)) 
                 stroke="#a9a9a9"
+                @mouseenter="handleMouseEnter(dataPoint)"
+                @mouseleave="handleMouseLeave"
               />
               <rect 
                 v-else
