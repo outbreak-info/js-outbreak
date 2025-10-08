@@ -442,7 +442,7 @@ const tooltipBarStyle = computed(() => {
                 :y="yScale(rowLabel)"
                 :width="xScale.bandwidth()"
                 :height="cellHeight"
-                :fill=colorScale(colorAccessor(dataPoint)) 
+                :fill="(hoveredCell === dataPoint) ? '#000dcb' : colorScale(colorAccessor(dataPoint))"
                 stroke="#a9a9a9"
                 @mouseenter="handleMouseEnter(dataPoint)"
                 @mouseleave="handleMouseLeave"
