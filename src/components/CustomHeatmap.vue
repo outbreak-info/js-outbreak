@@ -120,7 +120,7 @@ const generateDataToBeRendered = (columnLabels, rowLabels, data) => {
         result.push(lookup.get(key));
       } else {
         result.push({
-          [props.colorKey]: -1,
+          [props.colorKey]: "hatching",
           [props.columnKey]: columnLabel,
           [props.rowKey]: rowLabel,
         });
@@ -434,7 +434,7 @@ const tooltipBarStyle = computed(() => {
             </text>
             <g v-for="(dataPoint, index) in dataToBeRendered.filter((element) => element[props.rowKey] == rowLabel)">
               <rect 
-                v-if="dataPoint[props.colorKey] > 0"
+                v-if="dataPoint[props.colorKey] !== 'hatching'"
                 class="cell detected"
                 :key="'row-' + index"
                 :aria-label="`${props.rowKey}: ${rowLabel}, ${props.columnKey}: ${dataPoint[props.columnKey]}, ${props.colorKey}: ${dataPoint[props.colorKey]}%`"
