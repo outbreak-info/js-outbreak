@@ -229,7 +229,36 @@ const legendTicks = colorScale.value.domain();
 
 const formatLegendValue = format(".2s");
 
-const allXTicks = computed(() => xScale.value.domain());
+// Calculate visible x-ticks based on available space
+const xTicksToBeRendered = computed(() => {
+  const domain = xScale.value.domain();
+  
+  // For large screens (>= 1000px), always show all labels
+  if (containerWidth.value >= 1000) {
+    return domain;
+  }
+  
+  const totalWidth = xScale.value.range()[1];
+  
+  // Estimate space needed per label (accounting for rotation and text length)
+  // Average character width is ~7px for 12px font, rotated 45 degrees
+  const avgLabelLength = domain.reduce((sum, label) => sum + label.length, 0) / domain.length;
+  const estimatedLabelWidth = avgLabelLength * 7 * 0.707; // 0.707 = cos(45°)
+  const minSpaceBetweenLabels = 10; // minimum gap between labels
+  const spacePerLabel = estimatedLabelWidth + minSpaceBetweenLabels;
+  
+  // Calculate how many labels can fit
+  const maxVisibleLabels = Math.floor(totalWidth / spacePerLabel);
+  
+  // If all labels fit, show them all
+  if (maxVisibleLabels >= domain.length) {
+    return domain;
+  }
+  
+  // Otherwise, show a subset with even spacing
+  const step = Math.ceil(domain.length / maxVisibleLabels);
+  return domain.filter((_, index) => index % step === 0);
+});
 
 const updateTooltip = (d, event) => {
   if (!tooltipElement.value) return;
@@ -347,6 +376,7 @@ const legendWrapperStyle = {
   display: "flex",
   flexFlow: "row wrap",
   alignItems: "center",
+  marginTop: "15px",
   marginBottom: "0px",
 };
 
@@ -430,7 +460,7 @@ const noDataStyle = {
       >
         <g :transform="`translate(${margin.left}, 50)`">
           <g
-            v-for="(xTick, index) in allXTicks"
+            v-for="(xTick, index) in xTicksToBeRendered"
             :key="'xtick-' + index"
             :transform="`translate(${xScale(xTick) + xScale.bandwidth() / 2}, 0)`"
           >
