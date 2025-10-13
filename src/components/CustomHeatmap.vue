@@ -62,18 +62,33 @@ const cellHeight = 20;
 const cellPadding = 0.15;
 
 const hoveredCell = ref(null);
-const xPosition = ref(null);
-const yPosition = ref(null);
+const tooltipElement = ref(null);
+const heatmapContainer = ref(null);
 
 const formatColorKey = format(',.2f');
+
+// Create and manage tooltip DOM element
+const createTooltip = () => {
+  const tooltip = document.createElement('div');
+  tooltip.id = 'heatmap-tooltip-portal';
+  tooltip.style.position = 'fixed';
+  tooltip.style.zIndex = '10000';
+  tooltip.style.pointerEvents = 'none';
+  document.body.appendChild(tooltip);
+  return tooltip;
+};
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
   handleResize();
+  tooltipElement.value = createTooltip();
 });
 
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
+  if (tooltipElement.value && tooltipElement.value.parentNode) {
+    tooltipElement.value.parentNode.removeChild(tooltipElement.value);
+  }
 });
 
 const handleResize = () => {
@@ -216,16 +231,109 @@ const formatLegendValue = format(".2s");
 
 const allXTicks = computed(() => xScale.value.domain());
 
-const handleMouseEnter = (d) => {
+const updateTooltip = (d, event) => {
+  if (!tooltipElement.value) return;
+  
   hoveredCell.value = d;
-  xPosition.value = xScale.value(xAccessor(hoveredCell.value));
-  yPosition.value = yScale.value(yAccessor(hoveredCell.value));
+  
+  // Get the position of the heatmap container relative to the viewport
+  if (heatmapContainer.value) {
+    const containerRect = heatmapContainer.value.getBoundingClientRect();
+    const cellX = xScale.value(xAccessor(d));
+    const cellY = yScale.value(yAccessor(d));
+    
+    const tooltipWidth = 140;
+    const tooltipHeight = 95; 
+    const legendHeight = props.showLegend ? 79.3 : 0;
+    const axisHeight = 56.9;
+    const verticalOffset = 5; 
+    
+    // Calculate base position
+    let x = containerRect.left + margin.value.left + cellX;
+    const y = containerRect.top + legendHeight + axisHeight + cellY - tooltipHeight - verticalOffset;
+    
+    // Calculate heatmap boundaries
+    const heatmapLeft = containerRect.left + margin.value.left;
+    const heatmapRight = containerRect.left + margin.value.left + xScale.value.range()[1];
+    
+    // Nudge tooltip to keep it within heatmap boundaries
+    const tooltipRight = x + tooltipWidth;
+    const tooltipLeft = x;
+    
+    if (tooltipRight > heatmapRight) {
+      // Too far right, align with right edge of heatmap
+      x = heatmapRight - tooltipWidth;
+    }
+    
+    if (x < heatmapLeft) {
+      // Too far left, align with left edge of heatmap
+      x = heatmapLeft;
+    }
+    
+    // Generate tooltip HTML
+    const barColor = colorScale.value(colorAccessor(d));
+    const tooltipHTML = `
+      <div style="
+        position: fixed;
+        left: ${x}px;
+        top: ${y}px;
+        width: ${tooltipWidth}px;
+        background: #ffffff;
+        box-shadow: 1px 2px 7px rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+        padding: 0.5em;
+        text-align: left;
+        font-size: 13px;
+        line-height: 18px;
+        color: #2c3e50;
+        pointer-events: none;
+      ">
+        <div style="font-weight: 700; font-size: 14px; line-height: 16px;">
+          ${d.rowValue} &#183; ${d.columnValue}
+          <hr style="
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            margin-top: 5px;
+            margin-bottom: 5px;
+          " />
+        </div>
+        <div style="
+          display: grid;
+          grid-template-columns: 1fr auto;
+          font-weight: 400;
+          margin-bottom: 5px;
+        ">
+          <span>${props.colorKey}</span>
+          <span style="text-align: right;">${formatColorKey(d.colorValue)}</span>
+        </div>
+        <div>
+          <span style="
+            position: absolute;
+            height: 7px;
+            width: 100%;
+            bottom: 0;
+            left: 0;
+            background: ${barColor};
+          "></span>
+        </div>
+      </div>
+    `;
+    
+    tooltipElement.value.innerHTML = tooltipHTML;
+    tooltipElement.value.style.display = 'block';
+  }
+};
+
+const handleMouseEnter = (d, event) => {
+  updateTooltip(d, event);
 };
 
 const handleMouseLeave = () => {
   hoveredCell.value = null;
-  xPosition.value = null;
-  yPosition.value = null;
+  if (tooltipElement.value) {
+    tooltipElement.value.style.display = 'none';
+    tooltipElement.value.innerHTML = '';
+  }
 };
 
 // Heatmap container inline styles
@@ -257,63 +365,10 @@ const titleStyle = {
 const noDataStyle = {
   marginLeft: "7px",
 };
-
-// Tooltip inline styles
-const tooltipWrapperStyle = computed(() => ({
-  transform: `translate(${xPosition.value}px, ${yPosition.value}px)`,
-  width: "140px",
-  background: "#ffffff",
-  boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",
-  borderRadius: "3px",
-  position: "absolute",
-  padding: "0.5em",
-  textAlign: "left",
-  fontSize: "13px",
-  lineHeight: "18px",
-  zIndex: 1,
-  color: "#2c3e50",
-  pointerEvents: "none",
-}));
-
-const tooltipTitleStyle = {
-  fontWeight: "700",
-  fontSize: "14px",
-  lineHeight: "16px",
-};
-
-const tooltipDividerStyle = {
-  borderTop: "1px solid rgba(0, 0, 0, 0.1)",
-  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
-  marginTop: "5px",
-  marginBottom: "5px",
-};
-
-const tooltipGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "1fr auto",
-  fontWeight: "400",
-  marginBottom: "5px",
-};
-
-const tooltipDataStyle = {
-  textAlign: "right",
-};
-
-const tooltipBarStyle = computed(() => {
-  return {
-    position: "absolute",
-    height: "7px",
-    width: "100%",
-    bottom: "0",
-    left: "0",
-    background: hoveredCell.value !== null ? colorScale.value(colorAccessor(hoveredCell.value)) 
-        : "transparent",
-  };
-});
 </script>
 
 <template>
-  <div class="heatmap-container" :style="heatmapContainerStyle">
+  <div ref="heatmapContainer" class="heatmap-container" :style="heatmapContainerStyle">
     <!-- Legend -->
     <div v-if="showLegend" class="legend-wrapper" :style="legendWrapperStyle">
       <div class="legend" :style="legendStyle">
@@ -444,7 +499,7 @@ const tooltipBarStyle = computed(() => {
                 :height="cellHeight"
                 :fill="(hoveredCell === dataPoint) ? '#000dcb' : colorScale(colorAccessor(dataPoint))"
                 stroke="#a9a9a9"
-                @mouseenter="handleMouseEnter(dataPoint)"
+                @mouseenter="handleMouseEnter(dataPoint, $event)"
                 @mouseleave="handleMouseLeave"
               />
               <rect 
@@ -461,20 +516,6 @@ const tooltipBarStyle = computed(() => {
           </g>
         </g>
       </svg>
-    </div>
-  </div>
-  <!-- Tooltip -->
-  <div v-if="hoveredCell" :style="tooltipWrapperStyle">
-    <div :style="tooltipTitleStyle">
-      {{ hoveredCell.rowValue }} &#183; {{ hoveredCell.columnValue }} 
-      <hr :style="tooltipDividerStyle" />
-    </div>
-    <div :style="tooltipGridStyle">
-      <span>{{ colorKey }}</span>
-      <span class="data">{{ formatColorKey(hoveredCell.colorValue) }}</span>
-    </div>
-    <div>
-      <span :style="tooltipBarStyle" />
     </div>
   </div>
 </template>
