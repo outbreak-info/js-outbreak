@@ -7,6 +7,7 @@ import {
 } from "../utils/colorSchemes";
 import { format } from "d3-format";
 import { min, max } from "d3-array";
+import { create } from "naive-ui";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -39,6 +40,9 @@ const props = defineProps({
   containerMarginRight: { type: Number, default: 10 },
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
+
+  // Heatmap appearance
+  createCellsWithRoundedCorners: { type: Boolean, default: true },
 });
 
 const margin = computed(() => ({
@@ -529,6 +533,7 @@ const noDataStyle = {
                 :height="cellHeight"
                 :fill="(hoveredCell === dataPoint) ? '#000dcb' : colorScale(colorAccessor(dataPoint))"
                 stroke="#a9a9a9"
+                :rx="createCellsWithRoundedCorners ? '4' : '0'"
                 @mouseenter="handleMouseEnter(dataPoint, $event)"
                 @mouseleave="handleMouseLeave"
               />
@@ -541,6 +546,7 @@ const noDataStyle = {
                 :height="cellHeight"
                 fill="url(#diagonalHatch)"
                 stroke="#a9a9a9"
+                :rx="createCellsWithRoundedCorners ? '4' : '0'"
               />
             </g>
           </g>
