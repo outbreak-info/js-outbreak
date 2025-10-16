@@ -26,7 +26,7 @@ const props = defineProps({
 
   // Legend configuration
   showLegend: { type: Boolean, default: true },
-  legendTitle: { type: String, default: "(%)" },
+  legendTitle: { type: String, default: "asdfg (%)" },
   hatchPatternString: { type: String, default: "not detected" },
 
    // Chart margins
@@ -472,12 +472,28 @@ const noDataStyle = {
               x="0"
               y="0"
               text-anchor="start"
-              :fill="(hoveredCell && xTick === hoveredCell.columnValue) ?'#000dcb' : '#2c3e50'"
-              :font-size="(hoveredCell && xTick === hoveredCell.columnValue) ? '13px' : '12px'"
-              :font-weight="(hoveredCell && xTick === hoveredCell.columnValue) ? '700' : '400'"
+              :fill="hoveredCell ? '#bdc3c7' : '#2c3e50'"
+              font-size="12px"
+              font-weight="400"
               transform="rotate(-45)"
             >
               {{ xTick }}
+            </text>
+          </g>
+          <g
+            v-if="hoveredCell"
+            :transform="`translate(${xScale(xAccessor(hoveredCell)) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              x="0"
+              y="0"
+              text-anchor="start"
+              fill="#000dcb"
+              font-size="14px"
+              font-weight="700"
+              transform="rotate(-45)"
+            >
+              {{ xAccessor(hoveredCell) }}
             </text>
           </g>
         </g>
