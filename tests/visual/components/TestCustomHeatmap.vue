@@ -1,7 +1,7 @@
 <template>
   <div class="test-container">
     <h1>Custom Heatmap Component Test</h1>
-    <CustomHeatmap :data="fiftyColumns"/>
+    <CustomHeatmap :data="tenColumns"/>
   </div>
 </template>
 

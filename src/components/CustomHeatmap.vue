@@ -7,6 +7,7 @@ import {
 } from "../utils/colorSchemes";
 import { format } from "d3-format";
 import { min, max } from "d3-array";
+import { create } from "naive-ui";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -25,7 +26,7 @@ const props = defineProps({
 
   // Legend configuration
   showLegend: { type: Boolean, default: true },
-  legendTitle: { type: String, default: "(%)" },
+  legendTitle: { type: String, default: "asdfg (%)" },
   hatchPatternString: { type: String, default: "not detected" },
 
    // Chart margins
@@ -39,6 +40,9 @@ const props = defineProps({
   containerMarginRight: { type: Number, default: 10 },
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
+
+  // Heatmap appearance
+  createCellsWithRoundedCorners: { type: Boolean, default: true },
 });
 
 const margin = computed(() => ({
@@ -468,12 +472,28 @@ const noDataStyle = {
               x="0"
               y="0"
               text-anchor="start"
-              :fill="(hoveredCell && xTick === hoveredCell.columnValue) ?'#000dcb' : '#2c3e50'"
-              :font-size="(hoveredCell && xTick === hoveredCell.columnValue) ? '13px' : '12px'"
-              :font-weight="(hoveredCell && xTick === hoveredCell.columnValue) ? '700' : '400'"
+              :fill="hoveredCell ? '#bdc3c7' : '#2c3e50'"
+              font-size="12px"
+              font-weight="400"
               transform="rotate(-45)"
             >
               {{ xTick }}
+            </text>
+          </g>
+          <g
+            v-if="hoveredCell"
+            :transform="`translate(${xScale(xAccessor(hoveredCell)) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              x="0"
+              y="0"
+              text-anchor="start"
+              fill="#000dcb"
+              font-size="14px"
+              font-weight="700"
+              transform="rotate(-45)"
+            >
+              {{ xAccessor(hoveredCell) }}
             </text>
           </g>
         </g>
@@ -529,6 +549,7 @@ const noDataStyle = {
                 :height="cellHeight"
                 :fill="(hoveredCell === dataPoint) ? '#000dcb' : colorScale(colorAccessor(dataPoint))"
                 stroke="#a9a9a9"
+                :rx="createCellsWithRoundedCorners ? '4' : '0'"
                 @mouseenter="handleMouseEnter(dataPoint, $event)"
                 @mouseleave="handleMouseLeave"
               />
@@ -541,6 +562,7 @@ const noDataStyle = {
                 :height="cellHeight"
                 fill="url(#diagonalHatch)"
                 stroke="#a9a9a9"
+                :rx="createCellsWithRoundedCorners ? '4' : '0'"
               />
             </g>
           </g>
