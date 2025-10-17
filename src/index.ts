@@ -29,6 +29,7 @@ import TagComponent from "./components/TagComponent.vue";
 import CollapseWrapper from "./components/CollapseWrapper.vue";
 import CustomScatterChart from "./components/CustomScatterChart.vue";
 import CustomHeatmap from "./components/CustomHeatmap.vue";
+import CustomMultiLineChart from "./components/CustomMultiLineChart.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -66,6 +67,7 @@ export {
   CollapseWrapper,
   CustomScatterChart,
   CustomHeatmap,
+  CustomMultiLineChart,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -103,5 +105,6 @@ export default {
     app.component("CollapseWrapper", CollapseWrapper);
     app.component("CustomScatterChart", CustomScatterChart);
     app.component("CustomHeatmap", CustomHeatmap);
+    app.component("CustomMultinelineChart", CustomMultiLineChart);
   },
 };
