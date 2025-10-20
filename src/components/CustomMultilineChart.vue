@@ -1,5 +1,5 @@
 <script setup>
-console.log("custom multiline chart")
+console.log("custom multiline chart");
 </script>
 
 <template>
