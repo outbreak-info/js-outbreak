@@ -1,5 +1,8 @@
 <script setup>
-console.log("custom multiline chart");
+const props = defineProps({
+  data: { type: Array, required: true },
+});
+console.log("data", props.data);
 </script>
 
 <template>
