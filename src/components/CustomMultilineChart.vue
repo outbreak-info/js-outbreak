@@ -1,8 +1,11 @@
+// src/components/CustomMultilineChart.vue
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale';
+import { min, max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
+import { line } from "d3-shape";
 import { createDateArray } from "../utils/arrays";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
 
@@ -134,6 +137,22 @@ const yTicks = computed(() => {
 const colors = computed(() => selectAccessibleColorPalette(uniqueLabels.value));
 
 const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels.value));
+
+// Line generation
+const lineGenerator = computed(() =>
+  line()
+    .x(d => xScale.value(d.date))
+    .y(d => yScale.value(d.proportion * 100))
+    .defined(d => !Number.isNaN(d.proportion))
+);
+
+const chartLines = computed(() => {
+  return props.data.map(series => ({
+    label: series.label,
+    path: lineGenerator.value(series.data),
+    color: colorScale.value(series.label)
+  }));
+});
 </script>
 
 <template>
@@ -142,8 +161,6 @@ const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels
       role="img"
       :width="width - containerMarginLeft - containerMarginRight"
       :height="height"
-      @mousemove="handleMouseMove"
-      @mouseleave="handleMouseLeave"
     >
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
         <!-- y-axis -->
@@ -213,6 +230,18 @@ const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels
               {{ formatTime(parseTime(tick)) }}
             </text>
           </g>
+        </g>
+
+        <!-- lines -->
+        <g v-for="line in chartLines" :key="line.label">
+          <path
+            class="line"
+            :d="line.path"
+            :stroke="line.color"
+            stroke-width="2.5px"
+            fill="none"
+            stroke-linecap="round"
+          />
         </g>
       </g>
     </svg>
