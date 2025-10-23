@@ -6,6 +6,7 @@ import { min, max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import { line } from "d3-shape";
+import { area } from "d3-shape";
 import { createDateArray } from "../utils/arrays";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
 
@@ -146,10 +147,20 @@ const lineGenerator = computed(() =>
     .defined(d => !Number.isNaN(d.proportion))
 );
 
-const chartLines = computed(() => {
+// Area generation for confidence intervals
+const areaGenerator = computed(() =>
+  area()
+    .x(d => xScale.value(d.date))
+    .y0(d => yScale.value(d.proportion_ci_lower * 100))
+    .y1(d => yScale.value(d.proportion_ci_upper * 100))
+    .defined(d => !Number.isNaN(d.proportion_ci_lower) && !Number.isNaN(d.proportion_ci_upper))
+);
+
+const linesAndIntervals = computed(() => {
   return props.data.map(series => ({
     label: series.label,
     path: lineGenerator.value(series.data),
+    areaPath: areaGenerator.value(series.data),
     color: colorScale.value(series.label)
   }));
 });
@@ -232,10 +243,19 @@ const chartLines = computed(() => {
           </g>
         </g>
 
-        <!-- lines -->
-        <g v-for="line in chartLines" :key="line.label">
+        <!-- confidence intervals -->
+        <g v-for="line in linesAndIntervals" :key="'ci-' + line.label">
           <path
-            class="line"
+            :d="line.areaPath"
+            :fill="line.color"
+            fill-opacity="0.2"
+            stroke="none"
+          />
+        </g>
+
+        <!-- lines -->
+        <g v-for="line in linesAndIntervals" :key="line.label">
+          <path
             :d="line.path"
             :stroke="line.color"
             stroke-width="2.5px"
