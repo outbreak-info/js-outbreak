@@ -8,6 +8,7 @@ import { line, area } from "d3-shape";
 import { createDateArray } from "../utils/arrays";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
 import { quadtree } from "d3-quadtree";
+import CustomTooltipWithBarChart from "./CustomTooltipWithBarChart.vue";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -188,7 +189,6 @@ const handleMouseMove = (e) => {
 
   if (foundPoint) {
     hoveredDate.value = foundPoint.date;
-    console.log("data", hoveredDate.value);
   }
 };
 
@@ -344,6 +344,10 @@ const handleMouseLeave = () => {
         </g>
       </g>
     </svg>
+    <CustomTooltipWithBarChart v-if="hoveredDate"
+      :width="width"
+      :hoveredDate="hoveredDate"
+    />
   </div>
 </template>
 
