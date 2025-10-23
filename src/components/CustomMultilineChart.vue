@@ -1,14 +1,13 @@
-// src/components/CustomMultilineChart.vue
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale';
 import { min, max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
-import { line } from "d3-shape";
-import { area } from "d3-shape";
+import { line, area } from "d3-shape";
 import { createDateArray } from "../utils/arrays";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
+import { quadtree } from "d3-quadtree";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -30,6 +29,7 @@ const props = defineProps({
 });
 
 const width = ref(500);
+const hoveredDate = ref(null);
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -164,6 +164,37 @@ const linesAndIntervals = computed(() => {
     color: colorScale.value(series.label)
   }));
 });
+
+// Flat array of all data points with their dates for the quadtree
+const allDataPoints = computed(() => {
+  return xScaleDomain.value.map(date => ({
+    date,
+    x: xScale.value(date),
+    y: innerHeight.value / 2 // Use middle of chart for y position
+  }));
+});
+
+const quadtreeInstance = computed(() =>
+  quadtree()
+    .x(d => d.x)
+    .y(d => d.y)
+    .addAll(allDataPoints.value)
+);
+
+const handleMouseMove = (e) => {
+  const xPosition = e.offsetX - marginLeft;
+  const yPosition = e.offsetY - marginTop;
+  const foundPoint = quadtreeInstance.value.find(xPosition, yPosition);
+
+  if (foundPoint) {
+    hoveredDate.value = foundPoint.date;
+    console.log("data", hoveredDate.value);
+  }
+};
+
+const handleMouseLeave = () => {
+  hoveredDate.value = null;
+};
 </script>
 
 <template>
@@ -172,6 +203,8 @@ const linesAndIntervals = computed(() => {
       role="img"
       :width="width - containerMarginLeft - containerMarginRight"
       :height="height"
+      @mousemove="handleMouseMove"
+      @mouseleave="handleMouseLeave"
     >
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
         <!-- y-axis -->
@@ -235,10 +268,34 @@ const linesAndIntervals = computed(() => {
               y="10"
               dy="0.8em"
               text-anchor="middle"
-              fill="#2c3e50"
+              :fill="hoveredDate ? '#bdc3c7' : '#2c3e50'"
               font-size="14px"
             >
               {{ formatTime(parseTime(tick)) }}
+            </text>
+          </g>
+          <g v-if="hoveredDate"
+            :transform="`translate(${xScale(hoveredDate)}, 0)`"
+          >
+            <text
+              y="10"
+              dy="0.8em"
+              text-anchor="middle"
+              stroke="#ffffff"
+              stroke-width="4px"
+              font-size="14px"
+            >
+              {{ formatTime(parseTime(hoveredDate)) }}
+            </text>
+            <text
+              y="10"
+              dy="0.8em"
+              text-anchor="middle"
+              stroke="#000dcb"
+              stroke-width="1px"
+              font-size="14px"
+            >
+              {{ formatTime(parseTime(hoveredDate)) }}
             </text>
           </g>
         </g>
@@ -261,6 +318,28 @@ const linesAndIntervals = computed(() => {
             stroke-width="2.5px"
             fill="none"
             stroke-linecap="round"
+          />
+        </g>
+
+        <!-- vertical line -->
+        <g v-if="hoveredDate"
+          :transform="`translate(${xScale(hoveredDate)}, 0)`"
+        >
+          <line
+            x1="0"
+            x2="0"
+            :y1="0"
+            :y2="innerHeight"
+            stroke="#ffffff"
+            stroke-width="3px"
+          />
+          <line
+            x1="0"
+            x2="0"
+            :y1="0"
+            :y2="innerHeight + 6"
+            stroke="#000dcb"
+            stroke-width="2px"
           />
         </g>
       </g>
