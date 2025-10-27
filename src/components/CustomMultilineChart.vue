@@ -31,6 +31,7 @@ const props = defineProps({
 
 const width = ref(500);
 const hoveredDate = ref(null);
+const tooltipData = ref([]);
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -189,11 +190,23 @@ const handleMouseMove = (e) => {
 
   if (foundPoint) {
     hoveredDate.value = foundPoint.date;
+    tooltipData.value = props.data
+      .map(variant => {
+        const dataPoint = variant.data.find(d => d.date === hoveredDate.value);
+        return dataPoint ? {
+          label: variant.label,
+          date: dataPoint.date,
+          proportion: dataPoint.proportion
+        } : null;
+      })
+    .filter(Boolean)
+    console.log("tooltipData", tooltipData.value );
   }
 };
 
 const handleMouseLeave = () => {
   hoveredDate.value = null;
+  tooltipData.value = null;
 };
 </script>
 
@@ -274,7 +287,7 @@ const handleMouseLeave = () => {
               {{ formatTime(parseTime(tick)) }}
             </text>
           </g>
-          <g v-if="hoveredDate"
+          <g v-if="hoveredDate && tooltipData.length > 0"
             :transform="`translate(${xScale(hoveredDate)}, 0)`"
           >
             <text
@@ -322,7 +335,7 @@ const handleMouseLeave = () => {
         </g>
 
         <!-- vertical line -->
-        <g v-if="hoveredDate"
+        <g v-if="hoveredDate && tooltipData.length > 0"
           :transform="`translate(${xScale(hoveredDate)}, 0)`"
         >
           <line
@@ -344,9 +357,11 @@ const handleMouseLeave = () => {
         </g>
       </g>
     </svg>
-    <CustomTooltipWithBarChart v-if="hoveredDate"
+    <CustomTooltipWithBarChart v-if="hoveredDate && tooltipData.length > 0"
       :width="width"
       :hoveredDate="hoveredDate"
+      :tooltipData="tooltipData"
+      :colorScale="colorScale"
     />
   </div>
 </template>
