@@ -12,6 +12,12 @@ import CustomTooltipWithBarChart from "./CustomTooltipWithBarChart.vue";
 
 const props = defineProps({
   data: { type: Array, required: true },
+  setLabel: { type: String, default: "label" },
+  setData: { type: String, default: "data" },
+  dateKey: { type: String, default: "date" },
+  valueKey: { type: String, default: "proportion" },
+  lowerCIKey: { type: String, default: "proportion_ci_lower" },
+  upperCIKey: { type: String, default: "proportion_ci_upper" },
   xAxisLabel: { type: String, default: "Date" },
   yAxisLabel: { type: String, default: "Value" },
   height: { type: Number, default: 300 },
@@ -57,12 +63,19 @@ const handleResize = () => {
   }
 };
 
+const setLabelAccessor = (d) => d[props.setLabel];
+const setDataAccessor = (d) => d[props.setData];
+const xAccessor = (d) => d[props.dateKey];
+const yAccessor = (d) => d[props.valueKey];
+const lowerCIAccessor = (d) => d[props.lowerCIKey];
+const upperCIAccessor = (d) => d[props.upperCIKey];
+
 const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
 
 const uniqueLabels = computed(() => {
-  const labels = [...new Set(props.data.map(i => i.label))].sort((a, b) =>
+  const labels = [...new Set(props.data.map(setLabelAccessor))].sort((a, b) =>
     a.localeCompare(b)
   );
 
@@ -74,7 +87,7 @@ const uniqueLabels = computed(() => {
 });
 
 const dateRange = computed(() => {
-  const allDates = props.data.flatMap(item => item.data.map(d => new Date(d.date)));
+  const allDates = props.data.flatMap(item => setDataAccessor(item).map(d => new Date(xAccessor(d))));
   if (allDates.length === 0) return { earliest: null, latest: null };
 
   const earliest = new Date(Math.min(...allDates)).toISOString().split('T')[0];
@@ -144,26 +157,26 @@ const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels
 // Line generation
 const lineGenerator = computed(() =>
   line()
-    .x(d => xScale.value(d.date))
-    .y(d => yScale.value(d.proportion * 100))
-    .defined(d => !Number.isNaN(d.proportion))
+    .x(d => xScale.value(xAccessor(d)))
+    .y(d => yScale.value(100 * yAccessor(d)))
+    .defined(d => !Number.isNaN(yAccessor))
 );
 
 // Area generation for confidence intervals
 const areaGenerator = computed(() =>
   area()
-    .x(d => xScale.value(d.date))
-    .y0(d => yScale.value(d.proportion_ci_lower * 100))
-    .y1(d => yScale.value(d.proportion_ci_upper * 100))
-    .defined(d => !Number.isNaN(d.proportion_ci_lower) && !Number.isNaN(d.proportion_ci_upper))
+    .x(d => xScale.value(xAccessor(d)))
+    .y0(d => yScale.value(100 * lowerCIAccessor(d)))
+    .y1(d => yScale.value(100 * upperCIAccessor(d)))
+    .defined(d => !Number.isNaN(lowerCIAccessor(d)) && !Number.isNaN(upperCIAccessor(d)))
 );
 
 const linesAndIntervals = computed(() => {
   return props.data.map(series => ({
-    label: series.label,
-    path: lineGenerator.value(series.data),
-    areaPath: areaGenerator.value(series.data),
-    color: colorScale.value(series.label)
+    label: setLabelAccessor(series),
+    path: lineGenerator.value(setDataAccessor(series)),
+    areaPath: areaGenerator.value(setDataAccessor(series)),
+    color: colorScale.value(setLabelAccessor(series))
   }));
 });
 
@@ -191,12 +204,12 @@ const handleMouseMove = (e) => {
   if (foundPoint) {
     hoveredDate.value = foundPoint.date;
     tooltipData.value = props.data
-      .map(variant => {
-        const dataPoint = variant.data.find(d => d.date === hoveredDate.value);
+      .map(series => {
+        const dataPoint = setDataAccessor(series).find(d => xAccessor(d) === hoveredDate.value);
         return dataPoint ? {
-          label: variant.label,
-          date: dataPoint.date,
-          proportion: dataPoint.proportion
+          label: setLabelAccessor(series),
+          date: xAccessor(dataPoint),
+          proportion: yAccessor(dataPoint)
         } : null;
       })
     .filter(Boolean)
@@ -314,7 +327,7 @@ const handleMouseLeave = () => {
         </g>
 
         <!-- confidence intervals -->
-        <g v-for="line in linesAndIntervals" :key="'ci-' + line.label">
+        <g v-for="line in linesAndIntervals" :key="'ci-' + setLabelAccessor(line)">
           <path
             :d="line.areaPath"
             :fill="line.color"
@@ -324,7 +337,7 @@ const handleMouseLeave = () => {
         </g>
 
         <!-- lines -->
-        <g v-for="line in linesAndIntervals" :key="line.label">
+        <g v-for="line in linesAndIntervals" :key="setLabelAccessor(line)">
           <path
             :d="line.path"
             :stroke="line.color"
