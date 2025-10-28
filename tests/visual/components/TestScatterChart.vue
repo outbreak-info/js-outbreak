@@ -7,7 +7,7 @@
         :data="chartData"
         :width="width"
         :height="height"
-        pointColor="currentColor"
+        :pointColor="currentColor"
         xKey="valueX"
         yKey="valueY"
         xLabel="valueX"
@@ -44,12 +44,30 @@
         maxXLabel="End"
       />
     </div>
+
+    <div>
+      <h2>Scatter Plot with Search Bar</h2>
+      <ScatterChartWithSearchBar
+        :data="chartData"
+        :xKey="'valueX'"
+        :yKey="'valueY'"
+        :searchKey="'valueX'"
+        :pointColor="currentColor"
+        :highlightColor=colorPalette[0]
+        :height="height"
+        :width="width"
+        xLabel="valueX"
+        yLabel="valueY"
+        searchPlaceholder="Search points..."
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import ScatterChart from '../../../src/components/ScatterChart.vue'
+import ScatterChartWithSearchBar from '../../../src/components/ScatterChartWithSearchBar.vue'
 import { colorPalette } from '../../../src/utils/colorSchemes'
 
 const width = ref(800)

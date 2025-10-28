@@ -12,6 +12,7 @@ const props = defineProps({
   xKey: { type: String, default: 'x' },
   yKey: { type: String, default: 'y' },
   pointColor: { type: String, default: defaultColor},
+  colorKey: { type: String, default: null },
   height: { type: Number, default: 500 },
   width: { type: Number, default: 800 },
   marginLeft: { type: Number, default: 50 },
@@ -83,7 +84,7 @@ function renderChart() {
     Plot.dot(props.data, { 
       x: props.xKey,
       y: props.yKey,
-      fill: props.pointColor
+      fill: props.colorKey ? props.colorKey : props.pointColor
     }),
     Plot.tip(props.data, Plot.pointer({
       x: props.xKey,
