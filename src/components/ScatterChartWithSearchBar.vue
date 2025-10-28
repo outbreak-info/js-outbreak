@@ -8,7 +8,7 @@
       :width="searchWidth"
     />
     <ScatterChart
-      :data="highlighData"
+      :data="highlightData"
       :xKey="xKey"
       :yKey="yKey"
       :pointColor="pointColor"
@@ -72,7 +72,7 @@ const props = defineProps({
 const searchQuery = ref('');
 
 // Enhance data with color information based on search
-const highlighData = computed(() => {
+const highlightData = computed(() => {
   if (!props.data) return [];
   
   if (!searchQuery.value) {
