@@ -9,7 +9,7 @@
         :yKey="'valueY'"
         :searchKey="'key'"
         :pointColor="currentColor"
-        :highlightColor=colorPalette[2]
+        :highlightColor="colorPalette[2]"
         :height="height"
         :width="width"
         xLabel="valueX"
