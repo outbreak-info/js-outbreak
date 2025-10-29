@@ -89,7 +89,7 @@ const highlightData = computed(() => {
     
     return {
       ...d,
-      _isHighlighted: isMatch,
+      _isHighlighted: isMatch, // Useful for debugging or further logic
       _color: isMatch ? props.highlightColor : props.pointColor
     };
   });
