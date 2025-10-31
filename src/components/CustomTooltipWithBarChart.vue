@@ -10,6 +10,7 @@ const props = defineProps({
   hoveredDate: String,
   tooltipData: Array,
   colorScale: Function,
+  barChartTitle: { type: String, default: "Prevalence" },
 });
 
 const formatTime = timeFormat('%b %e, %Y');
@@ -83,7 +84,7 @@ const xAccessorScaled = (d) => barChartXScale.value(xAccessor(d));
       <hr class="divider" />
     </div>
     <div class="bar-chart-wrapper">
-      <h1 class="bar-chart-title">Prevalence</h1>
+      <h1 class="bar-chart-title">{{ barChartTitle }}</h1>
       <svg :width="barChartWidth" :height="barChartHeight">
         <g
           :transform="`translate(${barChartMargin.left}, ${barChartMargin.top})`"
