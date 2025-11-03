@@ -376,6 +376,7 @@ const handleMouseLeave = () => {
       :width="width"
       :hoveredDate="hoveredDate"
       :tooltipData="tooltipData"
+      :xScale="xScale"
       :colorScale="colorScale"
       tooltipTitle="San Diego, CA, USA"
       barChartTitle="Prevalence"

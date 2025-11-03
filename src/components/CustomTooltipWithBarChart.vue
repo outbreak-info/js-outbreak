@@ -9,6 +9,7 @@ const props = defineProps({
   width: Number,
   hoveredDate: String,
   tooltipData: Array,
+  xScale: Function,
   colorScale: Function,
   tooltipTitle: { type: String, default: "San Diego, CA, USA" },
   barChartTitle: { type: String, default: "Prevalence" },
@@ -18,10 +19,31 @@ const formatTime = timeFormat('%b %e, %Y');
 const parseTime = timeParse('%Y-%m-%d');
 const formatValue = format(',.2f');
 
-const tooltipWidth = 320;
-const xPosition = 50;
-
 const xAccessor = d => +d.proportion; 
+
+const tooltipWidth = 320;
+const xPosForSmallScreens = 50;
+
+const dateIndex = computed(() =>
+  props.xScale.domain().indexOf(props.hoveredDate),
+);
+
+const dateArrayLength = props.xScale.domain().length;
+
+const midPoint = Math.floor(dateArrayLength / 2);
+
+const xPosition = computed(() => setXPosition())
+
+const setXPosition = () => {
+  let xPos;
+  if (props.width <= 700) {
+    xPos = xPosForSmallScreens;
+  } else xPos = dateIndex.value <= midPoint ?
+      props.xScale(props.hoveredDate) + xPosForSmallScreens :
+      props.xScale(props.hoveredDate) -
+        (tooltipWidth - xPosForSmallScreens);
+  return xPos;
+}
 
 const sortedTooltipData = computed(() => 
  props.tooltipData.sort((a, b) => {
@@ -67,23 +89,76 @@ const barChartYScale = computed(() =>
 );
 
 const xAccessorScaled = (d) => barChartXScale.value(xAccessor(d));
+
+// Tooltip inline styles
+const tooltipWrapperStyle = computed(() => ({
+  transform: `translate(${xPosition.value}px, 0px)`,
+  width: `${tooltipWidth}px`,
+  background: "#ffffff",
+  boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",
+  borderRadius: "3px",
+  position: "absolute",
+  padding: "0.5em",
+  textAlign: "left",
+  fontSize: "13px",
+  lineHeight: "18px",
+  zIndex: 1,
+  color: "#2c3e50",
+  pointerEvents: "none",
+}));
+
+const tooltipTitleStyle = {
+  fontWeight: "700",
+  fontSize: "14px",
+  lineHeight: "16px",
+};
+
+const tooltipDateStyle = {
+  fontSize: "12px",
+  textTransform: "uppercase",
+}
+
+const tooltipDividerStyle = {
+  borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+  marginTop: "5px",
+  marginBottom: "5px",
+};
+
+const tooltipGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr auto",
+  fontWeight: "400",
+  marginBottom: "5px",
+};
+
+const tooltipDataStyle = {
+  textAlign: "right",
+};
+
+const barChartWrapperStyle = {
+  fontWeight: "400",
+}
+
+const barChartTitleStyle = {
+  fontWeight: "700",
+  fontSize: "14px",
+}
 </script>
 
 <template>
-  <div
-    class="tooltip-wrapper"
-    :style="{
-      transform: `translate(${xPosition}px, 0px)`,
-      width: `${tooltipWidth}px`,
-    }"
-  >
-    <div class="title"> {{ tooltipTitle }} </div>
-    <div class="date">
-      {{ formatTime(parseTime(hoveredDate)) }}
-      <hr class="divider" />
+  <div :style="tooltipWrapperStyle">
+    <div :style="tooltipTitleStyle"> 
+      {{ tooltipTitle }} 
     </div>
-    <div class="bar-chart-wrapper">
-      <h1 class="bar-chart-title">{{ barChartTitle }}</h1>
+    <div :style="tooltipDateStyle">
+      {{ formatTime(parseTime(hoveredDate)) }}
+      <hr :style="tooltipDividerStyle" />
+    </div>
+    <div :style="barChartWrapperStyle">
+      <h1 :style="barChartTitleStyle">
+        {{ barChartTitle }}
+      </h1>
       <svg :width="barChartWidth" :height="barChartHeight">
         <g
           :transform="`translate(${barChartMargin.left}, ${barChartMargin.top})`"
@@ -125,40 +200,3 @@ const xAccessorScaled = (d) => barChartXScale.value(xAccessor(d));
     </div>
   </div>
 </template>
-
-<style scoped>
-.tooltip-wrapper {
-  background: #ffffff;
-  box-shadow: 1px 2px 7px rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-  position: absolute;
-  padding: 0.5em;
-  text-align: left;
-  font-size: 12px;
-  line-height: 18px;
-  z-index: 2;
-  color: '#2c3e50';
-}
-.title {
-  font-weight: 700;
-  font-size: 14px;
-  line-height: 16px;
-}
-.date {
-  font-size: 12px;
-  text-transform: uppercase;
-}
-.divider {
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  margin-top: 5px;
-  margin-bottom: 5px;
-}
-.bar-chart-wrapper {
-  font-weight: 400;
-}
-.bar-chart-title {
-  font-weight: 700;
-  font-size: 14px;
-}
-</style>
