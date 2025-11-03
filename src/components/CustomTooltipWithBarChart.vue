@@ -10,6 +10,7 @@ const props = defineProps({
   hoveredDate: String,
   tooltipData: Array,
   colorScale: Function,
+  tooltipTitle: { type: String, default: "San Diego, CA, USA" },
   barChartTitle: { type: String, default: "Prevalence" },
 });
 
@@ -76,9 +77,7 @@ const xAccessorScaled = (d) => barChartXScale.value(xAccessor(d));
       width: `${tooltipWidth}px`,
     }"
   >
-    <div class="title"> 
-      San Diego, CA, USA
-    </div>
+    <div class="title"> {{ tooltipTitle }} </div>
     <div class="date">
       {{ formatTime(parseTime(hoveredDate)) }}
       <hr class="divider" />

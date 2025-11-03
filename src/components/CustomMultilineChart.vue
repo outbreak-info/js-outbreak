@@ -21,6 +21,8 @@ const props = defineProps({
   xAxisLabel: { type: String, default: "Date" },
   yAxisLabel: { type: String, default: "Value" },
   height: { type: Number, default: 300 },
+  tooltipTitle: { type: String, default: "San Diego, CA, USA" },
+  barChartTitle: { type: String, default: "Prevalence" },
 
   // Margins
   marginTop: { type: Number, default: 35 },
@@ -375,6 +377,8 @@ const handleMouseLeave = () => {
       :hoveredDate="hoveredDate"
       :tooltipData="tooltipData"
       :colorScale="colorScale"
+      tooltipTitle="San Diego, CA, USA"
+      barChartTitle="Prevalence"
     />
   </div>
 </template>
