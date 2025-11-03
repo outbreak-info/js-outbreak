@@ -7,7 +7,7 @@
         :data="chartData"
         :width="width"
         :height="height"
-        pointColor="currentColor"
+        :pointColor="currentColor"
         xKey="valueX"
         yKey="valueY"
         xLabel="valueX"
