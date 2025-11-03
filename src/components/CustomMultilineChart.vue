@@ -18,8 +18,8 @@ const props = defineProps({
   valueKey: { type: String, default: "proportion" },
   lowerCIKey: { type: String, default: "proportion_ci_lower" },
   upperCIKey: { type: String, default: "proportion_ci_upper" },
-  xAxisLabel: { type: String, default: "Date" },
-  yAxisLabel: { type: String, default: "Value" },
+  xAxisLabel: { type: String, default: "date" },
+  yAxisLabel: { type: String, default: "prevalence (%)" },
   height: { type: Number, default: 300 },
   tooltipTitle: { type: String, default: "San Diego, CA, USA" },
   barChartTitle: { type: String, default: "Prevalence" },
@@ -28,7 +28,7 @@ const props = defineProps({
   marginTop: { type: Number, default: 35 },
   marginRight: { type: Number, default: 130 },
   marginBottom: { type: Number, default: 50 },
-  marginLeft: { type: Number, default: 40 },
+  marginLeft: { type: Number, default: 70 },
 
   // Container margins
   containerMarginTop: { type: Number, default: 0 },
