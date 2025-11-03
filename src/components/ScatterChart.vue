@@ -84,7 +84,7 @@ function renderChart() {
     Plot.dot(props.data, { 
       x: props.xKey,
       y: props.yKey,
-      fill: props.colorKey ? props.colorKey : props.pointColor
+      fill: props.colorKey ? (d => d[props.colorKey]) : props.pointColor
     }),
     Plot.tip(props.data, Plot.pointer({
       x: props.xKey,
