@@ -9,6 +9,7 @@ import { createDateArray } from "../utils/arrays";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
 import { quadtree } from "d3-quadtree";
 import CustomTooltipWithBarChart from "./CustomTooltipWithBarChart.vue";
+import CustomCategoricalLegend from "./CustomCategoricalLegend.vue";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -227,6 +228,10 @@ const handleMouseLeave = () => {
 
 <template>
   <div class="chart-container" :style="containerMargins">
+    <CustomCategoricalLegend
+      :categories="uniqueLabels"
+      :colorScale="colorScale"
+    />
     <svg
       role="img"
       :width="width - containerMarginLeft - containerMarginRight"
