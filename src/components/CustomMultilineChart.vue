@@ -165,20 +165,34 @@ const lineGenerator = computed(() =>
     .defined(d => !Number.isNaN(yAccessor))
 );
 
+// Check whether any confidence intervals are present
+const hasConfidenceIntervals = computed(() => {
+  return props.data.some(series =>
+    setDataAccessor(series).some(d =>
+      d[props.lowerCIKey] != null &&
+      d[props.upperCIKey] != null &&
+      !Number.isNaN(d[props.lowerCIKey]) &&
+      !Number.isNaN(d[props.upperCIKey])
+    )
+  );
+});
+
 // Area generation for confidence intervals
-const areaGenerator = computed(() =>
-  area()
+const areaGenerator = computed(() => {
+  if (!hasConfidenceIntervals.value) return null;
+
+  return area()
     .x(d => xScale.value(xAccessor(d)))
     .y0(d => yScale.value(100 * lowerCIAccessor(d)))
     .y1(d => yScale.value(100 * upperCIAccessor(d)))
-    .defined(d => !Number.isNaN(lowerCIAccessor(d)) && !Number.isNaN(upperCIAccessor(d)))
-);
+    .defined(d => !Number.isNaN(lowerCIAccessor(d)) && !Number.isNaN(upperCIAccessor(d)));
+});
 
 const linesAndIntervals = computed(() => {
   return props.data.map(series => ({
     label: setLabelAccessor(series),
     path: lineGenerator.value(setDataAccessor(series)),
-    areaPath: areaGenerator.value(setDataAccessor(series)),
+    areaPath: areaGenerator.value ? areaGenerator.value(setDataAccessor(series)) : null,
     color: colorScale.value(setLabelAccessor(series))
   }));
 });
@@ -334,13 +348,16 @@ const handleMouseLeave = () => {
         </g>
 
         <!-- confidence intervals -->
-        <g v-for="line in linesAndIntervals" :key="'ci-' + setLabelAccessor(line)">
-          <path
-            :d="line.areaPath"
-            :fill="line.color"
-            fill-opacity="0.2"
-            stroke="none"
-          />
+        <g v-if="hasConfidenceIntervals">
+          <g v-for="line in linesAndIntervals" :key="'ci-' + setLabelAccessor(line)">
+            <path
+              v-if="line.areaPath"
+              :d="line.areaPath"
+              :fill="line.color"
+              fill-opacity="0.2"
+              stroke="none"
+            />
+          </g>
         </g>
 
         <!-- lines -->
