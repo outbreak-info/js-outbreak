@@ -238,6 +238,10 @@ const handleMouseLeave = () => {
   hoveredDate.value = null;
   tooltipData.value = null;
 };
+
+const ariaLabel = computed(
+  () => `Multiline chart showing ${props.yAxisLabel} versus ${props.xAxisLabel}.`
+);
 </script>
 
 <template>
@@ -248,6 +252,7 @@ const handleMouseLeave = () => {
     />
     <svg
       role="img"
+      :aria-label="ariaLabel"
       :width="width - containerMarginLeft - containerMarginRight"
       :height="height"
       @mousemove="handleMouseMove"
