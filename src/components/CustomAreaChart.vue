@@ -140,6 +140,10 @@ const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels
     v-if="numOfUniqueWeeks > 1"
     class="stacked-area-chart-wrapper">
       <div>
+        <CustomCategoricalLegend
+          :categories="uniqueLabels"
+          :colorScale="colorScale"
+        />
         <svg
           role="img"
           :width="width - containerMarginLeft - containerMarginRight"
