@@ -74,6 +74,8 @@ const weekAccessor = (d) => d[props.weekKey];
 const labelAccessor = (d) => d[props.labelKey];
 
 const formatValueKey = format(".2s");
+const parseTime = timeParse("%Y-%m-%d");
+const formatTime = timeFormat("%b %e");
 
 const uniqueLabels = computed(() =>
   [...new Set(props.aggregatedData.map(labelAccessor))]
@@ -121,6 +123,35 @@ const yScale = scaleLinear()
   .domain([0, 100])
   .range([innerHeight.value, 0])
   .nice();
+
+const allXTicks = computed(() => xScale.value.domain());
+
+const filterXTicks = (numberOfXTicks, width) => {
+  if (numberOfXTicks > 270) {
+    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 60));
+    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 90));
+    else return allXTicks.value.filter((d, i) => !(i % 210));
+  }
+  if (numberOfXTicks > 210) {
+    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 30));
+    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 60));
+    else return allXTicks.value.filter((d, i) => !(i % 90));
+  }
+  if (numberOfXTicks > 120) {
+    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 21));
+    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 30));
+    else return allXTicks.value.filter((d, i) => !(i % 60));
+  } else {
+    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 14));
+    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 21));
+    else if (width > 400) return allXTicks.value.filter((d, i) => !(i % 30));
+    else return allXTicks.value.filter((d, i) => !(i % 45));
+  }
+};
+
+const xTicksToBeRendered = computed(() =>
+  filterXTicks(xScaleDomain.value.length, innerWidth.value)
+);
 
 const yTicks = computed(() => {
   const numberOfYTicks = Math.floor(innerHeight.value / 40);
@@ -194,6 +225,38 @@ const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels
                 </text>
               </g>
             </g>
+            
+            <!-- x-axis -->
+            <g :transform="`translate(0, ${innerHeight})`">
+              <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
+              <text
+                :x="innerWidth / 2"
+                text-anchor="middle"
+                y="45"
+                fill="#2c3e50"
+                font-size="14px"
+                font-weight="700"
+              >
+                {{ xAxisLabel }}
+              </text>
+              <g
+                v-for="(tick, index) in xTicksToBeRendered"
+                :key="'tick-' + index"
+                :transform="`translate(${xScale(tick)}, 0)`"
+              >
+                <line :y1="0" :y2="6" stroke="#bdc3c7" />
+                <text
+                  y="10"
+                  dy="0.8em"
+                  text-anchor="middle"
+                  fill="#2c3e50"
+                  font-size="14px"
+                >
+                  {{ formatTime(parseTime(tick)) }}
+                </text>
+              </g>
+            </g>
+
             <g>
               <path
                 v-for="(s, index) in series" 
