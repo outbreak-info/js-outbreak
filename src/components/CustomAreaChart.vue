@@ -23,11 +23,11 @@ const props = defineProps({
   weekKey: { type: String, default: "epiweek" },
   xAxisLabel: { type: String, default: "last epiweek day" },
   yAxisLabel: { type: String, default: "prevalence (%)" },
-  height: { type: Number, default: 300 },
+  height: { type: Number, default: 315 },
   barChartTitle: { type: String, default: "Average prevalence" },
 
   // Margins
-  marginTop: { type: Number, default: 35 },
+  marginTop: { type: Number, default: 50 },
   marginRight: { type: Number, default: 130 },
   marginBottom: { type: Number, default: 50 },
   marginLeft: { type: Number, default: 70 },
@@ -72,6 +72,8 @@ const weekEndAccessor = (d) => d[props.weekEndKey];
 const yAccessor = (d) => d[props.valueKey];
 const weekAccessor = (d) => d[props.weekKey];
 const labelAccessor = (d) => d[props.labelKey];
+
+const formatValueKey = format(".2s");
 
 const uniqueLabels = computed(() =>
   [...new Set(props.aggregatedData.map(labelAccessor))]
@@ -120,6 +122,11 @@ const yScale = scaleLinear()
   .range([innerHeight.value, 0])
   .nice();
 
+const yTicks = computed(() => {
+  const numberOfYTicks = Math.floor(innerHeight.value / 40);
+  return yScale.ticks(numberOfYTicks);
+});
+
 const areaGenerator = computed(() => 
   area()
     .x((d) => {
@@ -149,7 +156,44 @@ const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels
           :width="width - containerMarginLeft - containerMarginRight"
           :height="height"
         >
-          <g :transform="`translate(${marginLeft}, ${marginTop})`">      
+          <g :transform="`translate(${marginLeft}, ${marginTop})`">
+            <!-- y-axis -->
+            <g>
+              <line
+                x1="0"
+                x2="0"
+                :y1="0"
+                :y2="innerHeight"
+                stroke="#bdc3c7"
+                stroke-width="1"
+              />
+              <text
+                x="-12"
+                y="-25"
+                text-anchor="middle"
+                fill="#2c3e50"
+                font-size="14px"
+                font-weight="700"
+              >
+                {{ yAxisLabel }}
+              </text>
+              <g
+                v-for="tick in yTicks"
+                :key="tick"
+                :transform="`translate(0, ${yScale(tick)})`"
+              >
+                <line x1="0" x2="-6" stroke="#bdc3c7" stroke-width="1" />
+                <text
+                  x="-10"
+                  dy="0.32em"
+                  text-anchor="end"
+                  fill="#2c3e50"
+                  font-size="14px"
+                >
+                  {{ tick === 0 ? 0 : formatValueKey(tick) }}
+                </text>
+              </g>
+            </g>
             <g>
               <path
                 v-for="(s, index) in series" 
