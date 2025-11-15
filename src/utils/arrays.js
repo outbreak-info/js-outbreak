@@ -32,3 +32,40 @@ export const createDateArray = (startDateStr, endDateStr) => {
 
   return result;
 };
+
+// find week end 
+export const findWeekEnd = (week, dataArray, weekAccessor, weekEndAccessor) => {
+  const result = dataArray.find(item => weekAccessor(item) === week);
+  return result ? weekEndAccessor(result) : null;
+};
+
+// create array used to build the stacked area chart
+export const createStackedAreaArray = (data, uniqueLabels, weekAccessor, 
+  weekStartAccessor, weekEndAccessor, labelAccessor, yAccessor) => {
+  // initialize wideData object
+  const wideData = {};
+
+  data.forEach(item => {
+    if (!wideData[weekAccessor(item)]) {
+      // initialize a new entry for this week
+      wideData[weekAccessor(item)] = {
+        epiweek: weekAccessor(item),
+        week_end: weekEndAccessor(item),
+        week_start: weekStartAccessor(item)
+      };
+
+      // set all label names to 0
+      uniqueLabels.forEach(label => {
+        wideData[weekAccessor(item)][label] = 0;
+      });
+    }
+
+    // set the mean_lineage_prevalence 
+    wideData[weekAccessor(item)][labelAccessor(item)] = yAccessor(item);
+  });
+
+  // convert wideData object to an array
+  const wideDataArray = Object.values(wideData);
+
+  return wideDataArray;
+};
