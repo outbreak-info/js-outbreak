@@ -130,7 +130,7 @@ const yTicks = computed(() => {
 const areaGenerator = computed(() => 
   area()
     .x((d) => {
-      return xScale.value(d.data.week_end); 
+      return xScale.value(weekEndAccessor(d.data));
     })
     .y1((d) => yScale(d[1]))
     .y0((d) => yScale(d[0]))
