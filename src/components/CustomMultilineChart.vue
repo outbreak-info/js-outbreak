@@ -230,7 +230,6 @@ const handleMouseMove = (e) => {
         } : null;
       })
     .filter(Boolean)
-    console.log("tooltipData", tooltipData.value );
   }
 };
 

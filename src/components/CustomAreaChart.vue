@@ -23,7 +23,7 @@ const props = defineProps({
   weekKey: { type: String, default: "epiweek" },
   xAxisLabel: { type: String, default: "last epiweek day" },
   yAxisLabel: { type: String, default: "prevalence (%)" },
-  height: { type: Number, default: 315 },
+  height: { type: Number, default: 330 },
   barChartTitle: { type: String, default: "Average prevalence" },
 
   // Margins
@@ -41,6 +41,7 @@ const props = defineProps({
 
 const width = ref(500);
 const hoveredDate = ref(null);
+const hoveredPoint = ref(null);
 const tooltipData = ref([]);
 
 const containerMargins = computed(() => ({
@@ -97,6 +98,11 @@ const xScaleDomain = computed(() =>
 );
 
 const data = computed(() => createStackedAreaArray(props.aggregatedData, uniqueLabels.value, weekAccessor, weekStartAccessor, weekEndAccessor, labelAccessor, yAccessor));
+
+const datesWithData = computed(() => {
+  const dates = [...new Set(props.aggregatedData.map(d => d.week_end))];
+  return dates.sort((a, b) => new Date(a) - new Date(b));
+});
 
 const marginTop = props.marginTop;
 const marginRight = props.marginRight;
@@ -168,9 +174,52 @@ const areaGenerator = computed(() =>
     .curve(curveBundle.beta(1)),
 );
 
+const quadtreeInstance = computed (() => quadtree()
+  .x(d => xScale.value(weekEndAccessor(d)))
+  .y(d => yScale(yAccessor(d)))
+  .addAll(props.aggregatedData)
+);
+
 const colors = computed(() => selectAccessibleColorPalette(uniqueLabels.value));
 
 const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels.value));
+
+const handleMouseMove = e => {
+  const xPosition = e.offsetX - marginLeft;
+  const yPosition = e.offsetY - marginTop;
+
+  if (datesWithData.value.length > 0) {
+    // find the closest day with data (horizontal snapping)
+    hoveredDate.value = datesWithData.value.reduce((prev, curr) => {
+      const prevX = xScale.value(prev);
+      const currX = xScale.value(curr);
+      return Math.abs(prevX - xPosition) < Math.abs(currX - xPosition) ? prev : curr;
+    });
+
+    // filter data for the highlighted day
+    tooltipData.value = props.aggregatedData.filter(item =>
+      weekEndAccessor(item) === hoveredDate.value
+    );
+
+    // find a specific point for that day
+    hoveredPoint.value = quadtreeInstance.value.find(
+      xScale.value(hoveredDate.value),
+      yPosition,
+      30
+    );
+
+  } else {
+    hoveredPoint.value = null;
+    hoveredDate.value = null;
+    tooltipData.value = [];
+  }
+}
+
+const handleMouseLeave = () => {
+  hoveredPoint.value = null;
+  hoveredDate.value = null;
+  tooltipData.value = [];
+}
 </script>
 
 <template>
@@ -249,10 +298,34 @@ const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels
                   y="10"
                   dy="0.8em"
                   text-anchor="middle"
-                  fill="#2c3e50"
+                  :fill="hoveredDate ? '#bdc3c7' : '#2c3e50'"
                   font-size="14px"
                 >
                   {{ formatTime(parseTime(tick)) }}
+                </text>
+              </g>
+              <g v-if="hoveredPoint && tooltipData.length > 0"
+                :transform="`translate(${xScale(hoveredDate)}, 0)`"
+              >
+                <text
+                  y="10"
+                  dy="0.8em"
+                  text-anchor="middle"
+                  stroke="#ffffff"
+                  stroke-width="4px"
+                  font-size="14px"
+                >
+                  {{ formatTime(parseTime(hoveredDate)) }}
+                </text>
+                <text
+                  y="10"
+                  dy="0.8em"
+                  text-anchor="middle"
+                  stroke="#000dcb"
+                  stroke-width="1px"
+                  font-size="14px"
+                >
+                  {{ formatTime(parseTime(hoveredDate)) }}
                 </text>
               </g>
             </g>
@@ -266,6 +339,38 @@ const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels
                 :fill="colorScale(index)"
               />
             </g>
+
+            <!-- vertical line -->
+            <g v-if="hoveredPoint && tooltipData.length > 0"
+              :transform="`translate(${xScale(hoveredDate)}, 0)`"
+            >
+              <line
+                x1="0"
+                x2="0"
+                :y1="0"
+                :y2="innerHeight"
+                stroke="#ffffff"
+                stroke-width="3px"
+              />
+              <line
+                x1="0"
+                x2="0"
+                :y1="0"
+                :y2="innerHeight + 6"
+                stroke="#000dcb"
+                stroke-width="2px"
+              />
+            </g>
+            <rect
+              :width="innerWidth"
+              :height="innerHeight"
+              :x="0"
+              :y="0"
+              fill="#ffffff"
+              fill-opacity="0"
+              @mousemove="handleMouseMove"
+              @mouseleave="handleMouseLeave"
+            />
           </g>
         </svg>
       </div>
