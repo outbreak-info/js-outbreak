@@ -1,3 +1,4 @@
+// src/components/CustomAreaChart.vue
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale';
@@ -6,6 +7,7 @@ import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import { stack, area, curveBundle } from 'd3-shape';
 import { createDateArray, findWeekEnd, createStackedAreaArray } from "../utils/arrays";
+import { filterXTicks } from "../utils/tickFilters";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
 import { quadtree } from "d3-quadtree";
 import CustomTooltipWithBarChart from "./CustomTooltipWithBarChart.vue";
@@ -132,31 +134,8 @@ const yScale = scaleLinear()
 
 const allXTicks = computed(() => xScale.value.domain());
 
-const filterXTicks = (numberOfXTicks, width) => {
-  if (numberOfXTicks > 270) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 60));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 90));
-    else return allXTicks.value.filter((d, i) => !(i % 210));
-  }
-  if (numberOfXTicks > 210) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 30));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 60));
-    else return allXTicks.value.filter((d, i) => !(i % 90));
-  }
-  if (numberOfXTicks > 120) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 21));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 30));
-    else return allXTicks.value.filter((d, i) => !(i % 60));
-  } else {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 14));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 21));
-    else if (width > 400) return allXTicks.value.filter((d, i) => !(i % 30));
-    else return allXTicks.value.filter((d, i) => !(i % 45));
-  }
-};
-
 const xTicksToBeRendered = computed(() =>
-  filterXTicks(xScaleDomain.value.length, innerWidth.value)
+  filterXTicks(allXTicks.value, innerWidth.value)
 );
 
 const yTicks = computed(() => {
