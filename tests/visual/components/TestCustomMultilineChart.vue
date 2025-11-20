@@ -1,13 +1,13 @@
 <template>
   <div class="test-container">
     <h1>Custom Multiline Chart Component Test</h1>
-    <CustomMultilineChart :data="mockData"/>
+    <CustomMultiLineChart :data="mockData"/>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import CustomMultilineChart from "../../../src/components/CustomMultilineChart.vue";
+import CustomMultiLineChart from "../../../src/components/CustomMultiLineChart.vue";
 
 const mockData = ref([
   {

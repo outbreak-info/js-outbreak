@@ -107,7 +107,7 @@ export default {
     app.component("CollapseWrapper", CollapseWrapper);
     app.component("CustomScatterChart", CustomScatterChart);
     app.component("CustomHeatmap", CustomHeatmap);
-    app.component("CustomMultinelineChart", CustomMultiLineChart);
+    app.component("CustomMultiLineChart", CustomMultiLineChart);
     app.component("CustomCategoricalLegend", CustomCategoricalLegend);
   },
 };
