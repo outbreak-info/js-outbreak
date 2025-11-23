@@ -1,4 +1,3 @@
-// src/components/CustomAreaChart.vue
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale';
@@ -23,6 +22,7 @@ const props = defineProps({
   valueKey: { type: String, default: "mean_lineage_prevalence" },
   labelKey: { type: String, default: "name" },
   weekKey: { type: String, default: "epiweek" },
+  regionKey: { type: String, default: "geo_loc_region" },
   xAxisLabel: { type: String, default: "last epiweek day" },
   yAxisLabel: { type: String, default: "prevalence (%)" },
   height: { type: Number, default: 330 },
@@ -75,6 +75,7 @@ const weekEndAccessor = (d) => d[props.weekEndKey];
 const yAccessor = (d) => d[props.valueKey];
 const weekAccessor = (d) => d[props.weekKey];
 const labelAccessor = (d) => d[props.labelKey];
+const regionAccessor = (d) => d[props.regionKey];
 
 const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
@@ -205,154 +206,167 @@ const handleMouseLeave = () => {
   <div
     v-if="numOfUniqueWeeks > 1"
     class="stacked-area-chart-wrapper">
-      <div>
         <CustomCategoricalLegend
           :categories="uniqueLabels"
           :colorScale="colorScale"
         />
-        <svg
-          role="img"
-          :width="width - containerMarginLeft - containerMarginRight"
-          :height="height"
-        >
-          <g :transform="`translate(${marginLeft}, ${marginTop})`">
-            <!-- y-axis -->
-            <g>
-              <line
-                x1="0"
-                x2="0"
-                :y1="0"
-                :y2="innerHeight"
-                stroke="#bdc3c7"
-                stroke-width="1"
-              />
+      <svg
+        role="img"
+        :width="width - containerMarginLeft - containerMarginRight"
+        :height="height"
+      >
+        <g :transform="`translate(${marginLeft}, ${marginTop})`">
+          <!-- y-axis -->
+          <g>
+            <line
+              x1="0"
+              x2="0"
+              :y1="0"
+              :y2="innerHeight"
+              stroke="#bdc3c7"
+              stroke-width="1"
+            />
+            <text
+              x="-12"
+              y="-25"
+              text-anchor="middle"
+              fill="#2c3e50"
+              font-size="14px"
+              font-weight="700"
+            >
+              {{ yAxisLabel }}
+            </text>
+            <g
+              v-for="tick in yTicks"
+              :key="tick"
+              :transform="`translate(0, ${yScale(tick)})`"
+            >
+              <line x1="0" x2="-6" stroke="#bdc3c7" stroke-width="1" />
               <text
-                x="-12"
-                y="-25"
-                text-anchor="middle"
+                x="-10"
+                dy="0.32em"
+                text-anchor="end"
                 fill="#2c3e50"
                 font-size="14px"
-                font-weight="700"
               >
-                {{ yAxisLabel }}
+                {{ tick === 0 ? 0 : formatValueKey(tick) }}
               </text>
-              <g
-                v-for="tick in yTicks"
-                :key="tick"
-                :transform="`translate(0, ${yScale(tick)})`"
-              >
-                <line x1="0" x2="-6" stroke="#bdc3c7" stroke-width="1" />
-                <text
-                  x="-10"
-                  dy="0.32em"
-                  text-anchor="end"
-                  fill="#2c3e50"
-                  font-size="14px"
-                >
-                  {{ tick === 0 ? 0 : formatValueKey(tick) }}
-                </text>
-              </g>
             </g>
-            
-            <!-- x-axis -->
-            <g :transform="`translate(0, ${innerHeight})`">
-              <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
+          </g>
+          
+          <!-- x-axis -->
+          <g :transform="`translate(0, ${innerHeight})`">
+            <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
+            <text
+              :x="innerWidth / 2"
+              text-anchor="middle"
+              y="45"
+              fill="#2c3e50"
+              font-size="14px"
+              font-weight="700"
+            >
+              {{ xAxisLabel }}
+            </text>
+            <g
+              v-for="(tick, index) in xTicksToBeRendered"
+              :key="'tick-' + index"
+              :transform="`translate(${xScale(tick)}, 0)`"
+            >
+              <line :y1="0" :y2="6" stroke="#bdc3c7" />
               <text
-                :x="innerWidth / 2"
+                y="10"
+                dy="0.8em"
                 text-anchor="middle"
-                y="45"
-                fill="#2c3e50"
+                :fill="hoveredDate ? '#bdc3c7' : '#2c3e50'"
                 font-size="14px"
-                font-weight="700"
               >
-                {{ xAxisLabel }}
+                {{ formatTime(parseTime(tick)) }}
               </text>
-              <g
-                v-for="(tick, index) in xTicksToBeRendered"
-                :key="'tick-' + index"
-                :transform="`translate(${xScale(tick)}, 0)`"
-              >
-                <line :y1="0" :y2="6" stroke="#bdc3c7" />
-                <text
-                  y="10"
-                  dy="0.8em"
-                  text-anchor="middle"
-                  :fill="hoveredDate ? '#bdc3c7' : '#2c3e50'"
-                  font-size="14px"
-                >
-                  {{ formatTime(parseTime(tick)) }}
-                </text>
-              </g>
-              <g v-if="hoveredPoint && tooltipData.length > 0"
-                :transform="`translate(${xScale(hoveredDate)}, 0)`"
-              >
-                <text
-                  y="10"
-                  dy="0.8em"
-                  text-anchor="middle"
-                  stroke="#ffffff"
-                  stroke-width="4px"
-                  font-size="14px"
-                >
-                  {{ formatTime(parseTime(hoveredDate)) }}
-                </text>
-                <text
-                  y="10"
-                  dy="0.8em"
-                  text-anchor="middle"
-                  stroke="#000dcb"
-                  stroke-width="1px"
-                  font-size="14px"
-                >
-                  {{ formatTime(parseTime(hoveredDate)) }}
-                </text>
-              </g>
             </g>
-
-            <g>
-              <path
-                v-for="(s, index) in series" 
-                :key="'s-' + index"
-                :d="areaGenerator(s)"
-                stroke="none"
-                :fill="colorScale(index)"
-              />
-            </g>
-
-            <!-- vertical line -->
             <g v-if="hoveredPoint && tooltipData.length > 0"
               :transform="`translate(${xScale(hoveredDate)}, 0)`"
             >
-              <line
-                x1="0"
-                x2="0"
-                :y1="0"
-                :y2="innerHeight"
+              <text
+                y="10"
+                dy="0.8em"
+                text-anchor="middle"
                 stroke="#ffffff"
-                stroke-width="3px"
-              />
-              <line
-                x1="0"
-                x2="0"
-                :y1="0"
-                :y2="innerHeight + 6"
+                stroke-width="4px"
+                font-size="14px"
+              >
+                {{ formatTime(parseTime(hoveredDate)) }}
+              </text>
+              <text
+                y="10"
+                dy="0.8em"
+                text-anchor="middle"
                 stroke="#000dcb"
-                stroke-width="2px"
-              />
+                stroke-width="1px"
+                font-size="14px"
+              >
+                {{ formatTime(parseTime(hoveredDate)) }}
+              </text>
             </g>
-            <rect
-              :width="innerWidth"
-              :height="innerHeight"
-              :x="0"
-              :y="0"
-              fill="#ffffff"
-              fill-opacity="0"
-              @mousemove="handleMouseMove"
-              @mouseleave="handleMouseLeave"
+          </g>
+
+          <g>
+            <path
+              v-for="(s, index) in series" 
+              :key="'s-' + index"
+              :d="areaGenerator(s)"
+              stroke="none"
+              :fill="colorScale(index)"
             />
           </g>
-        </svg>
-      </div>
+
+          <!-- vertical line -->
+          <g v-if="hoveredPoint && tooltipData.length > 0"
+            :transform="`translate(${xScale(hoveredDate)}, 0)`"
+          >
+            <line
+              x1="0"
+              x2="0"
+              :y1="0"
+              :y2="innerHeight"
+              stroke="#ffffff"
+              stroke-width="3px"
+            />
+            <line
+              x1="0"
+              x2="0"
+              :y1="0"
+              :y2="innerHeight + 6"
+              stroke="#000dcb"
+              stroke-width="2px"
+            />
+          </g>
+          <rect
+            :width="innerWidth"
+            :height="innerHeight"
+            :x="0"
+            :y="0"
+            fill="#ffffff"
+            fill-opacity="0"
+            @mousemove="handleMouseMove"
+            @mouseleave="handleMouseLeave"
+          />
+        </g>
+      </svg>
+      <CustomTooltipWithBarChart 
+        v-if="hoveredDate && tooltipData.length > 0"
+        :width="width"
+        :hoveredDate="hoveredDate"
+        :tooltipData="tooltipData"
+        :xScale="xScale"
+        :xAccessor="yAccessor"
+        :labelAccessor="labelAccessor"
+        :colorScale="colorScale"
+        :weekAccessor="weekAccessor"
+        :weekStartAccessor="weekStartAccessor"
+        :weekEndAccessor="weekEndAccessor"
+        :regionAccessor="regionAccessor"
+        barChartTitle="Average prevalence"
+      />
     </div>
 </template>
 

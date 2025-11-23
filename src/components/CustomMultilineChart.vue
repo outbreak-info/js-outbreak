@@ -1,4 +1,3 @@
-// src/components/CustomMultilineChart.vue
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale';
@@ -377,16 +376,20 @@ const ariaLabel = computed(
         </g>
       </g>
     </svg>
-    <CustomTooltipWithBarChart v-if="hoveredDate && tooltipData.length > 0"
+    <CustomTooltipWithBarChart 
+      v-if="hoveredDate && tooltipData.length > 0"
       :width="width"
       :hoveredDate="hoveredDate"
       :tooltipData="tooltipData"
       :xScale="xScale"
+      :xAccessor="yAccessor"
+      :labelAccessor="setLabelAccessor"
       :colorScale="colorScale"
       tooltipTitle="San Diego, CA, USA"
       barChartTitle="Prevalence"
     />
   </div>
+  
 </template>
 
 <style scoped>

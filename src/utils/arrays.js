@@ -39,6 +39,12 @@ export const findWeekEnd = (week, dataArray, weekAccessor, weekEndAccessor) => {
   return result ? weekEndAccessor(result) : null;
 };
 
+// find week 
+export const findWeek = (week_end, dataArray, weekAccessor, weekEndAccessor) => {
+  const result = dataArray.find(item => weekEndAccessor(item) === week_end);
+  return result ? weekAccessor(result) : null;
+}
+
 // create array used to build the stacked area chart
 export const createStackedAreaArray = (data, uniqueLabels, weekAccessor, 
   weekStartAccessor, weekEndAccessor, labelAccessor, yAccessor) => {
