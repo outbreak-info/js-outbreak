@@ -8,7 +8,6 @@ import { stack, area, curveBundle } from 'd3-shape';
 import { createDateArray, findWeekEnd, createStackedAreaArray } from "../utils/arrays";
 import { filterXTicks } from "../utils/tickFilters";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
-import { quadtree } from "d3-quadtree";
 import CustomTooltipWithBarChart from "./CustomTooltipWithBarChart.vue";
 import CustomCategoricalLegend from "./CustomCategoricalLegend.vue";
 
@@ -154,12 +153,6 @@ const areaGenerator = computed(() =>
     .curve(curveBundle.beta(1)),
 );
 
-const quadtreeInstance = computed (() => quadtree()
-  .x(d => xScale.value(weekEndAccessor(d)))
-  .y(d => yScale(yAccessor(d)))
-  .addAll(props.aggregatedData)
-);
-
 const colors = computed(() => selectAccessibleColorPalette(uniqueLabels.value));
 
 const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels.value));
@@ -169,34 +162,25 @@ const handleMouseMove = e => {
   const yPosition = e.offsetY - marginTop;
 
   if (datesWithData.value.length > 0) {
-    // find the closest day with data (horizontal snapping)
+    // find the closest date with data (horizontal snapping)
     hoveredDate.value = datesWithData.value.reduce((prev, curr) => {
       const prevX = xScale.value(prev);
       const currX = xScale.value(curr);
       return Math.abs(prevX - xPosition) < Math.abs(currX - xPosition) ? prev : curr;
     });
 
-    // filter data for the highlighted day
+    // filter data for the hovered date
     tooltipData.value = props.aggregatedData.filter(item =>
       weekEndAccessor(item) === hoveredDate.value
     );
 
-    // find a specific point for that day
-    hoveredPoint.value = quadtreeInstance.value.find(
-      xScale.value(hoveredDate.value),
-      yPosition,
-      30
-    );
-
   } else {
-    hoveredPoint.value = null;
     hoveredDate.value = null;
     tooltipData.value = [];
   }
 }
 
 const handleMouseLeave = () => {
-  hoveredPoint.value = null;
   hoveredDate.value = null;
   tooltipData.value = [];
 }
@@ -283,7 +267,7 @@ const handleMouseLeave = () => {
                 {{ formatTime(parseTime(tick)) }}
               </text>
             </g>
-            <g v-if="hoveredPoint && tooltipData.length > 0"
+            <g v-if="hoveredDate && tooltipData.length > 0"
               :transform="`translate(${xScale(hoveredDate)}, 0)`"
             >
               <text
@@ -320,7 +304,7 @@ const handleMouseLeave = () => {
           </g>
 
           <!-- vertical line -->
-          <g v-if="hoveredPoint && tooltipData.length > 0"
+          <g v-if="hoveredDate && tooltipData.length > 0"
             :transform="`translate(${xScale(hoveredDate)}, 0)`"
           >
             <line
