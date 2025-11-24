@@ -5,7 +5,7 @@ import { min, max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import { line, area } from "d3-shape";
-import { createDateArray } from "../utils/arrays";
+import { createDateArray, scaleValues } from "../utils/arrays";
 import { filterXTicks } from "../utils/tickFilters";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
 import { quadtree } from "d3-quadtree";
@@ -135,17 +135,21 @@ const colors = computed(() => selectAccessibleColorPalette(uniqueLabels.value));
 
 const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels.value));
 
-// Line generation
+// multiply values by 100
+const scaledData = computed(() => 
+  scaleValues(props.data, 100, yAccessor, lowerCIAccessor, upperCIAccessor));
+
+// line generation
 const lineGenerator = computed(() =>
   line()
     .x(d => xScale.value(xAccessor(d)))
-    .y(d => yScale.value(100 * yAccessor(d)))
+    .y(d => yScale.value(yAccessor(d)))
     .defined(d => !Number.isNaN(yAccessor))
 );
 
-// Check whether any confidence intervals are present
+// check whether any confidence intervals are present
 const hasConfidenceIntervals = computed(() => {
-  return props.data.some(series =>
+  return scaledData.value.some(series =>
     setDataAccessor(series).some(d =>
       d[props.lowerCIKey] != null &&
       d[props.upperCIKey] != null &&
@@ -155,19 +159,19 @@ const hasConfidenceIntervals = computed(() => {
   );
 });
 
-// Area generation for confidence intervals
+// area generation for confidence intervals
 const areaGenerator = computed(() => {
   if (!hasConfidenceIntervals.value) return null;
 
   return area()
     .x(d => xScale.value(xAccessor(d)))
-    .y0(d => yScale.value(100 * lowerCIAccessor(d)))
-    .y1(d => yScale.value(100 * upperCIAccessor(d)))
+    .y0(d => yScale.value(lowerCIAccessor(d)))
+    .y1(d => yScale.value(upperCIAccessor(d)))
     .defined(d => !Number.isNaN(lowerCIAccessor(d)) && !Number.isNaN(upperCIAccessor(d)));
 });
 
 const linesAndIntervals = computed(() => {
-  return props.data.map(series => ({
+  return scaledData.value.map(series => ({
     label: setLabelAccessor(series),
     path: lineGenerator.value(setDataAccessor(series)),
     areaPath: areaGenerator.value ? areaGenerator.value(setDataAccessor(series)) : null,
@@ -175,12 +179,12 @@ const linesAndIntervals = computed(() => {
   }));
 });
 
-// Flat array of all data points with their dates for the quadtree
+// flat array of all data points with their dates for the quadtree
 const allDataPoints = computed(() => {
   return xScaleDomain.value.map(date => ({
     date,
     x: xScale.value(date),
-    y: innerHeight.value / 2 // Use middle of chart for y position
+    y: innerHeight.value / 2 // use middle of chart for y position
   }));
 });
 
@@ -198,7 +202,7 @@ const handleMouseMove = (e) => {
 
   if (foundPoint) {
     hoveredDate.value = foundPoint.date;
-    tooltipData.value = props.data
+    tooltipData.value = scaledData.value
       .map(series => {
         const dataPoint = setDataAccessor(series).find(d => xAccessor(d) === hoveredDate.value);
         return dataPoint ? {

@@ -75,3 +75,47 @@ export const createStackedAreaArray = (data, uniqueLabels, weekAccessor,
 
   return wideDataArray;
 };
+
+// scale values in a nested data structure by a given factor
+export const scaleValues = (data, factor = 100, ...accessors) => {
+  // validate inputs
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    throw new Error('Data must be a non-empty array');
+  }
+
+  if (!accessors || accessors.length === 0) {
+    throw new Error('At least one accessor function must be provided');
+  }
+
+  // check whether accessors are functions
+  const invalidAccessors = accessors.filter(acc => typeof acc !== 'function');
+  if (invalidAccessors.length > 0) {
+    throw new Error('All accessors must be functions');
+  }
+
+  // scale the data
+  return data.map(item => ({
+    ...item,
+    data: item.data.map(dataPoint => {
+      const scaledPoint = { ...dataPoint };
+      
+      // apply scaling to each accessor
+      accessors.forEach(accessor => {
+        try {
+          const value = accessor(dataPoint);
+          if (typeof value === 'number' && !isNaN(value)) {
+            // find the property name by comparing the accessor's return value with object properties
+            const key = Object.keys(dataPoint).find(k => dataPoint[k] === value);
+            if (key) {
+              scaledPoint[key] = value * factor;
+            }
+          }
+        } catch (error) {
+          console.warn(`Accessor failed for data point:`, error);
+        }
+      });
+      
+      return scaledPoint;
+    })
+  }));
+};
