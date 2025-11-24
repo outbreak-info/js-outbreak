@@ -27,6 +27,7 @@ declare module "outbreakInfo" {
   export const CustomHeatmap: DefineComponent<{}, {}, any>;
   export const CustomMultiLineChart: DefineComponent<{}, {}, any>;
   export const CustomCategoricalLegend: DefineComponent<{}, {}, any>;
+  export const CustomAreaChart: DefineComponent<{}, {}, any>;
   export const HelpTooltip: DefineComponent<{}, {}, any>;
   export const TabsWrapper: DefineComponent<{}, {}, any>;
   export const InfoComponent: DefineComponent<{}, {}, any>;

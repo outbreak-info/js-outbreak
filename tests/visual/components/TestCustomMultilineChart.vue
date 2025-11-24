@@ -1,6 +1,6 @@
 <template>
   <div class="test-container">
-    <h1>Custom Multiline Chart Component Test</h1>
+    <h1>Custom Multi Line Chart Component Test</h1>
     <CustomMultiLineChart :data="mockData"/>
   </div>
 </template>

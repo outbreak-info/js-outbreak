@@ -4,30 +4,31 @@ import { scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale';
 import { min, max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
-import { line, area } from "d3-shape";
-import { createDateArray, scaleValues } from "../utils/arrays";
+import { stack, area, curveBundle } from 'd3-shape';
+import { createDateArray, findWeekEnd, createStackedAreaArray } from "../utils/arrays";
 import { filterXTicks } from "../utils/tickFilters";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
-import { quadtree } from "d3-quadtree";
 import CustomTooltipWithBarChart from "./CustomTooltipWithBarChart.vue";
 import CustomCategoricalLegend from "./CustomCategoricalLegend.vue";
 
 const props = defineProps({
-  data: { type: Array, required: true },
-  setLabel: { type: String, default: "label" },
-  setData: { type: String, default: "data" },
-  dateKey: { type: String, default: "date" },
-  valueKey: { type: String, default: "proportion" },
-  lowerCIKey: { type: String, default: "proportion_ci_lower" },
-  upperCIKey: { type: String, default: "proportion_ci_upper" },
-  xAxisLabel: { type: String, default: "date" },
+  aggregatedData: { type: Array, required: true },
+  firstWeek: { type: Number, required: true },
+  lastWeek: { type: Number, required: true },
+  areaChartRange: { type: Number, required: true },
+  weekStartKey: { type: String, default: "week_start" },
+  weekEndKey: { type: String, default: "week_end" },
+  valueKey: { type: String, default: "mean_lineage_prevalence" },
+  labelKey: { type: String, default: "name" },
+  weekKey: { type: String, default: "epiweek" },
+  regionKey: { type: String, default: "geo_loc_region" },
+  xAxisLabel: { type: String, default: "last epiweek day" },
   yAxisLabel: { type: String, default: "prevalence (%)" },
-  height: { type: Number, default: 300 },
-  tooltipTitle: { type: String, default: "San Diego, CA, USA" },
-  barChartTitle: { type: String, default: "Prevalence" },
+  height: { type: Number, default: 330 },
+  barChartTitle: { type: String, default: "Average prevalence" },
 
   // Margins
-  marginTop: { type: Number, default: 35 },
+  marginTop: { type: Number, default: 50 },
   marginRight: { type: Number, default: 130 },
   marginBottom: { type: Number, default: 50 },
   marginLeft: { type: Number, default: 70 },
@@ -41,6 +42,7 @@ const props = defineProps({
 
 const width = ref(500);
 const hoveredDate = ref(null);
+const hoveredPoint = ref(null);
 const tooltipData = ref([]);
 
 const containerMargins = computed(() => ({
@@ -67,37 +69,41 @@ const handleResize = () => {
   }
 };
 
-const setLabelAccessor = (d) => d[props.setLabel];
-const setDataAccessor = (d) => d[props.setData];
-const xAccessor = (d) => d[props.dateKey];
+const weekStartAccessor = (d) => d[props.weekStartKey];
+const weekEndAccessor = (d) => d[props.weekEndKey];
 const yAccessor = (d) => d[props.valueKey];
-const lowerCIAccessor = (d) => d[props.lowerCIKey];
-const upperCIAccessor = (d) => d[props.upperCIKey];
+const weekAccessor = (d) => d[props.weekKey];
+const labelAccessor = (d) => d[props.labelKey];
+const regionAccessor = (d) => d[props.regionKey];
 
 const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
 
-const uniqueLabels = computed(() => {
-  const labels = [...new Set(props.data.map(setLabelAccessor))].sort((a, b) =>
-    a.localeCompare(b)
-  );
+const uniqueLabels = computed(() =>
+  [...new Set(props.aggregatedData.map(labelAccessor))]
+    .sort((a, b) => {
+      if (a === 'Other') return 1;
+      if (b === 'Other') return -1;
+      return a.localeCompare(b);
+    }),
+);
 
-  if (labels.includes('Other')) {
-    labels.push(...labels.splice(labels.indexOf('Other'), 1));
-  }
+const numOfUniqueWeeks = computed(() => [...new Set(props.aggregatedData.map(weekAccessor))].length);
 
-  return labels;
-});
+const firstWeekEnd = computed(() => findWeekEnd(props.firstWeek, props.aggregatedData, weekAccessor, weekEndAccessor ));
 
-const dateRange = computed(() => {
-  const allDates = props.data.flatMap(item => setDataAccessor(item).map(d => new Date(xAccessor(d))));
-  if (allDates.length === 0) return { earliest: null, latest: null };
+const lastWeekEnd = computed(() => findWeekEnd(props.lastWeek, props.aggregatedData, weekAccessor, weekEndAccessor ));
 
-  const earliest = new Date(Math.min(...allDates)).toISOString().split('T')[0];
-  const latest = new Date(Math.max(...allDates)).toISOString().split('T')[0];
+const xScaleDomain = computed(() =>
+  createDateArray(firstWeekEnd.value, lastWeekEnd.value, props.areaChartRange),
+);
 
-  return { earliest, latest };
+const data = computed(() => createStackedAreaArray(props.aggregatedData, uniqueLabels.value, weekAccessor, weekStartAccessor, weekEndAccessor, labelAccessor, yAccessor));
+
+const datesWithData = computed(() => {
+  const dates = [...new Set(props.aggregatedData.map(d => d.week_end))];
+  return dates.sort((a, b) => new Date(a) - new Date(b));
 });
 
 const marginTop = props.marginTop;
@@ -108,136 +114,98 @@ const marginLeft = props.marginLeft;
 const innerWidth = computed(() => width.value - marginLeft - marginRight);
 const innerHeight = computed(() => props.height - marginTop - marginBottom);
 
-const xScaleDomain = computed(() =>
-  createDateArray(dateRange.value.earliest, dateRange.value.latest)
+const stackSeries = computed(() => stack()
+  .keys(uniqueLabels.value)
 );
+
+const series = computed(() => stackSeries.value(data.value));
+
+const xScale = computed(() => 
+  scaleBand()
+    .domain(xScaleDomain.value)
+    .range([0, innerWidth.value])
+    .padding(0)
+  );
+
+const yScale = scaleLinear()
+  .domain([0, 100])
+  .range([innerHeight.value, 0])
+  .nice();
 
 const allXTicks = computed(() => xScale.value.domain());
 
 const xTicksToBeRendered = computed(() =>
   filterXTicks(allXTicks.value, innerWidth.value)
 );
- 
-const xScale = computed(() =>
-  scaleBand().domain(xScaleDomain.value).range([0, innerWidth.value])
-);
-
-const yScale = computed(() =>
-  scaleLinear().domain([0, 100]).range([innerHeight.value, 0]).nice()
-);
 
 const yTicks = computed(() => {
   const numberOfYTicks = Math.floor(innerHeight.value / 40);
-  return yScale.value.ticks(numberOfYTicks);
+  return yScale.ticks(numberOfYTicks);
 });
+
+const areaGenerator = computed(() => 
+  area()
+    .x((d) => {
+      return xScale.value(weekEndAccessor(d.data));
+    })
+    .y1((d) => yScale(d[1]))
+    .y0((d) => yScale(d[0]))
+    .curve(curveBundle.beta(1)),
+);
 
 const colors = computed(() => selectAccessibleColorPalette(uniqueLabels.value));
 
 const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels.value));
 
-// multiply values by 100
-const scaledData = computed(() => 
-  scaleValues(props.data, 100, yAccessor, lowerCIAccessor, upperCIAccessor));
-
-// line generation
-const lineGenerator = computed(() =>
-  line()
-    .x(d => xScale.value(xAccessor(d)))
-    .y(d => yScale.value(yAccessor(d)))
-    .defined(d => !Number.isNaN(yAccessor))
-);
-
-// check whether any confidence intervals are present
-const hasConfidenceIntervals = computed(() => {
-  return scaledData.value.some(series =>
-    setDataAccessor(series).some(d =>
-      d[props.lowerCIKey] != null &&
-      d[props.upperCIKey] != null &&
-      !Number.isNaN(d[props.lowerCIKey]) &&
-      !Number.isNaN(d[props.upperCIKey])
-    )
-  );
-});
-
-// area generation for confidence intervals
-const areaGenerator = computed(() => {
-  if (!hasConfidenceIntervals.value) return null;
-
-  return area()
-    .x(d => xScale.value(xAccessor(d)))
-    .y0(d => yScale.value(lowerCIAccessor(d)))
-    .y1(d => yScale.value(upperCIAccessor(d)))
-    .defined(d => !Number.isNaN(lowerCIAccessor(d)) && !Number.isNaN(upperCIAccessor(d)));
-});
-
-const linesAndIntervals = computed(() => {
-  return scaledData.value.map(series => ({
-    label: setLabelAccessor(series),
-    path: lineGenerator.value(setDataAccessor(series)),
-    areaPath: areaGenerator.value ? areaGenerator.value(setDataAccessor(series)) : null,
-    color: colorScale.value(setLabelAccessor(series))
-  }));
-});
-
-// flat array of all data points with their dates for the quadtree
-const allDataPoints = computed(() => {
-  return xScaleDomain.value.map(date => ({
-    date,
-    x: xScale.value(date),
-    y: innerHeight.value / 2 // use middle of chart for y position
-  }));
-});
-
-const quadtreeInstance = computed(() =>
-  quadtree()
-    .x(d => d.x)
-    .y(d => d.y)
-    .addAll(allDataPoints.value)
-);
-
-const handleMouseMove = (e) => {
+const handleMouseMove = e => {
   const xPosition = e.offsetX - marginLeft;
   const yPosition = e.offsetY - marginTop;
-  const foundPoint = quadtreeInstance.value.find(xPosition, yPosition);
 
-  if (foundPoint) {
-    hoveredDate.value = foundPoint.date;
-    tooltipData.value = scaledData.value
-      .map(series => {
-        const dataPoint = setDataAccessor(series).find(d => xAccessor(d) === hoveredDate.value);
-        return dataPoint ? {
-          label: setLabelAccessor(series),
-          date: xAccessor(dataPoint),
-          proportion: yAccessor(dataPoint)
-        } : null;
-      })
-    .filter(Boolean)
+  if (datesWithData.value.length > 0) {
+    // find the closest date with data (horizontal snapping)
+    hoveredDate.value = datesWithData.value.reduce((prev, curr) => {
+      const prevX = xScale.value(prev);
+      const currX = xScale.value(curr);
+      return Math.abs(prevX - xPosition) < Math.abs(currX - xPosition) ? prev : curr;
+    });
+
+    // filter data for the hovered date
+    tooltipData.value = props.aggregatedData.filter(item =>
+      weekEndAccessor(item) === hoveredDate.value
+    );
+
+  } else {
+    hoveredDate.value = null;
+    tooltipData.value = [];
   }
-};
+}
 
 const handleMouseLeave = () => {
   hoveredDate.value = null;
-  tooltipData.value = null;
-};
+  tooltipData.value = [];
+}
 
-const ariaLabel = computed(
-  () => `Multiline chart showing ${props.yAxisLabel} versus ${props.xAxisLabel}.`
-);
+// Chart container inline styles
+const chartContainerStyle = computed(() => ({
+  position: "relative",
+  ...containerMargins.value,
+}));
 </script>
 
 <template>
-  <div class="chart-container" :style="containerMargins">
+  <div
+    v-if="numOfUniqueWeeks > 1"
+    class="stacked-area-chart-container"
+    :style="containerMargins"
+  >
     <CustomCategoricalLegend
       :categories="uniqueLabels"
       :colorScale="colorScale"
     />
     <svg
       role="img"
-      :aria-label="ariaLabel"
       :width="width - containerMarginLeft - containerMarginRight"
       :height="height"
-      @mousemove="handleMouseMove"
-      @mouseleave="handleMouseLeave"
     >
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
         <!-- y-axis -->
@@ -277,7 +245,7 @@ const ariaLabel = computed(
             </text>
           </g>
         </g>
-
+        
         <!-- x-axis -->
         <g :transform="`translate(0, ${innerHeight})`">
           <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
@@ -333,27 +301,13 @@ const ariaLabel = computed(
           </g>
         </g>
 
-        <!-- confidence intervals -->
-        <g v-if="hasConfidenceIntervals">
-          <g v-for="line in linesAndIntervals" :key="'ci-' + setLabelAccessor(line)">
-            <path
-              v-if="line.areaPath"
-              :d="line.areaPath"
-              :fill="line.color"
-              fill-opacity="0.2"
-              stroke="none"
-            />
-          </g>
-        </g>
-
-        <!-- lines -->
-        <g v-for="line in linesAndIntervals" :key="setLabelAccessor(line)">
+        <g>
           <path
-            :d="line.path"
-            :stroke="line.color"
-            stroke-width="2.5px"
-            fill="none"
-            stroke-linecap="round"
+            v-for="(s, index) in series" 
+            :key="'s-' + index"
+            :d="areaGenerator(s)"
+            stroke="none"
+            :fill="colorScale(index)"
           />
         </g>
 
@@ -378,6 +332,16 @@ const ariaLabel = computed(
             stroke-width="2px"
           />
         </g>
+        <rect
+          :width="innerWidth"
+          :height="innerHeight"
+          :x="0"
+          :y="0"
+          fill="#ffffff"
+          fill-opacity="0"
+          @mousemove="handleMouseMove"
+          @mouseleave="handleMouseLeave"
+        />
       </g>
     </svg>
     <CustomTooltipWithBarChart 
@@ -387,17 +351,13 @@ const ariaLabel = computed(
       :tooltipData="tooltipData"
       :xScale="xScale"
       :xAccessor="yAccessor"
-      :labelAccessor="setLabelAccessor"
+      :labelAccessor="labelAccessor"
       :colorScale="colorScale"
-      tooltipTitle="San Diego, CA, USA"
-      barChartTitle="Prevalence"
+      :weekAccessor="weekAccessor"
+      :weekStartAccessor="weekStartAccessor"
+      :weekEndAccessor="weekEndAccessor"
+      :regionAccessor="regionAccessor"
+      barChartTitle="Average prevalence"
     />
   </div>
-  
 </template>
-
-<style scoped>
-.chart-container {
-  position: relative;
-}
-</style>

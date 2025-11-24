@@ -1,17 +1,30 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale';
+import { computed } from "vue";
+import { scaleLinear, scaleBand } from 'd3-scale';
 import { timeParse, timeFormat } from 'd3-time-format';
-import { min, max } from "d3-array";
+import { max } from "d3-array";
 import { format } from "d3-format";
+import { insertYearWeekSeparator } from "../utils/helpers";
 
 const props = defineProps({
-  width: Number,
-  hoveredDate: String,
-  tooltipData: Array,
-  xScale: Function,
-  colorScale: Function,
-  tooltipTitle: { type: String, default: "San Diego, CA, USA" },
+  width: { type: Number, required: true },
+  hoveredDate: { type: String, required: true },
+  tooltipData: { type: Array, required: true },
+  xScale: { type: Function, required: true },
+  xAccessor: { type: Function, required: true },
+  labelAccessor: { type: Function, required: true },
+  colorScale: { type: Function, required: true },
+  
+  // Tooltip header props
+  tooltipTitle: { type: String, default: "" },
+  
+  // Optional props for area chart 
+  weekAccessor: { type: Function, default: null },
+  weekStartAccessor: { type: Function, default: null },
+  weekEndAccessor: { type: Function, default: null },
+  regionAccessor: { type: Function, default: null },
+  
+  // Chart title
   barChartTitle: { type: String, default: "Prevalence" },
 });
 
@@ -19,46 +32,47 @@ const formatTime = timeFormat('%b %e, %Y');
 const parseTime = timeParse('%Y-%m-%d');
 const formatValue = format(',.2f');
 
-const xAccessor = d => +d.proportion; 
-
 const tooltipWidth = 320;
 const xPosForSmallScreens = 50;
+
+// Determine if this is epiweek data (area chart) or regular date data (multiline chart)
+const isEpiweekData = computed(() => 
+  props.weekAccessor !== null && 
+  props.weekStartAccessor !== null && 
+  props.weekEndAccessor !== null
+);
 
 const dateIndex = computed(() =>
   props.xScale.domain().indexOf(props.hoveredDate),
 );
 
 const dateArrayLength = props.xScale.domain().length;
-
 const midPoint = Math.floor(dateArrayLength / 2);
 
-const xPosition = computed(() => setXPosition())
-
-const setXPosition = () => {
-  let xPos;
+const xPosition = computed(() => {
   if (props.width <= 700) {
-    xPos = xPosForSmallScreens;
-  } else xPos = dateIndex.value <= midPoint ?
-      props.xScale(props.hoveredDate) + xPosForSmallScreens :
-      props.xScale(props.hoveredDate) -
-        (tooltipWidth - xPosForSmallScreens);
-  return xPos;
-}
+    return xPosForSmallScreens;
+  }
+  
+  return dateIndex.value <= midPoint
+    ? props.xScale(props.hoveredDate) + xPosForSmallScreens
+    : props.xScale(props.hoveredDate) - (tooltipWidth - xPosForSmallScreens);
+});
 
 const sortedTooltipData = computed(() => 
- props.tooltipData.sort((a, b) => {
-    if (a.name === 'Other') return -1; 
-    if (b.name === 'Other') return 1; 
+  [...props.tooltipData].sort((a, b) => {
+    if (props.labelAccessor(a) === 'Other') return -1; 
+    if (props.labelAccessor(b) === 'Other') return 1; 
 
-    if (a.proportion !== b.proportion) {
-      return a.proportion - b.proportion;
+    if (props.xAccessor(a) !== props.xAccessor(b)) {
+      return props.xAccessor(a) - props.xAccessor(b);
     }
   
-    return b.name.localeCompare(a.name);
+    return props.labelAccessor(b).localeCompare(props.labelAccessor(a));
   })
 );
 
-const numberOfGroups = computed(() => (sortedTooltipData.value.length));
+const numberOfGroups = computed(() => sortedTooltipData.value.length);
 
 const barChartWidth = 300;
 const barChartHeight = computed(() => numberOfGroups.value * 20);
@@ -70,25 +84,50 @@ const barChartMargin = {
   left: 85,
 };
 
-const barChartInnerWidth =
-  barChartWidth - barChartMargin.left - barChartMargin.right;
-
-const barChartInnerHeight = computed(() => barChartHeight.value - barChartMargin.top - barChartMargin.bottom);
+const barChartInnerWidth = barChartWidth - barChartMargin.left - barChartMargin.right;
+const barChartInnerHeight = computed(() => 
+  barChartHeight.value - barChartMargin.top - barChartMargin.bottom
+);
 
 const barChartXScale = computed(() =>
   scaleLinear()
-    .domain([0, max(sortedTooltipData.value, xAccessor)])
+    .domain([0, max(sortedTooltipData.value, props.xAccessor)])
     .range([0, barChartInnerWidth]),
 );
 
 const barChartYScale = computed(() => 
   scaleBand()
-    .domain(sortedTooltipData.value.map(d => d.label))
+    .domain(sortedTooltipData.value.map(props.labelAccessor))
     .range([barChartInnerHeight.value, 0])
     .padding(0.25),
 );
 
-const xAccessorScaled = (d) => barChartXScale.value(xAccessor(d));
+const xAccessorScaled = (d) => barChartXScale.value(props.xAccessor(d));
+
+// Computed values for epiweek data
+const region = computed(() => 
+  isEpiweekData.value && props.regionAccessor && props.tooltipData.length > 0
+    ? props.regionAccessor(props.tooltipData[0])
+    : null
+);
+
+const week = computed(() => 
+  isEpiweekData.value && props.weekAccessor && props.tooltipData.length > 0
+    ? props.weekAccessor(props.tooltipData[0])
+    : null
+);
+
+const firstDate = computed(() => 
+  isEpiweekData.value && props.weekStartAccessor && props.tooltipData.length > 0
+    ? props.weekStartAccessor(props.tooltipData[0])
+    : null
+);
+
+const lastDate = computed(() => 
+  isEpiweekData.value && props.weekEndAccessor && props.tooltipData.length > 0
+    ? props.weekEndAccessor(props.tooltipData[0])
+    : null
+);
 
 // Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
@@ -116,7 +155,7 @@ const tooltipTitleStyle = {
 const tooltipDateStyle = {
   fontSize: "12px",
   textTransform: "uppercase",
-}
+};
 
 const tooltipDividerStyle = {
   borderTop: "1px solid rgba(0, 0, 0, 0.1)",
@@ -125,74 +164,76 @@ const tooltipDividerStyle = {
   marginBottom: "5px",
 };
 
-const tooltipGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "1fr auto",
-  fontWeight: "400",
-  marginBottom: "5px",
-};
-
-const tooltipDataStyle = {
-  textAlign: "right",
-};
-
 const barChartWrapperStyle = {
   fontWeight: "400",
-}
+};
 
 const barChartTitleStyle = {
   fontWeight: "700",
   fontSize: "14px",
-}
+};
 </script>
 
 <template>
   <div :style="tooltipWrapperStyle">
-    <div :style="tooltipTitleStyle"> 
-      {{ tooltipTitle }} 
-    </div>
-    <div :style="tooltipDateStyle">
-      {{ formatTime(parseTime(hoveredDate)) }}
-      <hr :style="tooltipDividerStyle" />
-    </div>
+    <!-- Header: either epiweek format or simple title -->
+    <template v-if="isEpiweekData">
+      <div :style="tooltipTitleStyle"> 
+        {{ region }} &#183; {{ `Epiweek ${insertYearWeekSeparator(week)}` }}
+      </div>
+      <div :style="tooltipDateStyle">
+        {{ formatTime(parseTime(firstDate)) }} &#183;
+        {{ formatTime(parseTime(lastDate)) }}
+      </div>
+    </template>
+    <template v-else>
+      <div :style="tooltipTitleStyle"> 
+        {{ tooltipTitle }}
+      </div>
+      <div :style="tooltipDateStyle">
+        {{ formatTime(parseTime(hoveredDate)) }}
+      </div>
+    </template>
+    
+    <hr :style="tooltipDividerStyle" />
+    
+    <!-- Bar chart -->
     <div :style="barChartWrapperStyle">
       <h1 :style="barChartTitleStyle">
         {{ barChartTitle }}
       </h1>
       <svg :width="barChartWidth" :height="barChartHeight">
-        <g
-          :transform="`translate(${barChartMargin.left}, ${barChartMargin.top})`"
-        >
-          <g v-for="lineage in sortedTooltipData">
+        <g :transform="`translate(${barChartMargin.left}, ${barChartMargin.top})`">
+          <g v-for="category in sortedTooltipData" :key="labelAccessor(category)">
             <text
               text-anchor="end"
               x="-10"
-              :y="barChartYScale(lineage.label) + barChartYScale.bandwidth() / 2"
+              :y="barChartYScale(labelAccessor(category)) + barChartYScale.bandwidth() / 2"
               dy=".32em"
               font-size="13px"
               stroke="#2c3e50"
               stroke-width=".5"
             >
-              {{ lineage.label }}
+              {{ labelAccessor(category) }}
             </text>
             <rect 
               x="0"
-              :y="barChartYScale(lineage.label)"
-              :width="xAccessorScaled(lineage)"
+              :y="barChartYScale(labelAccessor(category))"
+              :width="xAccessorScaled(category)"
               :height="barChartYScale.bandwidth()"
-              :fill="colorScale(lineage.label)"
+              :fill="colorScale(labelAccessor(category))"
             />
             <text
               text-anchor="start"
-              :x="xAccessorScaled(lineage)"
+              :x="xAccessorScaled(category)"
               dx="10"
-              :y="barChartYScale(lineage.label) + barChartYScale.bandwidth() / 2"
+              :y="barChartYScale(labelAccessor(category)) + barChartYScale.bandwidth() / 2"
               dy=".32em"
               font-size="13px"
               stroke="#2c3e50"
               stroke-width=".5"
             >
-              {{ `${formatValue(lineage.proportion * 100)}%` }}
+              {{ `${formatValue(xAccessor(category))}%` }}
             </text>
           </g>
         </g>
