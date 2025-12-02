@@ -1,33 +1,59 @@
 // create array of consecutive dates
-export const createDateArray = (startDateStr, endDateStr) => {
-  const result = [];
+export const createDateArray = (startDate, endDate, desiredNumOfDays = null) => {
+  if (!endDate) {
+    throw new Error("endDate is required.");
+  }
 
-  const parseDate = (str) => {
-    const [year, month, day] = str.split("-").map(Number);
-    return new Date(year, month - 1, day);
+  // strict YYYY-MM-DD parser returning a UTC midnight date
+  const parse = (d) => {
+    if (d instanceof Date) {
+      return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    }
+    if (typeof d === "string") {
+      const parts = d.split("-").map(Number);
+      if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) {
+        throw new Error("Invalid date. Expected YYYY-MM-DD.");
+      }
+      const [y, m, day] = parts;
+      return new Date(Date.UTC(y, m - 1, day));
+    }
+    throw new Error("Invalid date. Provide a Date or YYYY-MM-DD string.");
   };
 
-  let startDate = parseDate(startDateStr);
-  let endDate = parseDate(endDateStr);
+  let start = startDate ? parse(startDate) : null;
+  const end = parse(endDate);
 
-  // handle invalid dates
-  if (isNaN(startDate) || isNaN(endDate)) {
-    throw new Error("Invalid date format. Expected yyyy-mm-dd.");
+  // swap if reversed (only when both dates are provided)
+  if (start && start > end) {
+    [start, end] = [end, start];
   }
 
-  // swap dates if needed
-  if (startDate > endDate) {
-    [startDate, endDate] = [endDate, startDate];
+  // sliding-window mode (desiredNumOfDays provided)
+  if (desiredNumOfDays !== null) {
+    if (!Number.isInteger(desiredNumOfDays) || desiredNumOfDays < 1) {
+      throw new Error("desiredNumOfDays must be a positive integer.");
+    }
+
+    // start = end - (N - 1) days (inclusive window)
+    const computedStart = new Date(end);
+    computedStart.setUTCDate(end.getUTCDate() - (desiredNumOfDays - 1));
+
+    // if startDate was passed, we must not go earlier than it
+    start = start ? new Date(Math.max(start.getTime(), computedStart.getTime())) : computedStart;
   }
 
-  const currentDate = new Date(startDate);
+  // full-range mode requires startDate
+  if (!start) {
+    throw new Error("startDate is required when desiredNumOfDays is not provided.");
+  }
 
-  while (currentDate <= endDate) {
-    const yyyy = currentDate.getFullYear();
-    const mm = String(currentDate.getMonth() + 1).padStart(2, "0");
-    const dd = String(currentDate.getDate()).padStart(2, "0");
-    result.push(`${yyyy}-${mm}-${dd}`);
-    currentDate.setDate(currentDate.getDate() + 1);
+  // build date sequence
+  const result = [];
+  const cursor = new Date(start);
+
+  while (cursor <= end) {
+    result.push(cursor.toISOString().split("T")[0]); // YYYY-MM-DD
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
 
   return result;
