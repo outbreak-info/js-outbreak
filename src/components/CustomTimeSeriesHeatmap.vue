@@ -1,5 +1,14 @@
 <script setup>
-console.log("Custom Time-series Heatmap");
+const props = defineProps({
+  aggregatedData: { type: Array, required: true },
+  
+  // Property key configuration
+  rowKey: { type: String, default: "rowValue" },
+  columnKey: { type: String, default: "columnValue" },
+  colorKey: { type: String, default: "colorValue" },
+});
+console.log("heatmap data", props.aggregatedData);
+console.log("test");
 </script>
 
 <template>
