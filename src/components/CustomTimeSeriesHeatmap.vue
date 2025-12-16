@@ -3,11 +3,13 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { scaleThreshold, scaleLinear, scaleBand } from "d3-scale";
 import { format } from "d3-format";
 import { min, max } from "d3-array";
+import { timeFormat, timeParse } from "d3-time-format";
 import {
   ylOrRdDiscrete11,
   diagonalHatchPatternDef,
 } from "../utils/colorSchemes";
 import { createDateArray } from "../utils/arrays";
+import { filterXTicks } from "../utils/tickFilters";
 
 const props = defineProps({
   aggregatedData: { type: Array, required: true },
@@ -32,9 +34,9 @@ const props = defineProps({
 
   // Chart margins
   marginTop: { type: Number, default: 5 },
-  marginRight: { type: Number, default: 45 },
-  marginBottom: { type: Number, default: 5 },
-  marginLeft: { type: Number, default: 90 },
+  marginRight: { type: Number, default: 130 },
+  marginBottom: { type: Number, default: 50 },
+  marginLeft: { type: Number, default: 70 },
 
   // Container margins
   containerMarginTop: { type: Number, default: 0 },
@@ -45,6 +47,10 @@ const props = defineProps({
 
 const width = ref(500);
 const rowHeight = 20;
+const axisHeight = 25;
+
+const parseTime = timeParse("%Y-%m-%d");
+const formatTime = timeFormat("%b %e");
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
@@ -66,13 +72,6 @@ const handleResize = () => {
 const colorAccessor = (d) => d[props.colorKey];
 const xAccessor = (d) => d[props.columnKey];
 const yAccessor = (d) => d[props.rowKey];
-
-const margin = computed(() => ({
-  top: props.marginTop,
-  right: props.marginRight,
-  bottom: props.marginBottom,
-  left: props.marginLeft,
-}));
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -97,8 +96,6 @@ const rangeMax = 288;
 const colorScale = computed(() =>
   scaleThreshold().domain(props.colorDomain).range(props.colorRange)
 );
-
-const axisHeight = 50;
 
 const legendScale = scaleLinear()
   .domain([min(colorScale.value.domain()), max(colorScale.value.domain())])
@@ -135,7 +132,6 @@ const xScaleDomain = computed(() =>
   createDateArray(minMaxDates.value[0], minMaxDates.value[1], props.dateRange),
 );
 
-
 const height = computed(() => rowLabels.value.length > 2 ? (rowHeight * rowLabels.value.length) + (5 * rowLabels.value.length - 1) : (rowHeight * rowLabels.value.length) + 15);
 
 const innerWidth = computed(() => width.value - marginLeft - marginRight);
@@ -153,6 +149,17 @@ const yScale = computed(() =>
     .domain(rowLabels.value)
     .range([0, innerHeight.value])
     .paddingInner(0),
+);
+
+const datesWithData = computed(() => {
+  const dates = [...new Set(props.aggregatedData.map(xAccessor))];
+  return dates.sort((a, b) => new Date(a) - new Date(b));
+});
+
+const allXTicks = computed(() => xScale.value.domain());
+
+const xTicksToBeRendered = computed(() =>
+  filterXTicks(allXTicks.value, innerWidth.value)
 );
 
 // Heatmap container inline styles
@@ -240,6 +247,33 @@ const noDataStyle = {
         </svg>
       </div>
     </div>
+    <!-- x-axis -->
+    <div>
+      <svg
+        role="img"
+        :width="width - containerMarginLeft - containerMarginRight"
+        :height="axisHeight"
+      >
+        <g :transform="`translate(${marginLeft}, 5)`">
+          <g
+            v-for="(tick, index) in xTicksToBeRendered"
+            :key="'tick-' + index"
+            :transform="`translate(${xScale(tick) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              y="0"
+              dy="0.8em"
+              text-anchor="middle"
+              fill="#2c3e50"
+              font-size="14px"
+            >
+              {{ formatTime(parseTime(tick)) }}
+            </text>
+          </g>
+        </g>
+      </svg>
+    </div>
+
     <!-- grid -->
     <div>
       <svg
