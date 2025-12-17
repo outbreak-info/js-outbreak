@@ -18,7 +18,7 @@ const props = defineProps({
   // Property key configuration
   rowKey: { type: String, default: "name" },
   columnKey: { type: String, default: "collection_date" },
-  colorKey: { type: String, default: "colorValue" },
+  colorKey: { type: String, default: "prevalence" },
 
    // Color scale configuration
   colorDomain: {
@@ -43,11 +43,16 @@ const props = defineProps({
   containerMarginRight: { type: Number, default: 10 },
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
+
+  // Heatmap appearance
+  createCellsWithRoundedCorners: { type: Boolean, default: true },
 });
 
 const width = ref(500);
 const rowHeight = 20;
 const axisHeight = 25;
+const cellHeight = 20;
+const cellPadding = 0.15;
 
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
@@ -62,11 +67,7 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  if (window.innerWidth >= 1000) {
-    width.value = 1000;
-  } else {
-    width.value = window.innerWidth;
-  }
+  width.value = window.innerWidth >= 1000 ? 1000 : window.innerWidth;
 };
 
 const colorAccessor = (d) => d[props.colorKey];
@@ -132,23 +133,25 @@ const xScaleDomain = computed(() =>
   createDateArray(minMaxDates.value[0], minMaxDates.value[1], props.dateRange),
 );
 
-const height = computed(() => rowLabels.value.length > 2 ? (rowHeight * rowLabels.value.length) + (5 * rowLabels.value.length - 1) : (rowHeight * rowLabels.value.length) + 15);
+const height = computed(() =>
+  rowLabels.value.length * cellHeight + marginTop + marginBottom
+);
 
 const innerWidth = computed(() => width.value - marginLeft - marginRight);
-const innerHeight = computed(() => height.value - marginTop - marginBottom);
+const innerHeight = computed(() => rowLabels.value.length * cellHeight);
 
 const xScale = computed(() =>
   scaleBand()
     .domain(xScaleDomain.value)
     .range([0, innerWidth.value])
-    .paddingInner(0.15),
+    .paddingInner(cellPadding)
 );
 
 const yScale = computed(() =>
   scaleBand()
     .domain(rowLabels.value)
-    .range([0, innerHeight.value])
-    .paddingInner(0),
+    .range([0, rowLabels.value.length * cellHeight])
+    .paddingInner(0)
 );
 
 const datesWithData = computed(() => {
@@ -161,6 +164,34 @@ const allXTicks = computed(() => xScale.value.domain());
 const xTicksToBeRendered = computed(() =>
   filterXTicks(allXTicks.value, innerWidth.value)
 );
+
+const generateDataToBeRendered = (columnLabels, rowLabels, data) => {
+  const lookup = new Map(
+    data.map(d => [`${d[props.columnKey]}-${d[props.rowKey]}`, d])
+  );
+
+  const result = [];
+
+  for (const columnLabel of columnLabels) {
+    for (const rowLabel of rowLabels) {
+      const key = `${columnLabel}-${rowLabel}`;
+      if (lookup.has(key)) {
+        result.push(lookup.get(key));
+      } else {
+        result.push({
+          [props.colorKey]: "hatching",
+          [props.columnKey]: columnLabel,
+          [props.rowKey]: rowLabel,
+        });
+      }
+    }
+  }
+  return result.sort((a, b) => {
+    return a[props.columnKey].localeCompare(b[props.columnKey]);
+  });
+}
+
+const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.value, rowLabels.value, props.aggregatedData));
 
 // Heatmap container inline styles
 const heatmapContainerStyle = computed(() => ({
@@ -256,9 +287,9 @@ const noDataStyle = {
       >
         <g :transform="`translate(${marginLeft}, 5)`">
           <g
-            v-for="(tick, index) in xTicksToBeRendered"
-            :key="'tick-' + index"
-            :transform="`translate(${xScale(tick) + xScale.bandwidth() / 2}, 0)`"
+            v-for="(xtick, index) in xTicksToBeRendered"
+            :key="'xtick-' + index"
+            :transform="`translate(${xScale(xtick) + xScale.bandwidth() / 2}, 0)`"
           >
             <text
               y="0"
@@ -267,14 +298,13 @@ const noDataStyle = {
               fill="#2c3e50"
               font-size="14px"
             >
-              {{ formatTime(parseTime(tick)) }}
+              {{ formatTime(parseTime(xtick)) }}
             </text>
           </g>
         </g>
       </svg>
     </div>
-
-    <!-- grid -->
+    <!-- Grid -->
     <div>
       <svg
         role="img"
@@ -282,6 +312,23 @@ const noDataStyle = {
         :height="height"
       >
         <g :transform="`translate(${marginLeft}, ${marginTop})`">
+          <defs>
+            <pattern
+              id="diagonalHatch"
+              width="5"
+              height="5"
+              patternTransform="rotate(45 0 0)"
+              patternUnits="userSpaceOnUse"
+            >
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="10"
+                :style="`stroke:#a9a9a9; stroke-width:2`"
+              />
+            </pattern>
+          </defs>
           <g v-for="rowLabel in rowLabels">
             <text
               text-anchor="end"
@@ -294,6 +341,31 @@ const noDataStyle = {
             >
               {{ rowLabel }}
             </text>
+            <g v-for="(dataPoint, index) in dataToBeRendered.filter((element) => element[props.rowKey] == rowLabel)">
+              <rect 
+                v-if="dataPoint[props.colorKey] !== 'hatching'"
+                class="cell detected"
+                :key="'row-' + index"
+                :x="xScale(xAccessor(dataPoint))"
+                :y="yScale(rowLabel)"
+                :width="xScale.bandwidth()"
+                :height="cellHeight"
+                :fill=colorScale(colorAccessor(dataPoint)) 
+                 stroke="#a9a9a9"
+                :rx="createCellsWithRoundedCorners ? '4' : '0'"
+              />
+              <rect 
+                v-else
+                class="cell"
+                :x="xScale(xAccessor(dataPoint))"
+                :y="yScale(rowLabel)"
+                :width="xScale.bandwidth()"
+                :height="cellHeight"
+                fill="url(#diagonalHatch)"
+                stroke="#a9a9a9"
+                :rx="createCellsWithRoundedCorners ? '4' : '0'"
+              />
+            </g>
           </g>
         </g>
       </svg>
