@@ -236,7 +236,7 @@ const noDataStyle = {
           <span>{{ legendTitle }}</span>
         </div>
         <svg role="img" :width="legendWidth" :height="legendHeight">
-          <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')"></defs>
+          <defs v-html="diagonalHatchPatternDef('heatmapDiagonalHatch')"></defs>
           <g>
             <rect
               v-for="band in colorBands"
@@ -264,13 +264,12 @@ const noDataStyle = {
       </div>
       <div :style="noDataStyle">
         <svg width="125" height="24">
-          <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')"></defs>
           <rect
             x="5"
             y="2"
             :width="rectWidth"
             :height="rectHeight"
-            fill="url(#legendDiagonalHatch)"
+            fill="url(#heatmapDiagonalHatch)"
             stroke="#888"
             stroke-width="0.5"
           />
@@ -314,23 +313,6 @@ const noDataStyle = {
         :height="height"
       >
         <g :transform="`translate(${marginLeft}, ${marginTop})`">
-          <defs>
-            <pattern
-              id="diagonalHatch"
-              width="5"
-              height="5"
-              patternTransform="rotate(45 0 0)"
-              patternUnits="userSpaceOnUse"
-            >
-              <line
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="10"
-                :style="`stroke:#a9a9a9; stroke-width:2`"
-              />
-            </pattern>
-          </defs>
           <g v-for="rowLabel in rowLabels">
             <text
               text-anchor="end"
@@ -353,7 +335,7 @@ const noDataStyle = {
                 :width="xScale.bandwidth()"
                 :height="yScale.bandwidth()"
                 :fill=colorScale(colorAccessor(dataPoint)) 
-                 stroke="#a9a9a9"
+                stroke="#a9a9a9"
                 :rx="createCellsWithRoundedCorners ? '4' : '0'"
               />
               <rect 
@@ -363,7 +345,7 @@ const noDataStyle = {
                 :y="yScale(rowLabel)"
                 :width="xScale.bandwidth()"
                 :height="yScale.bandwidth()"
-                fill="url(#diagonalHatch)"
+                fill="url(#heatmapDiagonalHatch)"
                 stroke="#a9a9a9"
                 :rx="createCellsWithRoundedCorners ? '4' : '0'"
               />
