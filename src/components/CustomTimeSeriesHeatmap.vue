@@ -46,13 +46,15 @@ const props = defineProps({
 
   // Heatmap appearance
   createCellsWithRoundedCorners: { type: Boolean, default: true },
+  rowPadding: { type: Number, default: 0.1 },
 });
 
 const width = ref(500);
-const rowHeight = 20;
 const axisHeight = 25;
-const cellHeight = 20;
+const cellHeight = 25;
 const cellPadding = 0.15;
+
+console.log("data", props.aggregatedData);
 
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
@@ -151,7 +153,7 @@ const yScale = computed(() =>
   scaleBand()
     .domain(rowLabels.value)
     .range([0, rowLabels.value.length * cellHeight])
-    .paddingInner(0)
+    .paddingInner(props.rowPadding) 
 );
 
 const datesWithData = computed(() => {
@@ -349,7 +351,7 @@ const noDataStyle = {
                 :x="xScale(xAccessor(dataPoint))"
                 :y="yScale(rowLabel)"
                 :width="xScale.bandwidth()"
-                :height="cellHeight"
+                :height="yScale.bandwidth()"
                 :fill=colorScale(colorAccessor(dataPoint)) 
                  stroke="#a9a9a9"
                 :rx="createCellsWithRoundedCorners ? '4' : '0'"
@@ -360,7 +362,7 @@ const noDataStyle = {
                 :x="xScale(xAccessor(dataPoint))"
                 :y="yScale(rowLabel)"
                 :width="xScale.bandwidth()"
-                :height="cellHeight"
+                :height="yScale.bandwidth()"
                 fill="url(#diagonalHatch)"
                 stroke="#a9a9a9"
                 :rx="createCellsWithRoundedCorners ? '4' : '0'"
