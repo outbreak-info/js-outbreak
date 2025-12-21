@@ -22,7 +22,8 @@ const props = defineProps({
   yLabel: { type: String, default: 'key' },
   sortOrder: { type: String, default: 'desc' },
   groupBy: { type: String, default: '' },
-  colorBy: { type: String, default: '' } // Use barColor to color bars by category and colorBy to set BOTH fill and tick label to attribute. Change this in the future?
+  colorBy: { type: String, default: '' }, // Use barColor to color bars by category and colorBy to set BOTH fill and tick label to attribute. Change this in the future?
+  stacked: { type: Boolean, default: false }
 });
 
 const chartContainer = ref(null);
@@ -72,14 +73,22 @@ function renderChart() {
           range: colorPalette
         },
         marks: [
-          Plot.barX(props.data, {
-            y: props.colorBy || props.yKey,
-            x: props.xKey,
-            fx: props.groupBy, 
-            fill: props.colorBy || props.barColor, 
-            sort: getSortOrder(props.sortOrder, props.horizontal),
-            tip: true
-          }),
+          props.stacked
+            ? Plot.barX(props.data, Plot.stackX({
+                y: props.yKey,
+                x: props.xKey,
+                fx: props.groupBy,
+                fill: props.colorBy,
+                tip: true
+              }))
+            : Plot.barX(props.data, {
+                y: props.colorBy || props.yKey,
+                x: props.xKey,
+                fx: props.groupBy,
+                fill: props.colorBy || props.barColor,
+                sort: getSortOrder(props.sortOrder, props.horizontal),
+                tip: true
+              }),
           Plot.ruleX([0]),
         ]
       })
@@ -97,14 +106,22 @@ function renderChart() {
           range: colorPalette
         },
         marks: [
-          Plot.barY(props.data, {
-            x: props.colorBy || props.yKey,
-            y: props.xKey,
-            fx: props.groupBy, 
-            fill: props.colorBy || props.barColor, 
-            sort: getSortOrder(props.sortOrder, props.horizontal),
-            tip: true
-          }),
+          props.stacked
+            ? Plot.barY(props.data, Plot.stackY({
+                x: props.yKey,
+                y: props.xKey,
+                fx: props.groupBy,
+                fill: props.colorBy,
+                tip: true
+              }))
+            : Plot.barY(props.data, {
+                x: props.colorBy || props.yKey,
+                y: props.xKey,
+                fx: props.groupBy,
+                fill: props.colorBy || props.barColor,
+                sort: getSortOrder(props.sortOrder, props.horizontal),
+                tip: true
+              }),
           Plot.ruleY([0])
         ]
       });
@@ -118,6 +135,7 @@ watch(() => props.barColor, renderChart);
 watch(() => props.horizontal, renderChart);
 watch(() => props.groupBy, renderChart);
 watch(() => props.colorBy, renderChart);
+watch(() => props.stacked, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {

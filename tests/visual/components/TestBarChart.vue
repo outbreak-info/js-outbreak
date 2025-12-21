@@ -33,6 +33,20 @@
         sortOrder="None"
     />
 
+    Stacked bar chart
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="false"
+        :stacked="true"
+        xKey="value"
+        yKey="cat1"
+        colorBy="cat2"
+        xLabel="Value"
+        yLabel="Category"
+    />
+
     Grouped by cat1, colored by cat2
     <BarChart
         :data="chartData"
