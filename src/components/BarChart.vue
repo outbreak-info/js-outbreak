@@ -23,7 +23,9 @@ const props = defineProps({
   sortOrder: { type: String, default: 'desc' },
   groupBy: { type: String, default: '' },
   colorBy: { type: String, default: '' }, // Use barColor to color bars by category and colorBy to set BOTH fill and tick label to attribute. Change this in the future?
-  stacked: { type: Boolean, default: false }
+  stacked: { type: Boolean, default: false },
+  showProportion: { type: Boolean, default: false },
+  tooltipDecimalPlaces: { type: Number, default: 1 }
 });
 
 const chartContainer = ref(null);
@@ -50,10 +52,26 @@ function getSortOrder(sortOrder, horizontal) {
   return false;
 }
 
+function getTitle(total) {
+  if (!props.showProportion) {
+    return undefined;
+  }
+  return (d) => {
+    const value = d[props.xKey];
+    const pct = total > 0 ? ((value / total) * 100).toFixed(props.tooltipDecimalPlaces) : 0;
+    const label = d[props.yKey];
+    return `${label}\n${props.xLabel}: ${value} (${pct}% of ${Math.round(total)})`;
+  };
+}
+
 function renderChart() {
   if (!props.data || props.data.length === 0 || !chartContainer.value) return;
 
   chartContainer.value.innerHTML = '';
+
+  const total = props.showProportion
+    ? props.data.reduce((sum, d) => sum + Number(d[props.xKey] || 0), 0)
+    : 0;
 
 
 
@@ -79,6 +97,7 @@ function renderChart() {
                 x: props.xKey,
                 fx: props.groupBy,
                 fill: props.colorBy,
+                title: getTitle(total),
                 tip: true
               }))
             : Plot.barX(props.data, {
@@ -87,6 +106,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy || props.barColor,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
+                title: getTitle(total),
                 tip: true
               }),
           Plot.ruleX([0]),
@@ -112,6 +132,7 @@ function renderChart() {
                 y: props.xKey,
                 fx: props.groupBy,
                 fill: props.colorBy,
+                title: getTitle(total),
                 tip: true
               }))
             : Plot.barY(props.data, {
@@ -120,6 +141,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy || props.barColor,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
+                title: getTitle(total),
                 tip: true
               }),
           Plot.ruleY([0])
@@ -136,6 +158,8 @@ watch(() => props.horizontal, renderChart);
 watch(() => props.groupBy, renderChart);
 watch(() => props.colorBy, renderChart);
 watch(() => props.stacked, renderChart);
+watch(() => props.showProportion, renderChart);
+watch(() => props.tooltipDecimalPlaces, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
