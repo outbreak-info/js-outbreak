@@ -267,34 +267,5 @@ watch(
 </script>
 
 <style scoped>
-.chart-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  max-width: 1000px;
-  width: 100%;
-  text-align: left;
-  margin-top: 15px;
-  margin-bottom: 20px;
-}
-.chart-container :deep(svg) {
-  font-family: inherit;
-}
-.chart-container :deep(.plot-axis text) {
-  font-size: v-bind(fontSize + "px");
-  fill: v-bind(fontColor);
-}
-.chart-container :deep(.plot-axis-label) {
-  font-size: v-bind((fontSize + 1) + "px");
-  font-weight: 500;
-  fill: v-bind(fontColor);
-}
-.chart-container :deep(.plot-tip) {
-  font-size: v-bind(fontSize + "px");
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 6px 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+
 </style>

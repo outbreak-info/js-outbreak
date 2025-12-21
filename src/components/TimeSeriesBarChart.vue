@@ -8,7 +8,7 @@ import { defaultColor, colorPalette } from '../utils/colorSchemes';
 import * as Plot from '@observablehq/plot';
 import { sum, rollup } from 'd3-array';
 import { timeFormat, timeParse } from 'd3-time-format';
-import { timeMonth, timeDay, timeYear } from 'd3-time';
+import { timeMonth, timeDay, timeYear, timeWeek } from 'd3-time';
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -39,6 +39,8 @@ function getMiddleDate(date, binInterval) {
   switch (binInterval) {
     case 'day':
       return date;
+    case 'week':
+      return timeDay.offset(timeWeek.floor(date), 3);
     case 'month':
       return timeDay.offset(timeMonth.floor(date), 15);
     case 'year':
@@ -51,9 +53,20 @@ function getMiddleDate(date, binInterval) {
 function getTickFormat(binInterval) {
   switch (binInterval) {
     case 'day': return "%Y-%m-%d";
+    case 'week': return "%b %d";
     case 'month': return "%b '%y";
     case 'year': return "%Y";
     default: return "%b '%y";
+  }
+}
+
+function getIntervalLabel(binInterval) {
+  switch (binInterval) {
+    case 'day': return 'Day';
+    case 'week': return 'Week';
+    case 'month': return 'Month';
+    case 'year': return 'Year';
+    default: return 'Month';
   }
 }
 
@@ -65,10 +78,14 @@ function getDateFromBin(binValue) {
   const parseYear = timeParse("%Y");
   const parseMonth = timeParse("%Y-%m");
   const parseDay = timeParse("%Y-%m-%d");
+  const parseWeek = timeParse("%Y-W%W");
 
   if (binStr.match(/^\d{4}$/)) {
     // Year: "2024"
     return parseYear(binStr);
+  } else if (binStr.match(/^\d{4}-W\d{2}$/)) {
+    // Week: "2024-W01"
+    return parseWeek(binStr);
   } else if (binStr.match(/^\d{4}-\d{2}$/)) {
     // Month: "2024-01"
     return parseMonth(binStr);
@@ -105,7 +122,8 @@ function renderChart() {
 
     processedData = props.data.map(d => ({
       date: d[props.dateKey] instanceof Date ? d[props.dateKey] : parseDay(d[props.dateKey]),
-      value: d[props.valueKey]
+      value: d[props.valueKey],
+      group: d[props.groupKey],
     })).sort((a, b) => a.date - b.date);
 
     // Bin by binInterval. This is only for cumulative line.
@@ -155,7 +173,7 @@ function renderChart() {
       x: "date",
       y: "value",
       interval: props.binInterval,
-      fill: props.barColor,
+      fill: props.barColor, // TODO: For now, set barColor to "group" to color by group
       tip: {
         format: {
           x: (d) => timeFormat(getTickFormat(props.binInterval))(d),
@@ -178,7 +196,7 @@ function renderChart() {
       Plot.tip(binnedCumulativeData, Plot.pointer({
         x: "date",
         y: "cumulative",
-        title: d => `Month: ${d.dateBin}\nCumulative: ${d.cumulative}` // Use the pre-calculated monthLabel
+        title: d => `${getIntervalLabel(props.binInterval)}: ${d.dateBin}\nCumulative: ${d.cumulative}`
       }))
     );
   }
