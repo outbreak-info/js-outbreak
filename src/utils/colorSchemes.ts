@@ -3,7 +3,7 @@ import { schemeYlGnBu } from "d3-scale-chromatic";
 export const choroColorScheme = schemeYlGnBu;
 export const heatmapColorScheme = "RdPu";
 
-export const defaultColor = "#3498db";
+export const defaultColor = "#4E79A7";
 
 export const otherColor = "#bab0ab";
 
