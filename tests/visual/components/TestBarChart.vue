@@ -33,7 +33,7 @@
         sortOrder="None"
     />
 
-    Stacked bar chart
+    Stacked bar chart (default order)
     <BarChart
         :data="chartData"
         :width="width"
@@ -43,6 +43,36 @@
         xKey="value"
         yKey="cat1"
         colorBy="cat2"
+        xLabel="Value"
+        yLabel="Category"
+    />
+
+    Stacked bar chart with legendDomain order (A1 bottom, B2 top)
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="false"
+        :stacked="true"
+        xKey="value"
+        yKey="cat1"
+        colorBy="cat2"
+        :legendDomain="['A1', 'B2']"
+        xLabel="Value"
+        yLabel="Category"
+    />
+
+    Stacked bar chart with reversed legendDomain order (B2 bottom, A1 top)
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="false"
+        :stacked="true"
+        xKey="value"
+        yKey="cat1"
+        colorBy="cat2"
+        :legendDomain="['B2', 'A1']"
         xLabel="Value"
         yLabel="Category"
     />
@@ -58,6 +88,44 @@
         xLabel="Category 1"
         yLabel="Value"
         sortOrder="None"
+    />
+
+    Custom legend with custom colors and labels
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="true"
+        colorBy="cat2"
+        :legendDomain="['A1', 'B2']"
+        :legendRange="[colorPalette[5], colorPalette[6]]"
+        xLabel="Value"
+        yLabel="Key"
+        sortOrder="desc"
+    />
+
+    Custom Category Order (bars desc, ticks custom order)
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="true"
+        sortOrder="desc"
+        :categoryOrder="['D', 'A', 'M', 'T', 'B']"
+        xLabel="Value"
+        yLabel="Key"
+    />
+
+    Custom Category Order (vertical, custom tick order)
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="false"
+        sortOrder="None"
+        :categoryOrder="['T', 'M', 'K', 'E', 'A']"
+        xLabel="Key"
+        yLabel="Value"
     />
   </div>
 </template>

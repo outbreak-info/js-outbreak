@@ -3,6 +3,7 @@
     <h1>Time Series Bar Chart Component Test</h1>
     <TimeSeriesBarChart
         :data="chartData"
+        :showProportion="true"
     />
     With cumulative sum
     <TimeSeriesBarChart

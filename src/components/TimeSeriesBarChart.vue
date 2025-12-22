@@ -30,7 +30,13 @@ const props = defineProps({
   rangeColor: { type: Array, default: colorPalette },
   isPreBinned: { type: Boolean, default: false },
   xTickMin: { type: [Date, String], default: null },
-  xTickMax: { type: [Date, String], default: null }
+  xTickMax: { type: [Date, String], default: null },
+  showProportion: { type: Boolean, default: false },
+  tooltipDecimalPlaces: { type: Number, default: 1 },
+  legendDomain: { type: Array, default: null },
+  legendRange: { type: Array, default: null },
+  showLegend: { type: Boolean, default: true },
+  categoryOrder: { type: Array, default: null }
 });
 
 const chartContainer = ref(null);
@@ -103,6 +109,9 @@ function renderChart() {
 
   let binnedData = [], binnedCumulativeData = [], processedData = [];
 
+  // Calculate total for proportion display
+  const total = props.data.reduce((acc, d) => acc + Number(d[props.valueKey] || 0), 0);
+
   if(props.isPreBinned) {
     // Data is already binned. Note: Data will be summed by groupKey regardless
     processedData = props.data
@@ -153,6 +162,22 @@ function renderChart() {
     };
   });
 
+  // Tooltip format configuration for binned data
+  const tipFormat = {
+    format: {
+      x: (d) => timeFormat(getTickFormat(props.binInterval))(d),
+      y: (d) => {
+        const text = d.toLocaleString();
+        if (props.showProportion && total > 0) {
+          const pct = ((d / total) * 100).toFixed(props.tooltipDecimalPlaces);
+          return `${text} (${pct}%)`;
+        }
+        return text;
+      },
+      fill: true
+    }
+  };
+
   let binPlot;
   if (props.isPreBinned) {
     binPlot = Plot.rectY(processedData,
@@ -161,12 +186,7 @@ function renderChart() {
           y: "value",
           fill: "group",
           interval: props.binInterval,
-          tip: {
-            format: {
-              x: (d) => timeFormat(getTickFormat(props.binInterval))(d),
-              y: (d) => d.toLocaleString()
-            }
-          }
+          tip: tipFormat
         }));
   } else {
     binPlot = Plot.rectY(processedData, Plot.binX({ y: "sum" }, {
@@ -174,12 +194,7 @@ function renderChart() {
       y: "value",
       interval: props.binInterval,
       fill: props.barColor, // TODO: For now, set barColor to "group" to color by group
-      tip: {
-        format: {
-          x: (d) => timeFormat(getTickFormat(props.binInterval))(d),
-          y: (d) => d.toLocaleString()
-        }
-      }
+      tip: tipFormat
     }));
   }
 
@@ -222,11 +237,13 @@ function renderChart() {
     },
     y: {
       label: props.yLabel,
+      ...(props.categoryOrder && { domain: props.categoryOrder }),
       grid: true
     },
     color: {
-      legend: true,
-      range: props.rangeColor
+      legend: props.showLegend,
+      ...(props.legendDomain && { domain: props.legendDomain }),
+      range: props.legendRange || colorPalette
     },
     marks
   });

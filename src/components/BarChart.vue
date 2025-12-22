@@ -25,7 +25,11 @@ const props = defineProps({
   colorBy: { type: String, default: '' }, // Use barColor to color bars by category and colorBy to set BOTH fill and tick label to attribute. Change this in the future?
   stacked: { type: Boolean, default: false },
   showProportion: { type: Boolean, default: false },
-  tooltipDecimalPlaces: { type: Number, default: 1 }
+  tooltipDecimalPlaces: { type: Number, default: 1 },
+  legendDomain: { type: Array, default: null },
+  legendRange: { type: Array, default: null },
+  showLegend: { type: Boolean, default: true },
+  categoryOrder: { type: Array, default: null }
 });
 
 const chartContainer = ref(null);
@@ -59,8 +63,7 @@ function getTitle(total) {
   return (d) => {
     const value = d[props.xKey];
     const pct = total > 0 ? ((value / total) * 100).toFixed(props.tooltipDecimalPlaces) : 0;
-    const label = d[props.yKey];
-    return `${label}\n${props.xLabel}: ${value} (${pct}% of ${Math.round(total)})`;
+    return `${value} (${pct}% of ${Math.round(total)})`;
   };
 }
 
@@ -84,11 +87,15 @@ function renderChart() {
         height: props.height,
         width: props.width,
         fx: props.groupBy,
-        y: {label: props.yLabel},
+        y: {
+          label: props.yLabel,
+          ...(props.categoryOrder && { domain: props.categoryOrder })
+        },
         x: {label: props.xLabel, grid: true},
         color: {
-          legend: true,
-          range: colorPalette
+          legend: props.showLegend,
+          ...(props.legendDomain && { domain: props.legendDomain }),
+          range: props.legendRange || colorPalette
         },
         marks: [
           props.stacked
@@ -97,6 +104,7 @@ function renderChart() {
                 x: props.xKey,
                 fx: props.groupBy,
                 fill: props.colorBy,
+                ...(props.legendDomain && { order: props.legendDomain }),
                 title: getTitle(total),
                 tip: true
               }))
@@ -119,11 +127,16 @@ function renderChart() {
         height: props.height,
         width: props.width,
         fx: props.groupBy,
-        x: {tickRotate: 45, label: props.xLabel},
+        x: {
+          tickRotate: 45,
+          label: props.xLabel,
+          ...(props.categoryOrder && { domain: props.categoryOrder })
+        },
         y: {grid: true, label: props.yLabel},
         color: {
-          legend: true,
-          range: colorPalette
+          legend: props.showLegend,
+          ...(props.legendDomain && { domain: props.legendDomain }),
+          range: props.legendRange || colorPalette
         },
         marks: [
           props.stacked
@@ -132,6 +145,7 @@ function renderChart() {
                 y: props.xKey,
                 fx: props.groupBy,
                 fill: props.colorBy,
+                ...(props.legendDomain && { order: props.legendDomain }),
                 title: getTitle(total),
                 tip: true
               }))
@@ -160,6 +174,10 @@ watch(() => props.colorBy, renderChart);
 watch(() => props.stacked, renderChart);
 watch(() => props.showProportion, renderChart);
 watch(() => props.tooltipDecimalPlaces, renderChart);
+watch(() => props.legendDomain, renderChart, { deep: true });
+watch(() => props.legendRange, renderChart, { deep: true });
+watch(() => props.showLegend, renderChart);
+watch(() => props.categoryOrder, renderChart, { deep: true });
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
