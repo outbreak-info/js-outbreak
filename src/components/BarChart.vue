@@ -56,25 +56,32 @@ function getSortOrder(sortOrder, horizontal) {
   return false;
 }
 
-function getTitle(total) {
-  if (!props.showProportion) {
-    return undefined;
-  }
-  return (d) => {
-    const value = d[props.xKey];
-    const pct = total > 0 ? ((value / total) * 100).toFixed(props.tooltipDecimalPlaces) : 0;
-    return `${value} (${pct}% of ${Math.round(total)})`;
-  };
-}
-
 function renderChart() {
   if (!props.data || props.data.length === 0 || !chartContainer.value) return;
 
   chartContainer.value.innerHTML = '';
 
-  const total = props.showProportion
-    ? props.data.reduce((sum, d) => sum + Number(d[props.xKey] || 0), 0)
-    : 0;
+  const total = props.data.reduce((sum, d) => sum + Number(d[props.xKey] || 0), 0);
+
+  // Format function that handles both numeric values and category strings
+  const formatValue = (d) => {
+    if (typeof d === 'number') {
+      const text = d.toLocaleString();
+      if (props.showProportion && total > 0) {
+        const pct = ((d / total) * 100).toFixed(props.tooltipDecimalPlaces);
+        return `${text} (${pct}%)`;
+      }
+      return text;
+    }
+    return d;
+  };
+
+  const tipFormat = {
+    format: {
+      y: formatValue,
+      fill: true
+    }
+  };
 
 
 
@@ -105,8 +112,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy,
                 ...(props.legendDomain && { order: props.legendDomain }),
-                title: getTitle(total),
-                tip: true
+                tip: tipFormat
               }))
             : Plot.barX(props.data, {
                 y: props.colorBy || props.yKey,
@@ -114,8 +120,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy || props.barColor,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
-                title: getTitle(total),
-                tip: true
+                tip: tipFormat
               }),
           Plot.ruleX([0]),
         ]
@@ -146,8 +151,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy,
                 ...(props.legendDomain && { order: props.legendDomain }),
-                title: getTitle(total),
-                tip: true
+                tip: tipFormat
               }))
             : Plot.barY(props.data, {
                 x: props.colorBy || props.yKey,
@@ -155,8 +159,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy || props.barColor,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
-                title: getTitle(total),
-                tip: true
+                tip: tipFormat
               }),
           Plot.ruleY([0])
         ]
