@@ -35,7 +35,7 @@ const props = defineProps({
   // Chart margins
   marginTop: { type: Number, default: 5 },
   marginRight: { type: Number, default: 130 },
-  marginBottom: { type: Number, default: 50 },
+  marginBottom: { type: Number, default: 10 },
   marginLeft: { type: Number, default: 70 },
 
   // Container margins
@@ -292,7 +292,7 @@ const noDataStyle = {
         </svg>
       </div>
     </div>
-    <!-- x-axis -->
+    <!-- Top x-axis -->
     <div>
       <svg
         role="img"
@@ -372,6 +372,47 @@ const noDataStyle = {
               @mouseenter="d[colorKey] !== 'hatching' && handleMouseEnter(d)"
               @mouseleave="handleMouseLeave"
              />
+          </g>
+        </g>
+      </svg>
+    </div>
+    <!-- Bottom x-axis -->
+    <div>
+      <svg
+        role="img"
+        :width="width - containerMarginLeft - containerMarginRight"
+        :height="axisHeight"
+      >
+        <g :transform="`translate(${marginLeft}, 0)`">
+          <g
+            v-for="(xtick, index) in xTicksToBeRendered"
+            :key="'xtick-' + index"
+            :transform="`translate(${xScale(xtick) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              y="0"
+              dy="0.8em"
+              text-anchor="middle"
+              :fill="hoveredCellKey ? '#bdc3c7' : '#2c3e50'"
+              font-size="14px"
+            >
+              {{ formatTime(parseTime(xtick)) }}
+            </text>
+          </g>
+          <g
+            v-if="hoveredCell"
+            :transform="`translate(${xScale(xAccessor(hoveredCell)) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              y="0"
+              dy="0.8em"
+              text-anchor="middle"
+              fill="#000dcb"
+              font-size="14px"
+              font-weight="700"
+            >
+              {{ formatTime(parseTime(xAccessor(hoveredCell))) }}
+            </text>
           </g>
         </g>
       </svg>
