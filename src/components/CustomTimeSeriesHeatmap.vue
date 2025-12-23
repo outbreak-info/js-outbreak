@@ -54,7 +54,10 @@ const axisHeight = 25;
 const cellHeight = 25;
 const cellPadding = 0.15;
 
-console.log("data", props.aggregatedData);
+const hoveredCell = ref(null);
+const hoveredCellKey = ref(null);
+const cellKey = d =>
+  `${d[props.columnKey]}-${d[props.rowKey]}`;
 
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
@@ -195,6 +198,16 @@ const generateDataToBeRendered = (columnLabels, rowLabels, data) => {
 
 const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.value, rowLabels.value, props.aggregatedData));
 
+const handleMouseEnter = d => {
+  hoveredCell.value = d;
+  hoveredCellKey.value = cellKey(d);
+};
+
+const handleMouseLeave = () => {
+  hoveredCell.value = null;
+  hoveredCellKey.value = null;
+};
+
 // Heatmap container inline styles
 const heatmapContainerStyle = computed(() => ({
   position: "relative",
@@ -296,10 +309,25 @@ const noDataStyle = {
               y="0"
               dy="0.8em"
               text-anchor="middle"
-              fill="#2c3e50"
+              :fill="hoveredCellKey ? '#bdc3c7' : '#2c3e50'"
               font-size="14px"
             >
               {{ formatTime(parseTime(xtick)) }}
+            </text>
+          </g>
+          <g
+            v-if="hoveredCell"
+            :transform="`translate(${xScale(xAccessor(hoveredCell)) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              y="0"
+              dy="0.8em"
+              text-anchor="middle"
+              fill="#000dcb"
+              font-size="14px"
+              font-weight="700"
+            >
+              {{ formatTime(parseTime(xAccessor(hoveredCell))) }}
             </text>
           </g>
         </g>
@@ -325,31 +353,25 @@ const noDataStyle = {
             >
               {{ rowLabel }}
             </text>
-            <g v-for="(dataPoint, index) in dataToBeRendered.filter((element) => element[props.rowKey] == rowLabel)">
-              <rect 
-                v-if="dataPoint[props.colorKey] !== 'hatching'"
-                class="cell detected"
-                :key="'row-' + index"
-                :x="xScale(xAccessor(dataPoint))"
-                :y="yScale(rowLabel)"
-                :width="xScale.bandwidth()"
-                :height="yScale.bandwidth()"
-                :fill=colorScale(colorAccessor(dataPoint)) 
-                stroke="#a9a9a9"
-                :rx="createCellsWithRoundedCorners ? '4' : '0'"
-              />
-              <rect 
-                v-else
-                class="cell"
-                :x="xScale(xAccessor(dataPoint))"
-                :y="yScale(rowLabel)"
-                :width="xScale.bandwidth()"
-                :height="yScale.bandwidth()"
-                fill="url(#heatmapDiagonalHatch)"
-                stroke="#a9a9a9"
-                :rx="createCellsWithRoundedCorners ? '4' : '0'"
-              />
-            </g>
+            <rect
+              v-for="d in dataToBeRendered.filter(x => x[rowKey] === rowLabel)"
+              :key="cellKey(d)"
+              :x="xScale(xAccessor(d))"
+              :y="yScale(rowLabel)"
+              :width="xScale.bandwidth()"
+              :height="yScale.bandwidth()"
+              :rx="createCellsWithRoundedCorners ? 4 : 0"
+              stroke="#a9a9a9"
+              :fill="
+                d[colorKey] === 'hatching'
+                  ? 'url(#heatmapDiagonalHatch)'
+                  : hoveredCellKey === cellKey(d)
+                    ? '#000dcb'
+                    : colorScale(colorAccessor(d))
+              "
+              @mouseenter="d[colorKey] !== 'hatching' && handleMouseEnter(d)"
+              @mouseleave="handleMouseLeave"
+             />
           </g>
         </g>
       </svg>
