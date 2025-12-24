@@ -4,7 +4,7 @@
 
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount, computed } from "vue";
-import { defaultColor } from "../utils/colorSchemes";
+import {colorPalette, defaultColor} from "../utils/colorSchemes";
 import * as Plot from "@observablehq/plot";
 
 const props = defineProps({
@@ -161,7 +161,7 @@ function renderChart() {
       y: props.valueKey,
       stroke: props.lineColor,
       strokeWidth: 2,
-      curve: props.curve,
+      curve: props.curve
     })
   );
 
@@ -224,6 +224,10 @@ function renderChart() {
       tickPadding: props.tickPadding,
     },
     y: yAxisConfig.value,
+    color:{
+      legend: true,
+      range: colorPalette
+    },
     marks,
   });
 
