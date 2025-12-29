@@ -79,7 +79,7 @@ const noDataStyle = {
       </div>
 
       <svg role="img" :width="legendWidth" :height="legendHeight">
-        <defs v-html="diagonalHatchPatternDef('heatmapDiagonalHatch')" />
+        <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')" />
 
         <g>
           <!-- Color bands with transparent gaps -->
@@ -126,7 +126,7 @@ const noDataStyle = {
           y="2"
           :width="rectWidth"
           :height="rectHeight"
-          fill="url(#heatmapDiagonalHatch)"
+          fill="url(#legendDiagonalHatch)"
           stroke="#888"
           stroke-width="0.5"
         />
