@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from "vue";
 import { scaleLinear } from "d3-scale";
 import { format } from "d3-format";
 import { min, max } from "d3-array";
@@ -8,6 +9,12 @@ const props = defineProps({
   colorScale: { type: Function, required: true },
   legendTitle: { type: String, default: "prevalence (%)" },
   hatchPatternString: { type: String, default: "not detected" },
+
+  // Container margins
+  containerMarginTop: { type: Number, default: 0 },
+  containerMarginRight: { type: Number, default: 0 },
+  containerMarginBottom: { type: Number, default: 0 },
+  containerMarginLeft: { type: Number, default: 0 },
 });
 
 // Legend dimensions
@@ -18,6 +25,13 @@ const rectHeight = 15;
 const rangeMin = 12;
 const rangeMax = 288;
 const colorBandGap = 1;
+
+const containerMargins = computed(() => ({
+  marginTop: props.containerMarginTop + "px",
+  marginRight: props.containerMarginRight + "px",
+  marginBottom: props.containerMarginBottom + "px",
+  marginLeft: props.containerMarginLeft + "px",
+}));
 
 const legendScale = scaleLinear()
   .domain([min(props.colorScale.domain()), max(props.colorScale.domain())])
@@ -35,19 +49,13 @@ const colorBands = props.colorScale.range().map((color) => {
 const legendTicks = props.colorScale.domain();
 const formatLegendValue = format(".2s");
 
-// Legend inline styles
-const legendWrapperStyle = {
+// Legend container inline styles
+const legendContainerStyle = computed(() => ({
   display: "flex",
   flexFlow: "row wrap",
   alignItems: "center",
-  marginTop: "15px",
-  marginBottom: "0px",
-};
-
-const legendStyle = {
-  marginLeft: "0px",
-  marginRight: "0px",
-};
+  ...containerMargins.value,
+}));
 
 const titleStyle = {
   marginBottom: "5px",
@@ -57,13 +65,13 @@ const titleStyle = {
 };
 
 const noDataStyle = {
-  marginLeft: "7px",
+  marginLeft: "10px",
 };
 </script>
 
 <template>
-  <div :style="legendWrapperStyle">
-    <div :style="legendStyle">
+  <div :style="legendContainerStyle">
+    <div>
       <div :style="titleStyle">
         <span>{{ legendTitle }}</span>
       </div>
