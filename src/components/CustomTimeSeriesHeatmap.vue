@@ -10,6 +10,7 @@ import {
 } from "../utils/colorSchemes";
 import { createDateArray } from "../utils/arrays";
 import { filterXTicks } from "../utils/tickFilters";
+import CustomLegendWithQuantizeScale from "./CustomLegendWithQuantizeScale.vue";
 
 const props = defineProps({
   aggregatedData: { type: Array, required: true },
@@ -20,17 +21,12 @@ const props = defineProps({
   columnKey: { type: String, default: "collection_date" },
   colorKey: { type: String, default: "prevalence" },
 
-   // Color scale configuration
+  // Color scale configuration
   colorDomain: {
     type: Array,
     default: () => [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
   },
   colorRange: { type: Array, default: () => ylOrRdDiscrete11 },
-
-  // Legend configuration
-  showLegend: { type: Boolean, default: true },
-  legendTitle: { type: String, default: "prevalence (%)" },
-  hatchPatternString: { type: String, default: "not detected" },
 
   // Chart margins
   marginTop: { type: Number, default: 5 },
@@ -91,34 +87,9 @@ const marginRight = props.marginRight;
 const marginBottom = props.marginBottom;
 const marginLeft = props.marginLeft;
 
-// Legend dimensions
-const legendWidth = 300;
-const legendHeight = 45;
-const rectWidth = 25;
-const rectHeight = 15;
-const rangeMin = 12;
-const rangeMax = 288;
-
 const colorScale = computed(() =>
   scaleThreshold().domain(props.colorDomain).range(props.colorRange)
 );
-
-const legendScale = scaleLinear()
-  .domain([min(colorScale.value.domain()), max(colorScale.value.domain())])
-  .rangeRound([rangeMin, rangeMax]);
-
-const colorBands = colorScale.value.range().map((color) => {
-  const d = colorScale.value.invertExtent(color);
-
-  if (d[0] == null) d[0] = legendScale.domain()[0];
-  if (d[1] == null) d[1] = legendScale.domain()[1];
-
-  return d;
-});
-
-const legendTicks = colorScale.value.domain();
-
-const formatLegendValue = format(".2s");
 
 const rowLabels = computed(() =>
   [...new Set(props.aggregatedData.map(yAccessor))]
@@ -213,85 +184,12 @@ const heatmapContainerStyle = computed(() => ({
   position: "relative",
   ...containerMargins.value,
 }));
-
-// Legend inline styles
-const legendWrapperStyle = {
-  display: "flex",
-  flexFlow: "row wrap",
-  alignItems: "center",
-  marginTop: "15px",
-  marginBottom: "0px",
-};
-
-const legendStyle = {
-  marginLeft: "0px",
-  marginRight: "0px",
-};
-
-const titleStyle = {
-  marginBottom: "5px",
-  textAlign: "left",
-  fontSize: "14px",
-  marginLeft: "10px",
-};
-
-const noDataStyle = {
-  marginLeft: "7px",
-};
 </script>
 
 <template>
   <div :style="heatmapContainerStyle">
-    <!-- Legend -->
-    <div v-if="showLegend" :style="legendWrapperStyle">
-      <div :style="legendStyle">
-        <div :style="titleStyle">
-          <span>{{ legendTitle }}</span>
-        </div>
-        <svg role="img" :width="legendWidth" :height="legendHeight">
-          <defs v-html="diagonalHatchPatternDef('heatmapDiagonalHatch')"></defs>
-          <g>
-            <rect
-              v-for="band in colorBands"
-              :x="legendScale(band[0])"
-              :width="legendScale(band[1]) - legendScale(band[0])"
-              :height="rectHeight"
-              :fill="colorScale(band[0])"
-            />
-            <g
-              v-for="legendTick in legendTicks"
-              :transform="`translate(${legendScale(legendTick)}, 0)`"
-            >
-              <text
-                y="18"
-                dy="0.8em"
-                text-anchor="middle"
-                fill="#2c3e50"
-                font-size="14px"
-              >
-                {{ legendTick == 0 ? legendTick : formatLegendValue(legendTick) }}
-              </text>
-            </g>
-          </g>
-        </svg>
-      </div>
-      <div :style="noDataStyle">
-        <svg width="125" height="24">
-          <rect
-            x="5"
-            y="2"
-            :width="rectWidth"
-            :height="rectHeight"
-            fill="url(#heatmapDiagonalHatch)"
-            stroke="#888"
-            stroke-width="0.5"
-          />
-          <text x="40" y="12" dy="0.1em" fill="#2c3e50" font-size="14px">
-            {{ hatchPatternString }}
-          </text>
-        </svg>
-      </div>
-    </div>
+    <CustomLegendWithQuantizeScale :colorScale="colorScale" />
+
     <!-- Top x-axis -->
     <div>
       <svg
@@ -333,6 +231,7 @@ const noDataStyle = {
         </g>
       </svg>
     </div>
+
     <!-- Grid -->
     <div>
       <svg
@@ -340,6 +239,7 @@ const noDataStyle = {
         :width="width - containerMarginLeft - containerMarginRight"
         :height="height"
       >
+        <defs v-html="diagonalHatchPatternDef('heatmapDiagonalHatch')" />
         <g :transform="`translate(${marginLeft}, ${marginTop})`">
           <g v-for="rowLabel in rowLabels">
             <text
@@ -376,6 +276,7 @@ const noDataStyle = {
         </g>
       </svg>
     </div>
+
     <!-- Bottom x-axis -->
     <div>
       <svg
