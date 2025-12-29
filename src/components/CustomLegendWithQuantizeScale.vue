@@ -10,6 +10,9 @@ const props = defineProps({
   legendTitle: { type: String, default: "prevalence (%)" },
   hatchPatternString: { type: String, default: "not detected" },
 
+  // Toggle hatch legend visibility
+  showHatchLegend: { type: Boolean, default: true },
+
   // Container margins
   containerMarginTop: { type: Number, default: 0 },
   containerMarginRight: { type: Number, default: 0 },
@@ -49,7 +52,6 @@ const colorBands = props.colorScale.range().map((color) => {
 const legendTicks = props.colorScale.domain();
 const formatLegendValue = format(".2s");
 
-// Legend container inline styles
 const legendContainerStyle = computed(() => ({
   display: "flex",
   flexFlow: "row wrap",
@@ -77,7 +79,7 @@ const noDataStyle = {
       </div>
 
       <svg role="img" :width="legendWidth" :height="legendHeight">
-        <defs v-html="diagonalHatchPatternDef('heatmapDiagonalHatch')"></defs>
+        <defs v-html="diagonalHatchPatternDef('heatmapDiagonalHatch')" />
 
         <g>
           <!-- Color bands with transparent gaps -->
@@ -117,7 +119,7 @@ const noDataStyle = {
     </div>
 
     <!-- Hatch legend -->
-    <div :style="noDataStyle">
+    <div v-if="showHatchLegend" :style="noDataStyle">
       <svg width="125" height="24">
         <rect
           x="5"
