@@ -11,6 +11,7 @@ import {
 import { createDateArray } from "../utils/arrays";
 import { filterXTicks } from "../utils/tickFilters";
 import CustomLegendWithQuantizeScale from "./CustomLegendWithQuantizeScale.vue";
+import CustomTooltipWithLineChart from "./CustomTooltipWithLineChart.vue";
 
 const props = defineProps({
   aggregatedData: { type: Array, required: true },
@@ -54,6 +55,7 @@ const hoveredCell = ref(null);
 const hoveredCellKey = ref(null);
 const cellKey = d =>
   `${d[props.columnKey]}-${d[props.rowKey]}`;
+const tooltipData = ref(null);
 
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
@@ -169,14 +171,28 @@ const generateDataToBeRendered = (columnLabels, rowLabels, data) => {
 
 const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.value, rowLabels.value, props.aggregatedData));
 
+console.log("dataToBeRendered", dataToBeRendered.value);
+
 const handleMouseEnter = d => {
   hoveredCell.value = d;
+  console.log("d", d);
   hoveredCellKey.value = cellKey(d);
+  // tooltipData.value = dataToBeRendered.value.filter(element => yAccessor(element) === yAccessor(hoveredCell.value));
+  // console.log("tooltipData", tooltipData.value);
+
+  tooltipData.value = dataToBeRendered.value.filter(
+    element => 
+      yAccessor(element) === yAccessor(hoveredCell.value) &&
+      typeof element.prevalence === "number"
+    );
+
+  console.log("tooltipData", tooltipData.value);
 };
 
 const handleMouseLeave = () => {
   hoveredCell.value = null;
   hoveredCellKey.value = null;
+  tooltipData.value = null;
 };
 
 // Heatmap container inline styles
@@ -318,5 +334,15 @@ const heatmapContainerStyle = computed(() => ({
         </g>
       </svg>
     </div>
+    <CustomTooltipWithLineChart
+      v-if="hoveredCell && tooltipData.length > 0"
+      :width="width"
+      :hoveredCell="hoveredCell"
+      :tooltipData="tooltipData"
+      :xScale="xScale"
+      :xScaleDomain="xScaleDomain"
+      :xAccessor="xAccessor"
+      :colorScale="colorScale"
+    />
   </div>
 </template>
