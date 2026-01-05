@@ -334,8 +334,10 @@ const heatmapContainerStyle = computed(() => ({
       :tooltipData="tooltipData"
       :xScale="xScale"
       :xScaleDomain="xScaleDomain"
+      :yScale="yScale"
       :xAccessor="xAccessor"
       :yAccessor="colorAccessor"
+      :rowAccessor="yAccessor"
       :colorScale="colorScale"
     />
   </div>

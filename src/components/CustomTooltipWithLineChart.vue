@@ -13,8 +13,10 @@ const props = defineProps({
   tooltipData: { type: Array, required: true },
   xScale: { type: Function, required: true },
   xScaleDomain: { type: Array, required: true },
+  yScale: { type: Function, required: true },
   xAccessor: { type: Function, required: true },
   yAccessor: { type: Function, required: true },
+  rowAccessor: { type: Function, required: true },
   colorScale: { type: Function, required: true },
 });
 
@@ -29,51 +31,33 @@ const sraIdString = computed(() => sraIds.value.join(', '));
 const sampleRowTitle = computed(() => sraIds.value.length > 1 ? 'Samples' : 'Sample' );
 
 const tooltipWidth = computed(() => (props.width > 400 ? 215 : 185));
+const xPosForSmallScreens = 50;
 
 const fontSize = computed(() => (props.width > 400 ? '14px' : '13px'));
 
 const dateIndex = computed(() =>
-  props.xScaleDomain.indexOf(props.hoveredCell.collection_date),
+  props.xScaleDomain.indexOf(props.xAccessor(props.hoveredCell)),
 );
+
 const dateArrayLength = props.xScaleDomain.length;
 const midPoint = Math.floor(dateArrayLength / 2);
 
 const xNudge = computed(() => setXNudge());
 
-const yNudge = computed(() => setYNudge());
-
-const xPosition = computed(
-  () => props.xScale(props.xAccessor(props.hoveredCell)) + xNudge.value,
-);
-
-const yPosition = computed(
-  () => props.yScale(props.hoveredCelll.name) + yNudge.value,
-);
-
-const setXNudge = () => {
-  let xPos;
-  if (props.width > 400) {
-    xPos = dateIndex.value >= midPoint ? -50 : 140;
-  } else {
-    xPos = dateIndex.value >= midPoint ? -20 : 90;
+const xPosition = computed(() => {
+  if (props.width <= 700) {
+    return xPosForSmallScreens;
   }
-  return xPos;
-};
-
-const setYNudge = () => {
-  let yPos;
-  if (props.data.length > 1 && props.width > 400) {
-    yPos = -120;
-  } else {
-    yPos = -10;
-  }
-  return yPos;
-}
+  
+  return dateIndex.value <= midPoint
+    ? props.xScale(props.xAccessor(props.hoveredCell)) + xPosForSmallScreens
+    : props.xScale(props.xAccessor(props.hoveredCell)) - (tooltipWidth.value - xPosForSmallScreens);
+});
 
 // Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
   transform: `translate(${xPosition.value}px, 0px)`,
-  width: `${tooltipWidth}px`,
+  width: `${tooltipWidth.value}px`,
   background: "#ffffff",
   boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",
   borderRadius: "3px",
@@ -120,7 +104,7 @@ const tooltipBarStyle = computed(() => ({
   width: "100%",
   bottom: "0",
   left: "0",
-  background: `${props.colorScale(props.hoveredCell.prevalence)}`,
+  background: `${props.colorScale(props.yAccessor(props.hoveredCell))}`,
 }));
 </script>
 
@@ -158,7 +142,7 @@ const tooltipBarStyle = computed(() => ({
     </div>
     <div v-if="tooltipData.length > 1 && width > 400">
       <CustomLineChartWithHighlightedPoint
-        :width="lineChartWidth"
+        :width="width"
         :data="tooltipData"
         :xAccessor="xAccessor"
         :xScaleDomain="xScaleDomain"
