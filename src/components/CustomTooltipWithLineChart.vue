@@ -14,6 +14,7 @@ const props = defineProps({
   xScale: { type: Function, required: true },
   xScaleDomain: { type: Array, required: true },
   xAccessor: { type: Function, required: true },
+  yAccessor: { type: Function, required: true },
   colorScale: { type: Function, required: true },
 });
 
@@ -68,8 +69,6 @@ const setYNudge = () => {
   }
   return yPos;
 }
-
-const yAccessor = (d) => d.prevalence;
 
 // Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
@@ -163,6 +162,7 @@ const tooltipBarStyle = computed(() => ({
         :data="tooltipData"
         :xAccessor="xAccessor"
         :xScaleDomain="xScaleDomain"
+        :yAccessor="yAccessor"
         :hoveredCell="hoveredCell"
       />
     </div>

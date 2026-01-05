@@ -10,14 +10,13 @@ const props = defineProps({
   width: Number,
   data: Array,
   xAccessor: Function,
+  yAccessor: Function,
   xScaleDomain: Array,
   hoveredCell: Object,
 });
 
 const parseTime = timeParse('%Y-%m-%d');
 const formatTime = timeFormat('%b %e');
-
-const yAccessor = (d) => d.prevalence;
 
 const lineChartWidth = 200;
 
@@ -42,18 +41,19 @@ const lineChartXScale = scaleBand()
   .padding(0);
 
 const lineChartYScale = scaleLinear()
-  .domain([0, max(props.data, yAccessor)])
+  .domain([0, max(props.data, props.yAccessor)])
   .range([lineChartInnerHeight, 0])
   .nice();
 
 const xAccessorScaled = (d) => lineChartXScale(props.xAccessor(d));
-const yAccessorScaled = (d) => lineChartYScale(yAccessor(d));
+const yAccessorScaled = (d) => lineChartYScale(props.yAccessor(d));
 
 const lineGenerator = line()
   .x(xAccessorScaled)
   .y(yAccessorScaled)
-  .defined(function (d) {
-    return !Number.isNaN(d.prevalence);
+  .defined(d => {
+    const y = props.yAccessor(d);
+    return Number.isFinite(y);
   })
   .curve(curveBundle);
 

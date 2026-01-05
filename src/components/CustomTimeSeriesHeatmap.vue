@@ -171,22 +171,15 @@ const generateDataToBeRendered = (columnLabels, rowLabels, data) => {
 
 const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.value, rowLabels.value, props.aggregatedData));
 
-console.log("dataToBeRendered", dataToBeRendered.value);
-
 const handleMouseEnter = d => {
   hoveredCell.value = d;
-  console.log("d", d);
   hoveredCellKey.value = cellKey(d);
-  // tooltipData.value = dataToBeRendered.value.filter(element => yAccessor(element) === yAccessor(hoveredCell.value));
-  // console.log("tooltipData", tooltipData.value);
 
   tooltipData.value = dataToBeRendered.value.filter(
     element => 
       yAccessor(element) === yAccessor(hoveredCell.value) &&
       typeof element.prevalence === "number"
     );
-
-  console.log("tooltipData", tooltipData.value);
 };
 
 const handleMouseLeave = () => {
@@ -342,6 +335,7 @@ const heatmapContainerStyle = computed(() => ({
       :xScale="xScale"
       :xScaleDomain="xScaleDomain"
       :xAccessor="xAccessor"
+      :yAccessor="colorAccessor"
       :colorScale="colorScale"
     />
   </div>
