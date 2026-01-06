@@ -56,6 +56,7 @@ const hoveredCellKey = ref(null);
 const cellKey = d =>
   `${d[props.columnKey]}-${d[props.rowKey]}`;
 const tooltipData = ref(null);
+const tooltipTitle = ref(null);
 
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
@@ -174,6 +175,7 @@ const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.v
 const handleMouseEnter = d => {
   hoveredCell.value = d;
   hoveredCellKey.value = cellKey(d);
+  tooltipTitle.value = `${hoveredCell.value.name} · ${hoveredCell.value.collection_site_id}`;
 
   tooltipData.value = dataToBeRendered.value.filter(
     element => 
@@ -186,6 +188,7 @@ const handleMouseLeave = () => {
   hoveredCell.value = null;
   hoveredCellKey.value = null;
   tooltipData.value = null;
+  tooltipTitle.value = null;
 };
 
 // Heatmap container inline styles
@@ -332,6 +335,7 @@ const heatmapContainerStyle = computed(() => ({
       :width="width"
       :hoveredCell="hoveredCell"
       :tooltipData="tooltipData"
+      :tooltipTitle="tooltipTitle"
       :xScale="xScale"
       :xScaleDomain="xScaleDomain"
       :yScale="yScale"

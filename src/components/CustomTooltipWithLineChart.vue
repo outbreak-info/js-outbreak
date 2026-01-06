@@ -11,6 +11,7 @@ const props = defineProps({
   width: { type: Number, required: true },
   hoveredCell: { type: Object, required: true },
   tooltipData: { type: Array, required: true },
+  tooltipTitle: { type: Array, required: false },
   xScale: { type: Function, required: true },
   xScaleDomain: { type: Array, required: true },
   yScale: { type: Function, required: true },
@@ -114,8 +115,8 @@ const tooltipBarStyle = computed(() => ({
 
 <template>
   <div :style="tooltipWrapperStyle">
-    <div :style="tooltipTitleStyle"> 
-      {{ hoveredCell.name }} &#183; {{ hoveredCell.collection_site_id }}   
+    <div v-if="tooltipData" :style="tooltipTitleStyle">
+      {{ tooltipTitle }}
     </div>
     <div :style="tooltipDateStyle">
       {{ formatTime(parseTime(hoveredCell.collection_date)) }}
