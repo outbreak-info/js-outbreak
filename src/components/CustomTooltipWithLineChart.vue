@@ -54,9 +54,13 @@ const xPosition = computed(() => {
     : props.xScale(props.xAccessor(props.hoveredCell)) - (tooltipWidth.value - xPosForSmallScreens);
 });
 
+const yPosition = computed(
+  () => props.yScale(props.rowAccessor(props.hoveredCell)) - 200
+);
+
 // Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
-  transform: `translate(${xPosition.value}px, 0px)`,
+  transform: `translate(${xPosition.value}px, ${yPosition.value}px)`,
   width: `${tooltipWidth.value}px`,
   background: "#ffffff",
   boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",
@@ -147,6 +151,7 @@ const tooltipBarStyle = computed(() => ({
         :xAccessor="xAccessor"
         :xScaleDomain="xScaleDomain"
         :yAccessor="yAccessor"
+        yAxisTitle="prevalence (%)"
         :hoveredCell="hoveredCell"
       />
     </div>

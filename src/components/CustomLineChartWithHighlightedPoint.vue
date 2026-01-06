@@ -12,6 +12,7 @@ const props = defineProps({
   xAccessor: Function,
   yAccessor: Function,
   xScaleDomain: Array,
+  yAxisTitle: String,
   hoveredCell: Object,
 });
 
@@ -109,7 +110,7 @@ const yMax = lineChartYScale.range()[1];
           fill="#2c3e50"
           font-size="12px"
         >
-          prevalence (%)
+          {{ yAxisTitle }}
         </text>
         <line 
           :x1="0" 
