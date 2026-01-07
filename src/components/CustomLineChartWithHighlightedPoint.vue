@@ -8,6 +8,7 @@ import { filterXTicks } from "../utils/tickFilters";
 
 const props = defineProps({
   width: Number,
+  lineChartWidth: Number,
   data: Array,
   xAccessor: Function,
   yAccessor: Function,
@@ -19,19 +20,17 @@ const props = defineProps({
 const parseTime = timeParse('%Y-%m-%d');
 const formatTime = timeFormat('%b %e');
 
-const lineChartWidth = 200;
-
 const lineChartHeight = 80;
 
 const lineChartMargin = {
   top: 25,
-  right: 18,
+  right: 20,
   bottom: 25,
   left: 40,
 };
 
 const lineChartInnerWidth =
-  lineChartWidth - lineChartMargin.left - lineChartMargin.right;
+  props.lineChartWidth - lineChartMargin.left - lineChartMargin.right;
 
 const lineChartInnerHeight =
   lineChartHeight - lineChartMargin.top - lineChartMargin.bottom;

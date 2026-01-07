@@ -140,7 +140,7 @@ const tooltipGridStyle = {
   display: "grid",
   rowGap: "1px",
   gridTemplateColumns: "1fr auto",
-  columnGap: "20px",
+  columnGap: "10px",
   fontWeight: "400",
   marginBottom: "10px", 
 }
@@ -194,6 +194,7 @@ const tooltipBarStyle = computed(() => ({
     <div v-if="tooltipData.length > 1 && width > 400">
       <CustomLineChartWithHighlightedPoint
         :width="width"
+        :lineChartWidth="tooltipWidth"
         :data="tooltipData"
         :xAccessor="xAccessor"
         :xScaleDomain="xScaleDomain"
