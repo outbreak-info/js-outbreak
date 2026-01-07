@@ -9,9 +9,19 @@ import CustomLineChartWithHighlightedPoint from "./CustomLineChartWithHighlighte
 
 const props = defineProps({
   width: { type: Number, required: true },
-  hoveredCell: { type: Object, required: true },
-  tooltipData: { type: Array, required: true },
-  tooltipTitle: { type: Array, required: false },
+  hoveredCell: {
+    type: Object,
+    required: true,
+    default: () => ({}),
+  },
+  tooltipData: {
+    type: Array,
+    default: () => [],
+  },
+  tooltipTitle: {
+    type: String,
+    default: "",
+  },
   xScale: { type: Function, required: true },
   xScaleDomain: { type: Array, required: true },
   yScale: { type: Function, required: true },
@@ -19,6 +29,9 @@ const props = defineProps({
   yAccessor: { type: Function, required: true },
   rowAccessor: { type: Function, required: true },
   colorScale: { type: Function, required: true },
+  sraAccessor: { type: Function, default: null },
+  populationAccessor: { type: Function, default: null},
+  viralLoadAccessor: { type: Function, default: null},
 });
 
 const formatTime = timeFormat('%b %e, %Y');
@@ -27,9 +40,31 @@ const formatPrevalence = format(',.2f');
 const formatPopulation = format(',.0f');
 const formatViralLoad = format(',.0f');
 
-const sraIds = computed(() => props.hoveredCell.sra_accession.sort());
-const sraIdString = computed(() => sraIds.value.join(', '));
-const sampleRowTitle = computed(() => sraIds.value.length > 1 ? 'Samples' : 'Sample' );
+const hovered = computed(() => props.hoveredCell ?? {});
+
+const sraIds = computed(() => {
+  if (!props.sraAccessor) return [];
+  const value = props.sraAccessor(hovered.value);
+  return Array.isArray(value) ? [...value].sort() : [];
+});
+
+const sraIdString = computed(() => sraIds.value.join(", "));
+
+const sampleRowTitle = computed(() =>
+  sraIds.value.length > 1 ? "Samples" : "Sample"
+);
+
+const populationValue = computed(() => {
+  return props.populationAccessor
+    ? props.populationAccessor(hovered.value)
+    : null;
+});
+
+const viralLoadValue = computed(() => {
+  if (!props.viralLoadAccessor) return null;
+  const value = props.viralLoadAccessor(hovered.value);
+  return value === -1 ? null : value;
+});
 
 const tooltipWidth = computed(() => (props.width > 400 ? 215 : 185));
 const xPosForSmallScreens = 50;
@@ -37,7 +72,7 @@ const xPosForSmallScreens = 50;
 const fontSize = computed(() => (props.width > 400 ? '14px' : '13px'));
 
 const dateIndex = computed(() =>
-  props.xScaleDomain.indexOf(props.xAccessor(props.hoveredCell)),
+  props.xScaleDomain.indexOf(props.xAccessor(hovered.value)),
 );
 
 const dateArrayLength = props.xScaleDomain.length;
@@ -51,13 +86,22 @@ const xPosition = computed(() => {
   }
   
   return dateIndex.value <= midPoint
-    ? props.xScale(props.xAccessor(props.hoveredCell)) + xPosForSmallScreens
-    : props.xScale(props.xAccessor(props.hoveredCell)) - (tooltipWidth.value - xPosForSmallScreens);
+    ? props.xScale(props.xAccessor(hovered.value)) + xPosForSmallScreens
+    : props.xScale(props.xAccessor(hovered.value)) - (tooltipWidth.value - xPosForSmallScreens);
 });
 
 const yPosition = computed(
-  () => props.yScale(props.rowAccessor(props.hoveredCell)) - 200
+  () => props.yScale(props.rowAccessor(hovered.value)) - 200
 );
+
+const shouldRenderGrid = computed(() => {
+  return (
+    sraIds.value.length > 0 ||
+    populationValue.value !== null ||
+    viralLoadValue.value !== null ||
+    props.yAccessor(hovered.value) !== null
+  );
+});
 
 // Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
@@ -109,7 +153,7 @@ const tooltipBarStyle = computed(() => ({
   width: "100%",
   bottom: "0",
   left: "0",
-  background: `${props.colorScale(props.yAccessor(props.hoveredCell))}`,
+  background: `${props.colorScale(props.yAccessor(hovered.value))}`,
 }));
 </script>
 
@@ -119,32 +163,36 @@ const tooltipBarStyle = computed(() => ({
       {{ tooltipTitle }}
     </div>
     <div :style="tooltipDateStyle">
-      {{ formatTime(parseTime(hoveredCell.collection_date)) }}
+      {{ formatTime(parseTime(xAccessor(hovered))) }}
     </div>
     <hr :style="tooltipDividerStyle" />
-    <div :style="tooltipGridStyle">
-      <span>{{ sampleRowTitle }}</span>
-      <span class="data">{{ sraIdString }}</span>
-      <span>Population</span>
-      <span class="data">
-        {{ formatPopulation(hoveredCell.ww_population) }}
-      </span>
-      <span
-        v-if="hoveredCell.viral_load != -1.0"
-      >
-        Viral load
-      </span>
-      <span
-        v-if="hoveredCell.viral_load != -1.0"
-        class="data"
-      >
-        {{ `${formatViralLoad(hoveredCell.viral_load)} copies/L` }}</span
-      >
+
+    <div v-if="shouldRenderGrid" :style="tooltipGridStyle">
+      <template v-if="sraIds.length">
+        <span>{{ sampleRowTitle }}</span>
+        <span class="data">{{ sraIdString }}</span>
+      </template>
+
+      <template v-if="populationValue !== null">
+        <span>Population</span>
+        <span class="data">
+          {{ formatPopulation(populationValue) }}
+        </span>
+      </template>
+
+      <template v-if="viralLoadValue !== null">
+        <span>Viral load</span>
+        <span class="data">
+          {{ formatViralLoad(viralLoadValue) }} copies/L
+        </span>
+      </template>
+
       <span>Prevalence</span>
       <span class="data">
-        {{ `${formatPrevalence(hoveredCell.prevalence)}%` }}</span
-      >
+        {{ formatPrevalence(yAccessor(hovered)) }}%
+      </span>
     </div>
+
     <div v-if="tooltipData.length > 1 && width > 400">
       <CustomLineChartWithHighlightedPoint
         :width="width"

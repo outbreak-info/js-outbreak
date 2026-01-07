@@ -21,6 +21,9 @@ const props = defineProps({
   rowKey: { type: String, default: "name" },
   columnKey: { type: String, default: "collection_date" },
   colorKey: { type: String, default: "prevalence" },
+  sraKey: { type: String, default: "sra_accession" },
+  populationKey: { type: String, default: "ww_population" },
+  viralLoadKey: { type: String, default: "viral_load" },
 
   // Color scale configuration
   colorDomain: {
@@ -77,6 +80,9 @@ const handleResize = () => {
 const colorAccessor = (d) => d[props.colorKey];
 const xAccessor = (d) => d[props.columnKey];
 const yAccessor = (d) => d[props.rowKey];
+const sraAccessor = (d) => d[props.sraKey];
+const populationAccessor = (d) => d[props.populationKey];
+const viralLoadAccessor = (d) => d[props.viralLoadKey];
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -343,6 +349,9 @@ const heatmapContainerStyle = computed(() => ({
       :yAccessor="colorAccessor"
       :rowAccessor="yAccessor"
       :colorScale="colorScale"
+      :sraAccessor="sraAccessor"
+      :populationAccessor="populationAccessor"
+      :viralLoadAccessor="viralLoadAccessor"
     />
   </div>
 </template>
