@@ -78,8 +78,6 @@ const dateIndex = computed(() =>
 const dateArrayLength = props.xScaleDomain.length;
 const midPoint = Math.floor(dateArrayLength / 2);
 
-const xNudge = computed(() => setXNudge());
-
 const xPosition = computed(() => {
   if (props.width <= 700) {
     return xPosForSmallScreens;
