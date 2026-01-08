@@ -52,6 +52,16 @@ const colorBands = props.colorScale.range().map((color) => {
 const legendTicks = props.colorScale.domain();
 const formatLegendValue = format(".2s");
 
+const ariaLabel = computed(
+  () =>
+    `Color scale showing ${props.legendTitle} values from ${formatLegendValue(legendScale.domain()[0])} to ${formatLegendValue(legendScale.domain()[1])}.`
+);
+
+const hatchAriaLabel = computed(
+  () =>
+    `${props.hatchPatternString} indicator.`
+);
+
 const legendContainerStyle = computed(() => ({
   display: "flex",
   flexFlow: "row wrap",
@@ -78,10 +88,15 @@ const noDataStyle = {
         <span>{{ legendTitle }}</span>
       </div>
 
-      <svg role="img" :width="legendWidth" :height="legendHeight">
+      <svg
+        role="img"
+        :aria-label="ariaLabel"
+        :width="legendWidth"
+        :height="legendHeight"
+      >
         <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')" />
 
-        <g>
+        <g aria-hidden="true">
           <!-- Color bands with transparent gaps -->
           <rect
             v-for="band in colorBands"
@@ -120,7 +135,12 @@ const noDataStyle = {
 
     <!-- Hatch legend -->
     <div v-if="showHatchLegend" :style="noDataStyle">
-      <svg width="125" height="24">
+      <svg
+        role="img"
+        :aria-label="hatchAriaLabel"
+        width="125"
+        height="24"
+      >
         <rect
           x="5"
           y="2"
