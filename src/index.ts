@@ -26,6 +26,7 @@ import InfoComponent from "./components/InfoComponent.vue";
 import ButtonComponent from "./components/ButtonComponent.vue";
 import CheckBox from "./components/CheckBox.vue";
 import TagComponent from "./components/TagComponent.vue";
+import DatePickerComponent from "./components/DatePickerComponent.vue";
 import CollapseWrapper from "./components/CollapseWrapper.vue";
 import CustomScatterChart from "./components/CustomScatterChart.vue";
 import CustomHeatmap from "./components/CustomHeatmap.vue";
@@ -66,6 +67,7 @@ export {
   ButtonComponent,
   CheckBox,
   TagComponent,
+  DatePickerComponent,
   CollapseWrapper,
   CustomScatterChart,
   CustomHeatmap,
@@ -106,6 +108,7 @@ export default {
     app.component("ButtonComponent", ButtonComponent);
     app.component("CheckBox", CheckBox);
     app.component("TagComponent", TagComponent);
+    app.component("DatePickerComponent", DatePickerComponent);
     app.component("CollapseWrapper", CollapseWrapper);
     app.component("CustomScatterChart", CustomScatterChart);
     app.component("CustomHeatmap", CustomHeatmap);
