@@ -194,7 +194,7 @@ function renderChart() {
       x: "date",
       y: "value",
       interval: props.binInterval,
-      fill: props.barColor, // TODO: For now, set barColor to "group" to color by group
+      fill: (props.legendDomain) ? "group" : props.barColor, // TODO: For now, set barColor to "group" to color by group
       ...(props.legendDomain && { order: props.legendDomain }),
       tip: tipFormat
     }));

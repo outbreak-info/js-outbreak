@@ -34,30 +34,30 @@
 
     Testing legendDomain - order: Yes, No
     <TimeSeriesBarChart
-        :data="chartGroupedPreBinnedData"
+        :data="chartGroupedData"
         :isPreBinned="true"
-        :legendDomain="['Yes', 'No']"
+        :legendDomain="['B', 'A', 'C']"
     />
 
     Testing reversed legendDomain - order: No, Yes
     <TimeSeriesBarChart
-        :data="chartGroupedPreBinnedData"
+        :data="chartGroupedData"
         :isPreBinned="true"
-        :legendDomain="['No', 'Yes']"
+        :legendDomain="['C', 'B', 'A']"
     />
 
-    Testing legendDomain (non preBinned data) - order: Yes, No
+    Testing legendDomain (non preBinned data) - order: A, B, C
     <TimeSeriesBarChart
-        :data="chartGroupedPreBinnedData"
+        :data="chartData"
         :isPreBinned="false"
-        :legendDomain="['Yes', 'No']"
+        :legendDomain="['A', 'B', 'C']"
     />
 
-    Testing legendDomain (none preBinned data) - order: No, Yes
+    Testing legendDomain (none preBinned data) - order: C, A, B
     <TimeSeriesBarChart
-        :data="chartGroupedPreBinnedData"
+        :data="chartData"
         :isPreBinned="false"
-        :legendDomain="['No', 'Yes']"
+        :legendDomain="['C', 'A', 'B']"
     />
 
   </div>
@@ -68,17 +68,17 @@ import { ref } from 'vue'
 import TimeSeriesBarChart from '../../../src/components/TimeSeriesBarChart.vue'
 
 const chartData = ref([
-  { key: '2024-04-01', value: 300 },
-  { key: '2024-05-01', value: 250 },
-  { key: '2024-06-01', value: 320 },
-  { key: '2024-07-01', value: 280 },
-  { key: '2024-08-01', value: 200 },
-  { key: '2024-08-01', value: 180 },
-  { key: '2024-10-01', value: 150 },
-  { key: '2024-11-01', value: 350 },
-  { key: '2024-12-01', value: 1200 },
-  { key: '2025-05-01', value: 500 },
-  { key: '2025-02-01', value: 100 }
+  { key: '2024-04-01', value: 300, group: "A" },
+  { key: '2024-05-01', value: 250, group: "B" },
+  { key: '2024-06-01', value: 320, group: "C" },
+  { key: '2024-07-01', value: 280, group: "A" },
+  { key: '2024-08-01', value: 200, group: "A" },
+  { key: '2024-08-01', value: 180, group: "B" },
+  { key: '2024-10-01', value: 150, group: "C" },
+  { key: '2024-11-01', value: 350, group: "A" },
+  { key: '2024-12-01', value: 1200, group: "A" },
+  { key: '2025-05-01', value: 500, group: "A" },
+  { key: '2025-02-01', value: 100, group: "C" }
 ]);
 
 const chartGroupedData = ref([
@@ -95,15 +95,6 @@ const chartGroupedData = ref([
   { key: '2025-07', value: 100, group: "A" },
   { key: '2025-05', value: 500, group: "D" },
   { key: '2025-02', value: 100, group: "D" }
-]);
-
-const chartGroupedPreBinnedData = ref([
-  { key: '2024-09-14', value: 300, group: "Yes" },
-  { key: '2024-09-14', value: 100, group: "No" },
-  { key: '2024-09-21', value: 300, group: "Yes" },
-  { key: '2024-09-21', value: 120, group: "No" },
-  { key: '2024-09-28', value: 100, group: "Yes" },
-  { key: '2024-09-28', value: 20, group: "No" }
 ]);
 
 </script> 
