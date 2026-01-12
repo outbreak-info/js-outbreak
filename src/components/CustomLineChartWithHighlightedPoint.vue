@@ -24,7 +24,7 @@ const lineChartHeight = 80;
 
 const lineChartMargin = {
   top: 25,
-  right: 20,
+  right: 30,
   bottom: 25,
   left: 40,
 };

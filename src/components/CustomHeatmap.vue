@@ -8,6 +8,7 @@ import {
 import { format } from "d3-format";
 import { min, max } from "d3-array";
 import { create } from "naive-ui";
+import CustomLegendWithQuantizeScale from "./CustomLegendWithQuantizeScale.vue";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -26,8 +27,8 @@ const props = defineProps({
 
   // Legend configuration
   showLegend: { type: Boolean, default: true },
-  legendTitle: { type: String, default: "asdfg (%)" },
-  hatchPatternString: { type: String, default: "not detected" },
+  legendTitle: { type: String, default: "prevalence (%)" },
+  hatchPatternString: { type: String, default: "no data" },
 
    // Chart margins
   marginTop: { type: Number, default: 5 },
@@ -207,31 +208,7 @@ const yScale = computed(() =>
     .paddingInner(0),
 );
 
-const legendWidth = 300;
-const legendHeight = 45;
-const rectWidth = 25;
-const rectHeight = 15;
-const rangeMin = 12;
-const rangeMax = 288;
-
 const axisHeight = 50;
-
-const legendScale = scaleLinear()
-  .domain([min(colorScale.value.domain()), max(colorScale.value.domain())])
-  .rangeRound([rangeMin, rangeMax]);
-
-const colorBands = colorScale.value.range().map((color) => {
-  const d = colorScale.value.invertExtent(color);
-
-  if (d[0] == null) d[0] = legendScale.domain()[0];
-  if (d[1] == null) d[1] = legendScale.domain()[1];
-
-  return d;
-});
-
-const legendTicks = colorScale.value.domain();
-
-const formatLegendValue = format(".2s");
 
 // Calculate visible x-ticks based on available space
 const xTicksToBeRendered = computed(() => {
@@ -374,86 +351,14 @@ const heatmapContainerStyle = computed(() => ({
   position: "relative",
   ...containerMargins.value,
 }));
-
-// Legend inline styles
-const legendWrapperStyle = {
-  display: "flex",
-  flexFlow: "row wrap",
-  alignItems: "center",
-  marginTop: "15px",
-  marginBottom: "0px",
-};
-
-const legendStyle = {
-  marginLeft: "0px",
-  marginRight: "0px",
-};
-
-const titleStyle = {
-  marginBottom: "5px",
-  textAlign: "left",
-  fontSize: "14px",
-  marginLeft: "10px",
-};
-
-const noDataStyle = {
-  marginLeft: "7px",
-};
 </script>
 
 <template>
   <div ref="heatmapContainer" class="heatmap-container" :style="heatmapContainerStyle">
-    <!-- Legend -->
-    <div v-if="showLegend" class="legend-wrapper" :style="legendWrapperStyle">
-      <div class="legend" :style="legendStyle">
-        <div class="title" :style="titleStyle">
-          <span>{{ legendTitle }}</span>
-        </div>
-        <svg role="img" :width="legendWidth" :height="legendHeight">
-          <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')"></defs>
-          <g>
-            <rect
-              v-for="band in colorBands"
-              :x="legendScale(band[0])"
-              :width="legendScale(band[1]) - legendScale(band[0])"
-              :height="rectHeight"
-              :fill="colorScale(band[0])"
-            />
-            <g
-              v-for="legendTick in legendTicks"
-              :transform="`translate(${legendScale(legendTick)}, 0)`"
-            >
-              <text
-                y="18"
-                dy="0.8em"
-                text-anchor="middle"
-                fill="#2c3e50"
-                font-size="14px"
-              >
-                {{ legendTick == 0 ? legendTick : formatLegendValue(legendTick) }}
-              </text>
-            </g>
-          </g>
-        </svg>
-      </div>
-      <div class="no-data" :style="noDataStyle">
-        <svg width="125" height="24">
-          <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')"></defs>
-          <rect
-            x="5"
-            y="2"
-            :width="rectWidth"
-            :height="rectHeight"
-            fill="url(#legendDiagonalHatch)"
-            stroke="#888"
-            stroke-width="0.5"
-          />
-          <text x="40" y="12" dy="0.1em" fill="#2c3e50" font-size="14px">
-            {{ hatchPatternString }}
-          </text>
-        </svg>
-      </div>
-    </div>
+     <CustomLegendWithQuantizeScale
+      :colorScale="colorScale"
+      :hatchPatternString="hatchPatternString"
+    />
     <!-- x axis -->
     <div class="axis-wrapper">
       <svg
