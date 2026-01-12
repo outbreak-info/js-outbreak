@@ -295,6 +295,7 @@ const heatmapContainerStyle = computed(() => ({
               :width="xScale.bandwidth()"
               :height="yScale.bandwidth()"
               :rx="createCellsWithRoundedCorners ? 4 : 0"
+              :tabindex="d[colorKey] !== 'hatching' ? 0 : -1"
               stroke="#a9a9a9"
               :fill="
                 d[colorKey] === 'hatching'
