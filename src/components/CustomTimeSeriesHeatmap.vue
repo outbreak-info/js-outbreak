@@ -56,8 +56,10 @@ const cellPadding = 0.15;
 
 const hoveredCell = ref(null);
 const hoveredCellKey = ref(null);
+
 const cellKey = d =>
   `${d[props.columnKey]}-${d[props.rowKey]}`;
+
 const tooltipData = ref(null);
 const tooltipTitle = ref(null);
 
@@ -289,7 +291,9 @@ const heatmapContainerStyle = computed(() => ({
             <rect
               v-for="d in dataToBeRendered.filter(x => x[rowKey] === rowLabel)"
               :key="cellKey(d)"
+              role="gridcell"
               :aria-label="cellAriaLabel(d)"
+              aria-describedby="heatmap-tooltip"
               :x="xScale(xAccessor(d))"
               :y="yScale(rowLabel)"
               :width="xScale.bandwidth()"
@@ -360,6 +364,7 @@ const heatmapContainerStyle = computed(() => ({
     </div>
     <CustomTooltipWithLineChart
       v-if="hoveredCell && tooltipData.length > 0"
+      id="heatmap-tooltip"
       :width="width"
       :hoveredCell="hoveredCell"
       :tooltipData="tooltipData"

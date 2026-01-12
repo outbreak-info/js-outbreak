@@ -8,6 +8,7 @@ import { line, curveBundle } from "d3-shape";
 import CustomLineChartWithHighlightedPoint from "./CustomLineChartWithHighlightedPoint.vue";
 
 const props = defineProps({
+  id: { type: String, required: true },
   width: { type: Number, required: true },
   hoveredCell: {
     type: Object,
@@ -145,6 +146,15 @@ const tooltipGridStyle = {
   marginBottom: "10px", 
 }
 
+const dtStyle = {
+  margin: "0",
+};
+
+const ddStyle = {
+  margin: "0",
+  textAlign: "right",
+};
+
 const tooltipBarStyle = computed(() => ({
   position: "absolute",
   height: "7px",
@@ -156,40 +166,49 @@ const tooltipBarStyle = computed(() => ({
 </script>
 
 <template>
-  <div :style="tooltipWrapperStyle">
+  <div
+    :id="id"
+    role="tooltip"
+    :style="tooltipWrapperStyle"
+  >
     <div v-if="tooltipData" :style="tooltipTitleStyle">
       {{ tooltipTitle }}
     </div>
     <div :style="tooltipDateStyle">
       {{ formatTime(parseTime(xAccessor(hovered))) }}
     </div>
-    <hr :style="tooltipDividerStyle" />
-
-    <div v-if="shouldRenderGrid" :style="tooltipGridStyle">
+    <hr
+      aria-hidden="true"
+      :style="tooltipDividerStyle"
+    />
+    <dl
+      v-if="shouldRenderGrid"
+      :style="tooltipGridStyle"
+    >
       <template v-if="sraIds.length">
-        <span>{{ sampleRowTitle }}</span>
-        <span class="data">{{ sraIdString }}</span>
+        <dt :style="dtStyle">{{ sampleRowTitle }}</dt>
+        <dd :style="ddStyle">{{ sraIdString }}</dd>
       </template>
 
       <template v-if="populationValue !== null">
-        <span>Population</span>
-        <span class="data">
+        <dt :style="dtStyle">Population</dt>
+        <dd :style="ddStyle">
           {{ formatPopulation(populationValue) }}
-        </span>
+        </dd>
       </template>
 
       <template v-if="viralLoadValue !== null">
-        <span>Viral load</span>
-        <span class="data">
+        <dt :style="dtStyle">Viral load</dt>
+        <dd :style="ddStyle">
           {{ formatViralLoad(viralLoadValue) }} copies/L
-        </span>
+        </dd>
       </template>
 
-      <span>Prevalence</span>
-      <span class="data">
+      <dt :style="dtStyle">Prevalence</dt>
+      <dd :style="ddStyle">
         {{ formatPrevalence(yAccessor(hovered)) }}%
-      </span>
-    </div>
+      </dd>
+    </dl>
 
     <div v-if="tooltipData.length > 1 && width > 400">
       <CustomLineChartWithHighlightedPoint
@@ -205,6 +224,7 @@ const tooltipBarStyle = computed(() => ({
     </div>
     <div>
       <span
+        aria-hidden="true"
         :style="tooltipBarStyle"
       />
     </div>
