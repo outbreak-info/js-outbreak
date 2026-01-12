@@ -197,6 +197,19 @@ const handleMouseLeave = () => {
   tooltipTitle.value = null;
 };
 
+const heatmapAriaLabel = computed(
+  () =>
+    `Heatmap showing ${props.colorKey} by ${props.rowKey} and date.`
+);
+
+const cellAriaLabel = d => {
+  const date = formatTime(parseTime(xAccessor(d)));
+  if (d[props.colorKey] === "hatching") {
+    return `No data for ${yAccessor(d)} on ${date}`;
+  }
+  return `${yAccessor(d)} on ${date}: ${d[props.colorKey]}`;
+};
+
 // Heatmap container inline styles
 const heatmapContainerStyle = computed(() => ({
   position: "relative",
@@ -254,6 +267,7 @@ const heatmapContainerStyle = computed(() => ({
     <div>
       <svg
         role="img"
+        :aria-label="heatmapAriaLabel"
         :width="width - containerMarginLeft - containerMarginRight"
         :height="height"
       >
@@ -274,6 +288,7 @@ const heatmapContainerStyle = computed(() => ({
             <rect
               v-for="d in dataToBeRendered.filter(x => x[rowKey] === rowLabel)"
               :key="cellKey(d)"
+              :aria-label="cellAriaLabel(d)"
               :x="xScale(xAccessor(d))"
               :y="yScale(rowLabel)"
               :width="xScale.bandwidth()"
