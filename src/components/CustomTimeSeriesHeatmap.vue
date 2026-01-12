@@ -304,6 +304,10 @@ const heatmapContainerStyle = computed(() => ({
               "
               @mouseenter="d[colorKey] !== 'hatching' && handleMouseEnter(d)"
               @mouseleave="handleMouseLeave"
+              @focus="d[colorKey] !== 'hatching' && handleMouseEnter(d)"
+              @blur="handleMouseLeave"
+              @keydown.enter.prevent="handleMouseEnter(d)"
+              @keydown.space.prevent="handleMouseEnter(d)"
              />
           </g>
         </g>
