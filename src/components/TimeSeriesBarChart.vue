@@ -186,6 +186,7 @@ function renderChart() {
           y: "value",
           fill: "group",
           interval: props.binInterval,
+          ...(props.legendDomain && { order: props.legendDomain }),
           tip: tipFormat
         }));
   } else {
@@ -194,6 +195,7 @@ function renderChart() {
       y: "value",
       interval: props.binInterval,
       fill: props.barColor, // TODO: For now, set barColor to "group" to color by group
+      ...(props.legendDomain && { order: props.legendDomain }),
       tip: tipFormat
     }));
   }

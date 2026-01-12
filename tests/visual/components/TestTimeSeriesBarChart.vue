@@ -32,6 +32,34 @@
       :showCumulativeLine="true"
     />
 
+    Testing legendDomain - order: Yes, No
+    <TimeSeriesBarChart
+        :data="chartGroupedPreBinnedData"
+        :isPreBinned="true"
+        :legendDomain="['Yes', 'No']"
+    />
+
+    Testing reversed legendDomain - order: No, Yes
+    <TimeSeriesBarChart
+        :data="chartGroupedPreBinnedData"
+        :isPreBinned="true"
+        :legendDomain="['No', 'Yes']"
+    />
+
+    Testing legendDomain (non preBinned data) - order: Yes, No
+    <TimeSeriesBarChart
+        :data="chartGroupedPreBinnedData"
+        :isPreBinned="false"
+        :legendDomain="['Yes', 'No']"
+    />
+
+    Testing legendDomain (none preBinned data) - order: No, Yes
+    <TimeSeriesBarChart
+        :data="chartGroupedPreBinnedData"
+        :isPreBinned="false"
+        :legendDomain="['No', 'Yes']"
+    />
+
   </div>
 </template>
 
@@ -67,6 +95,15 @@ const chartGroupedData = ref([
   { key: '2025-07', value: 100, group: "A" },
   { key: '2025-05', value: 500, group: "D" },
   { key: '2025-02', value: 100, group: "D" }
+]);
+
+const chartGroupedPreBinnedData = ref([
+  { key: '2024-09-14', value: 300, group: "Yes" },
+  { key: '2024-09-14', value: 100, group: "No" },
+  { key: '2024-09-21', value: 300, group: "Yes" },
+  { key: '2024-09-21', value: 120, group: "No" },
+  { key: '2024-09-28', value: 100, group: "Yes" },
+  { key: '2024-09-28', value: 20, group: "No" }
 ]);
 
 </script> 
