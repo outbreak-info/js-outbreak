@@ -58,6 +58,20 @@ export const rdPuDiscrete11 = [
   "#49006a",
 ];
 
+export const ylOrRdDiscrete11 = [
+  "#ffffcc",
+  "#fff0a9",
+  "#fee087",
+  "#fec965",
+  "#feab4b",
+  "#fd893c",
+  "#fa5c2e",
+  "#ec3023",
+  "#d31121",
+  "#af0225",
+  "#800026",
+];
+
 // Diagonal hatch pattern
 export const diagonalHatchPatternDef = (
   patternId = "diagonalHatch",
