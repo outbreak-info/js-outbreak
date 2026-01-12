@@ -225,6 +225,7 @@ const heatmapContainerStyle = computed(() => ({
     <div>
       <svg
         role="img"
+        aria-hidden="true"
         :width="width - containerMarginLeft - containerMarginRight"
         :height="axisHeight"
       >
@@ -318,6 +319,7 @@ const heatmapContainerStyle = computed(() => ({
     <div>
       <svg
         role="img"
+        aria-hidden="true"
         :width="width - containerMarginLeft - containerMarginRight"
         :height="axisHeight"
       >
