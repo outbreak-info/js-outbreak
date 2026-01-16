@@ -11,6 +11,7 @@
     <CustomLollipopChart
       :data="mockDataSet1"
       valueKey="val"
+      xAxisLabel="date"
       yAxisLabel="samples"
       :activeKey="hoveredKey"
       @hover="(key) => (hoveredKey = key)"
@@ -18,7 +19,7 @@
       marginLeft="70"
     />
     <CustomLollipopChart
-      :data="mockDataSet1"
+      :data="mockDataSet2"
       valueKey="val"
       xAxisLabel="date"
       yAxisLabel="catchment size"
@@ -51,6 +52,25 @@ const mockDataSet1 = [
   { key: "2025-05-10", val: 50 },
   { key: "2025-05-17", val: 52 },
   { key: "2025-05-24", val: 10 },
+];
+
+const mockDataSet2 = [
+  { key: "2025-01-25", val: 1845234 },
+  { key: "2025-02-15", val: 297654 },
+  { key: "2025-02-22", val: 2210987 },
+  { key: "2025-03-01", val: 1456721 },
+  { key: "2025-03-08", val: 3893412 },
+  { key: "2025-03-15", val: 2678430 },
+  { key: "2025-03-22", val: 1045987 },
+  { key: "2025-03-29", val: 1356789 },
+  { key: "2025-04-05", val: 1982345 },
+  { key: "2025-04-12", val: 1276543 },
+  { key: "2025-04-19", val: 1329876 },
+  { key: "2025-04-26", val: 2543987 },
+  { key: "2025-05-03", val: 2487654 },
+  { key: "2025-05-10", val: 5998765 },
+  { key: "2025-05-17", val: 1654321 },
+  { key: "2025-05-24", val: 108765 },
 ];
 
 const hoveredKey = ref(null);
