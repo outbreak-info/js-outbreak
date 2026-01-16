@@ -32,6 +32,7 @@ const props = defineProps({
   // Color props
   lollipopColor: { type: String, default: "#d13b62" },
   hoverColor: { type: String, default: "#000dcb" },
+  showXAxisLabelAndTicks: { type: Boolean, default: true },
 });
 
 const emit = defineEmits(["hover", "leave"]);
@@ -205,45 +206,49 @@ const chartContainerStyle = computed(() => ({
         </g>
 
         <!-- x-axis -->
-        <g :transform="`translate(0, ${innerHeight})`">
+        <g :transform="`translate(0, ${innerHeight})`"  >
           <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
-          <text
-            :x="innerWidth / 2"
-            y="45"
-            text-anchor="middle"
-            fill="#2c3e50"
-            font-size="14px"
-            font-weight="700"
-          >
-            {{ xAxisLabel }}
-          </text>
-
-          <g
-            v-for="tick in xTicksToBeRendered"
-            :key="tick"
-            :transform="`translate(${xScale(tick)}, 0)`"
-          >
-            <line y1="0" y2="6" stroke="#bdc3c7" />
+          <g v-if="showXAxisLabelAndTicks">
             <text
-              y="10"
-              dy="0.8em"
+              :x="innerWidth / 2"
+              y="45"
               text-anchor="middle"
-              :fill="
-                hoveredPoint
-                  ? tick === xAccessor(hoveredPoint)
-                    ? hoverColor
-                    : '#bdc3c7'
-                  : '#2c3e50'
-              "
+              fill="#2c3e50"
               font-size="14px"
-              :font-weight="
-                hoveredPoint && tick === xAccessor(hoveredPoint)
-                  ? '600'
-                  : '400'
-              "
+              font-weight="700"
             >
-              {{ formatTime(parseTime(tick)) }}
+              {{ xAxisLabel }}
             </text>
+          </g>
+          
+          <g v-if="showXAxisLabelAndTicks">
+            <g
+              v-for="tick in xTicksToBeRendered"
+              :key="tick"
+              :transform="`translate(${xScale(tick)}, 0)`"
+            >
+              <line y1="0" y2="6" stroke="#bdc3c7" />
+              <text
+                y="10"
+                dy="0.8em"
+                text-anchor="middle"
+                :fill="
+                  hoveredPoint
+                    ? tick === xAccessor(hoveredPoint)
+                      ? hoverColor
+                      : '#bdc3c7'
+                    : '#2c3e50'
+                "
+                font-size="14px"
+                :font-weight="
+                  hoveredPoint && tick === xAccessor(hoveredPoint)
+                    ? '600'
+                    : '400'
+                "
+              >
+                {{ formatTime(parseTime(tick)) }}
+              </text>
+            </g>
           </g>
         </g>
 
@@ -308,29 +313,31 @@ const chartContainerStyle = computed(() => ({
             {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
           </text>
         </g>
-        <g v-if="hoveredPoint" :transform="`translate(0, ${innerHeight})`">
-          <text
-            :x="xAccessorScaled(hoveredPoint)"
-            y="10"
-            dy="0.8em"
-            text-anchor="middle"
-            stroke="#ffffff"
-            stroke-width="4px"
-            font-size="14px"
-          >
-            {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
-          </text>
-          <text
-            :x="xAccessorScaled(hoveredPoint)"
-            y="10"
-            dy="0.8em"
-            text-anchor="middle"
-            :fill="hoverColor"
-            font-size="14px"
-            font-weight="600"
-          >
-            {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
-          </text>
+        <g v-if="showXAxisLabelAndTicks">
+          <g v-if="hoveredPoint" :transform="`translate(0, ${innerHeight})`">
+            <text
+              :x="xAccessorScaled(hoveredPoint)"
+              y="10"
+              dy="0.8em"
+              text-anchor="middle"
+              stroke="#ffffff"
+              stroke-width="4px"
+              font-size="14px"
+            >
+              {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
+            </text>
+            <text
+              :x="xAccessorScaled(hoveredPoint)"
+              y="10"
+              dy="0.8em"
+              text-anchor="middle"
+              :fill="hoverColor"
+              font-size="14px"
+              font-weight="600"
+            >
+              {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
+            </text>
+          </g>
         </g>
       </g>
     </svg>

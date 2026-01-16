@@ -17,6 +17,7 @@
       @hover="(key) => (hoveredKey = key)"
       @leave="() => (hoveredKey = null)"
       marginLeft="70"
+      :showXAxisLabelAndTicks="false"
     />
     <CustomLollipopChart
       :data="mockDataSet2"
