@@ -6,11 +6,13 @@ import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import { quadtree } from "d3-quadtree";
 import { createDateArray } from "../utils/arrays";
+import { filterXTicks } from "../utils/tickFilters";
 
 const props = defineProps({
   data: { type: Array, required: true },
   dateKey: { type: String, default: "key" },
   valueKey: { type: String, default: "val" },
+  activeKey: { type: String, default: null },
   xAxisLabel: { type: String, default: "Date" },
   yAxisLabel: { type: String, default: "Value" },
   height: { type: Number, default: 135 },
@@ -32,8 +34,10 @@ const props = defineProps({
   hoverColor: { type: String, default: "#000dcb" },
 });
 
+const emit = defineEmits(["hover", "leave"]);
+
 const width = ref(500);
-const hoveredPoint = ref(null);
+const internalHoveredPoint = ref(null);
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -52,11 +56,7 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  if (window.innerWidth >= 1000) {
-    width.value = 1000;
-  } else {
-    width.value = window.innerWidth;
-  }
+  width.value = window.innerWidth >= 1000 ? 1000 : window.innerWidth;
 };
 
 const xAccessor = (d) => d[props.dateKey];
@@ -78,13 +78,12 @@ const responsiveStrokeWidth = computed(() => {
   return "2px";
 });
 
-const marginTop = props.marginTop;
-const marginRight = props.marginRight;
-const marginBottom = props.marginBottom;
-const marginLeft = props.marginLeft;
-
-const innerWidth = computed(() => width.value - marginLeft - marginRight);
-const innerHeight = computed(() => props.height - marginTop - marginBottom);
+const innerWidth = computed(
+  () => width.value - props.marginLeft - props.marginRight
+);
+const innerHeight = computed(
+  () => props.height - props.marginTop - props.marginBottom
+);
 
 const xScaleDomain = computed(() =>
   createDateArray(
@@ -115,65 +114,59 @@ const quadtreeInstance = computed(() =>
 );
 
 const yTicks = computed(() => {
-  const numberOfYTicks = Math.floor(innerHeight.value / 40);
-  return yScale.value.ticks(numberOfYTicks);
+  const count = Math.floor(innerHeight.value / 40);
+  return yScale.value.ticks(count);
 });
 
 const allXTicks = computed(() => xScale.value.domain());
 
-const filterXTicks = (numberOfXTicks, width) => {
-  if (numberOfXTicks > 270) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 60));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 90));
-    else return allXTicks.value.filter((d, i) => !(i % 210));
-  }
-  if (numberOfXTicks > 210) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 30));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 60));
-    else return allXTicks.value.filter((d, i) => !(i % 90));
-  }
-  if (numberOfXTicks > 120) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 21));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 30));
-    else return allXTicks.value.filter((d, i) => !(i % 60));
-  } else {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 14));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 21));
-    else if (width > 400) return allXTicks.value.filter((d, i) => !(i % 30));
-    else return allXTicks.value.filter((d, i) => !(i % 45));
-  }
-};
-
 const xTicksToBeRendered = computed(() =>
-  filterXTicks(xScaleDomain.value.length, innerWidth.value)
+  filterXTicks(allXTicks.value, innerWidth.value)
 );
 
-const handleMouseMove = (e) => {
-  const xPosition = e.offsetX - marginLeft;
-  const yPosition = e.offsetY - marginTop;
-  const foundPoint = quadtreeInstance.value.find(xPosition, yPosition);
+const hoveredPoint = computed(() => {
+  if (props.activeKey) {
+    return (
+      props.data.find((d) => xAccessor(d) === props.activeKey) || null
+    );
+  }
+  return internalHoveredPoint.value;
+});
 
-  if (foundPoint) {
-    hoveredPoint.value = foundPoint;
+const handleMouseMove = (e) => {
+  const x = e.offsetX - props.marginLeft;
+  const y = e.offsetY - props.marginTop;
+  const found = quadtreeInstance.value.find(x, y);
+
+  if (found) {
+    internalHoveredPoint.value = found;
+    emit("hover", xAccessor(found), found);
   }
 };
 
 const handleMouseLeave = () => {
-  hoveredPoint.value = null;
+  internalHoveredPoint.value = null;
+  emit("leave");
 };
 
 const ariaLabel = computed(
   () =>
-    `Lollipop chart showing ${props.yAxisLabel} over time. Hover over chart for detailed information.`
+    `Lollipop chart showing ${props.yAxisLabel} over time. Hover or focus to explore values.`
 );
+
+// Chart container inline styles
+const chartContainerStyle = computed(() => ({
+  position: "relative",
+  ...containerMargins.value,
+}));
 </script>
 
 <template>
-  <div class="chart-container" :style="containerMargins">
+  <div :style="containerMargins">
     <svg
       role="img"
       :aria-label="ariaLabel"
-      :width="width - containerMarginLeft - containerMarginRight"
+      :width="width"
       :height="height"
       @mousemove="handleMouseMove"
       @mouseleave="handleMouseLeave"
@@ -181,14 +174,7 @@ const ariaLabel = computed(
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
         <!-- y-axis -->
         <g>
-          <line
-            x1="0"
-            x2="0"
-            :y1="0"
-            :y2="innerHeight"
-            stroke="#bdc3c7"
-            stroke-width="1"
-          />
+          <line x1="0" x2="0" y1="0" :y2="innerHeight" stroke="#bdc3c7" />
           <text
             x="-12"
             y="-25"
@@ -199,12 +185,13 @@ const ariaLabel = computed(
           >
             {{ yAxisLabel }}
           </text>
+
           <g
             v-for="tick in yTicks"
             :key="tick"
             :transform="`translate(0, ${yScale(tick)})`"
           >
-            <line x1="0" x2="-6" stroke="#bdc3c7" stroke-width="1" />
+            <line x1="0" x2="-6" stroke="#bdc3c7" />
             <text
               x="-10"
               dy="0.32em"
@@ -222,85 +209,105 @@ const ariaLabel = computed(
           <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
           <text
             :x="innerWidth / 2"
-            text-anchor="middle"
             y="45"
+            text-anchor="middle"
             fill="#2c3e50"
             font-size="14px"
             font-weight="700"
           >
             {{ xAxisLabel }}
           </text>
+
           <g
-            v-for="(tick, index) in xTicksToBeRendered"
-            :key="'tick-' + index"
+            v-for="tick in xTicksToBeRendered"
+            :key="tick"
             :transform="`translate(${xScale(tick)}, 0)`"
           >
-            <line :y1="0" :y2="6" stroke="#bdc3c7" />
+            <line y1="0" y2="6" stroke="#bdc3c7" />
             <text
               y="10"
               dy="0.8em"
               text-anchor="middle"
-              :fill="hoveredPoint ? '#bdc3c7' : '#2c3e50'"
+              :fill="
+                hoveredPoint
+                  ? tick === xAccessor(hoveredPoint)
+                    ? hoverColor
+                    : '#bdc3c7'
+                  : '#2c3e50'
+              "
               font-size="14px"
+              :font-weight="
+                hoveredPoint && tick === xAccessor(hoveredPoint)
+                  ? '600'
+                  : '400'
+              "
             >
               {{ formatTime(parseTime(tick)) }}
             </text>
           </g>
         </g>
 
-        <!-- data points and lines -->
-        <g v-for="(dataPoint, index) in data" :key="'point-' + index">
-          <circle
-            :r="
-              hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
-                ? `${responsivePointRadius + 2}`
-                : `${responsivePointRadius}`
-            "
-            :cx="xAccessorScaled(dataPoint)"
-            :cy="yAccessorScaled(dataPoint)"
-            :fill="
-              hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
-                ? hoverColor
-                : lollipopColor
-            "
-          />
+        <!-- lollipops -->
+        <g
+          v-for="(d, i) in data"
+          :key="i"
+          tabindex="0"
+          role="graphics-symbol"
+          :aria-label="`Date ${formatTime(parseTime(xAccessor(d)))} value ${yAccessor(d)}`"
+          @focus="emit('hover', xAccessor(d), d)"
+          @blur="emit('leave')"
+        >
           <line
-            :x1="xAccessorScaled(dataPoint)"
-            :x2="xAccessorScaled(dataPoint)"
-            :y1="yAccessorScaled(dataPoint)"
+            :x1="xAccessorScaled(d)"
+            :x2="xAccessorScaled(d)"
+            :y1="yAccessorScaled(d)"
             :y2="yScale(0)"
             :stroke="
-              hoveredPoint && xAccessor(dataPoint) === xAccessor(hoveredPoint)
+              hoveredPoint && xAccessor(d) === xAccessor(hoveredPoint)
                 ? hoverColor
                 : lollipopColor
             "
             :stroke-width="responsiveStrokeWidth"
           />
+          <circle
+            :cx="xAccessorScaled(d)"
+            :cy="yAccessorScaled(d)"
+            :r="
+              hoveredPoint && xAccessor(d) === xAccessor(hoveredPoint)
+                ? responsivePointRadius + 2
+                : responsivePointRadius
+            "
+            :fill="
+              hoveredPoint && xAccessor(d) === xAccessor(hoveredPoint)
+                ? hoverColor
+                : lollipopColor
+            "
+          />
         </g>
 
         <!-- hover effects -->
-        <text
-          v-if="hoveredPoint"
-          :x="xAccessorScaled(hoveredPoint)"
-          :y="yAccessorScaled(hoveredPoint) - 10"
-          text-anchor="middle"
-          stroke="#ffffff"
-          stroke-width="4px"
-          font-size="14px"
-        >
-          {{ formatValueKey(yAccessor(hoveredPoint)) }}
-        </text>
-        <text
-          v-if="hoveredPoint"
-          :x="xAccessorScaled(hoveredPoint)"
-          :y="yAccessorScaled(hoveredPoint) - 10"
-          text-anchor="middle"
-          :fill="hoverColor"
-          font-size="14px"
-          font-weight="600"
-        >
-          {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
-        </text>
+        <g v-if="hoveredPoint">
+          <text
+            :x="xAccessorScaled(hoveredPoint)"
+            :y="yAccessorScaled(hoveredPoint) - 10"
+            text-anchor="middle"
+            stroke="#ffffff"
+            stroke-width="4px"
+            font-size="14px"
+          >
+            {{ formatValueKey(yAccessor(hoveredPoint)) }}
+          </text>
+          <text
+            :x="xAccessorScaled(hoveredPoint)"
+            :y="yAccessorScaled(hoveredPoint) - 10"
+            text-anchor="middle"
+            :fill="hoverColor"
+            font-size="14px"
+            font-weight="600"
+          >
+            {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
+          </text>
+        </g>
         <g v-if="hoveredPoint" :transform="`translate(0, ${innerHeight})`">
           <text
             :x="xAccessorScaled(hoveredPoint)"
@@ -329,9 +336,3 @@ const ariaLabel = computed(
     </svg>
   </div>
 </template>
-
-<style scoped>
-.chart-container {
-  position: relative;
-}
-</style>
