@@ -79,9 +79,21 @@ const responsiveStrokeWidth = computed(() => {
   return "2px";
 });
 
+// Dynamic bottom margin based on whether x-axis labels/ticks are shown
+const effectiveMarginBottom = computed(() => {
+  return props.showXAxisLabelAndTicks ? props.marginBottom : 15;
+});
+
+// Adjust total height to account for reduced bottom margin
+const effectiveHeight = computed(() => {
+  const baseInnerHeight = props.height - props.marginTop - props.marginBottom;
+  return baseInnerHeight + props.marginTop + effectiveMarginBottom.value;
+});
+
 const innerWidth = computed(
   () => width.value - props.marginLeft - props.marginRight
 );
+
 const innerHeight = computed(
   () => props.height - props.marginTop - props.marginBottom
 );
@@ -168,7 +180,7 @@ const chartContainerStyle = computed(() => ({
       role="img"
       :aria-label="ariaLabel"
       :width="width"
-      :height="height"
+      :height="effectiveHeight"
       @mousemove="handleMouseMove"
       @mouseleave="handleMouseLeave"
     >
