@@ -32,6 +32,7 @@ const props = defineProps({
   // Color props
   lollipopColor: { type: String, default: "#d13b62" },
   hoverColor: { type: String, default: "#000dcb" },
+
   showXAxisLabelAndTicks: { type: Boolean, default: true },
 });
 
@@ -39,6 +40,9 @@ const emit = defineEmits(["hover", "leave"]);
 
 const width = ref(500);
 const internalHoveredPoint = ref(null);
+const focusedIndex = ref(-1);
+const chartId = ref(`lollipop-chart-${Math.random().toString(36).substr(2, 9)}`);
+const liveRegionId = ref(`${chartId.value}-live`);
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -146,6 +150,9 @@ const hoveredPoint = computed(() => {
   return internalHoveredPoint.value;
 });
 
+const minValue = computed(() => Math.min(...props.data.map(yAccessor)));
+const maxValue = computed(() => max(props.data, yAccessor));
+
 const handleMouseMove = (e) => {
   const x = e.offsetX - props.marginLeft;
   const y = e.offsetY - props.marginTop;
@@ -162,31 +169,149 @@ const handleMouseLeave = () => {
   emit("leave");
 };
 
-const ariaLabel = computed(
-  () =>
-    `Lollipop chart showing ${props.yAxisLabel} over time. Hover or focus to explore values.`
-);
+const handleKeyDown = (e, d, index) => {
+  let newIndex = index;
+  
+  switch (e.key) {
+    case "ArrowRight":
+    case "ArrowDown":
+      e.preventDefault();
+      newIndex = Math.min(index + 1, props.data.length - 1);
+      break;
+    case "ArrowLeft":
+    case "ArrowUp":
+      e.preventDefault();
+      newIndex = Math.max(index - 1, 0);
+      break;
+    case "Home":
+      e.preventDefault();
+      newIndex = 0;
+      break;
+    case "End":
+      e.preventDefault();
+      newIndex = props.data.length - 1;
+      break;
+    default:
+      return;
+  }
+  
+  if (newIndex !== index) {
+    focusedIndex.value = newIndex;
+    internalHoveredPoint.value = props.data[newIndex];
+    // Focus the next element
+    const elements = document.querySelectorAll(`[data-chart-id="${chartId.value}"] g[role="button"]`);
+    if (elements[newIndex]) {
+      elements[newIndex].focus();
+    }
+    emit("hover", xAccessor(props.data[newIndex]), props.data[newIndex]);
+  }
+};
+
+const handleFocus = (d, index) => {
+  focusedIndex.value = index;
+  internalHoveredPoint.value = d;
+  emit("hover", xAccessor(d), d);
+};
+
+const handleBlur = () => {
+  focusedIndex.value = -1;
+  internalHoveredPoint.value = null;
+  emit("leave");
+};
 
 // Chart container inline styles
 const chartContainerStyle = computed(() => ({
   position: "relative",
   ...containerMargins.value,
 }));
+
+// Aria label with data summary
+const ariaLabel = computed(() => {
+  const title = `${props.yAxisLabel} over ${props.xAxisLabel}`;
+  const description =
+    `A lollipop chart displaying ${props.data.length} data points. ` +
+    `Values range from ${formatHoveredValueKey(minValue.value)} to ${formatHoveredValueKey(maxValue.value)}.`;
+  return `${title}. ${description}`;
+});
+
+// Individual point aria label
+const getPointAriaLabel = (d) => {
+  const date = formatTime(parseTime(xAccessor(d)));
+  const value = formatHoveredValueKey(yAccessor(d));
+  return `${date}: ${value} ${props.yAxisLabel}`;
+};
+
+// Screen reader instructions
+const srInstructions = computed(() =>
+  "Use arrow keys to navigate between data points. Press Home or End to jump to first or last point."
+);
+
+// Live region announcement for screen readers
+const liveRegionText = computed(() => {
+  if (hoveredPoint.value) {
+    return getPointAriaLabel(hoveredPoint.value);
+  }
+  return "";
+});
+
+// Inline styles
+const srOnlyStyle = {
+  position: 'absolute',
+  width: '1px',
+  height: '1px',
+  padding: '0',
+  margin: '-1px',
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  borderWidth: '0'
+};
+
+const lollipopPointStyle = {
+  cursor: 'pointer',
+  outline: 'none'
+};
 </script>
 
 <template>
-  <div :style="containerMargins">
+  <div :style="chartContainerStyle">
+    <!-- screen reader instructions (visually hidden) -->
+    <div :style="srOnlyStyle" :id="`${chartId}-instructions`">
+      {{ srInstructions }}
+    </div>
+    
+    <!-- live region for announcing changes to screen readers -->
+    <div
+      :id="liveRegionId"
+      :style="srOnlyStyle"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {{ liveRegionText }}
+    </div>
+
     <svg
       role="img"
       :aria-label="ariaLabel"
+      :aria-describedby="`${chartId}-instructions`"
       :width="width"
       :height="effectiveHeight"
+      :data-chart-id="chartId"
       @mousemove="handleMouseMove"
       @mouseleave="handleMouseLeave"
     >
+      <!-- title for assistive technologies -->
+      <title>{{ `${yAxisLabel} over ${xAxisLabel} lollipop chart` }}</title>
+      
+      <!-- description for assistive technologies -->
+      <desc>
+        {{ `A lollipop chart showing ${yAxisLabel} over ${xAxisLabel.toLowerCase()}. The chart contains ${data.length} data points ranging from ${formatHoveredValueKey(minValue)} to ${formatHoveredValueKey(maxValue)}.` }}
+      </desc>
+
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
         <!-- y-axis -->
-        <g>
+        <g role="presentation" aria-hidden="true">
           <line x1="0" x2="0" y1="0" :y2="innerHeight" stroke="#bdc3c7" />
           <text
             x="-12"
@@ -218,7 +343,11 @@ const chartContainerStyle = computed(() => ({
         </g>
 
         <!-- x-axis -->
-        <g :transform="`translate(0, ${innerHeight})`"  >
+        <g
+          :transform="`translate(0, ${innerHeight})`"
+          role="presentation"
+          aria-hidden="true"
+        >
           <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
           <g v-if="showXAxisLabelAndTicks">
             <text
@@ -264,15 +393,19 @@ const chartContainerStyle = computed(() => ({
           </g>
         </g>
 
-        <!-- lollipops -->
+        <!-- lollipops  -->
         <g
           v-for="(d, i) in data"
           :key="i"
+          :style="lollipopPointStyle"
           tabindex="0"
-          role="graphics-symbol"
-          :aria-label="`Date ${formatTime(parseTime(xAccessor(d)))} value ${yAccessor(d)}`"
-          @focus="emit('hover', xAccessor(d), d)"
-          @blur="emit('leave')"
+          role="button"
+          :aria-label="getPointAriaLabel(d)"
+          :aria-describedby="liveRegionId"
+          :aria-pressed="hoveredPoint && xAccessor(d) === xAccessor(hoveredPoint) ? 'true' : 'false'"
+          @focus="handleFocus(d, i)"
+          @blur="handleBlur"
+          @keydown="handleKeyDown($event, d, i)"
         >
           <line
             :x1="xAccessorScaled(d)"
@@ -285,6 +418,7 @@ const chartContainerStyle = computed(() => ({
                 : lollipopColor
             "
             :stroke-width="responsiveStrokeWidth"
+            pointer-events="none"
           />
           <circle
             :cx="xAccessorScaled(d)"
@@ -299,11 +433,26 @@ const chartContainerStyle = computed(() => ({
                 ? hoverColor
                 : lollipopColor
             "
+            pointer-events="none"
+          />
+          
+          <!-- focus ring for keyboard navigation -->
+          <circle
+            v-if="focusedIndex === i"
+            :cx="xAccessorScaled(d)"
+            :cy="yAccessorScaled(d)"
+            :r="responsivePointRadius + 6"
+            fill="none"
+            :stroke="hoverColor"
+            stroke-width="2"
+            stroke-dasharray="4 2"
+            pointer-events="none"
+            opacity="0.6"
           />
         </g>
 
         <!-- hover effects -->
-        <g v-if="hoveredPoint">
+        <g v-if="hoveredPoint" role="presentation" aria-hidden="true">
           <text
             :x="xAccessorScaled(hoveredPoint)"
             :y="yAccessorScaled(hoveredPoint) - 10"
@@ -325,7 +474,7 @@ const chartContainerStyle = computed(() => ({
             {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
           </text>
         </g>
-        <g v-if="showXAxisLabelAndTicks">
+        <g v-if="showXAxisLabelAndTicks" role="presentation" aria-hidden="true">
           <g v-if="hoveredPoint" :transform="`translate(0, ${innerHeight})`">
             <text
               :x="xAccessorScaled(hoveredPoint)"

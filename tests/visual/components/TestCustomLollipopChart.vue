@@ -7,7 +7,7 @@
       valueKey="val"
       xAxisLabel="date"
       yAxisLabel="samples"
-      marginLeft="70"
+      :marginLeft="70"
     />
     <h2>Linked visualizations</h2>
     <CustomLollipopChart
@@ -18,7 +18,7 @@
       :activeKey="hoveredKey"
       @hover="(key) => (hoveredKey = key)"
       @leave="() => (hoveredKey = null)"
-      marginLeft="70"
+      :marginLeft="70"
       :showXAxisLabelAndTicks="false"
     />
     <CustomLollipopChart
@@ -29,7 +29,7 @@
       :activeKey="hoveredKey"
       @hover="(key) => (hoveredKey = key)"
       @leave="() => (hoveredKey = null)"
-      marginLeft="70"
+      :marginLeft="70"
     />
   </div>
 </template>
