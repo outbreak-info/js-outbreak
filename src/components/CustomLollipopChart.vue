@@ -32,8 +32,10 @@ const props = defineProps({
   // Color props
   lollipopColor: { type: String, default: "#d13b62" },
   hoverColor: { type: String, default: "#000dcb" },
-
   showXAxisLabelAndTicks: { type: Boolean, default: true },
+  
+  // Scale props
+  xScale: { type: Function, default: null },
 });
 
 const emit = defineEmits(["hover", "leave"]);
@@ -102,16 +104,22 @@ const innerHeight = computed(
   () => props.height - props.marginTop - props.marginBottom
 );
 
-const xScaleDomain = computed(() =>
-  createDateArray(
+const xScaleDomain = computed(() => {
+  if (props.xScale) {
+    return props.xScale.domain();
+  }
+  return createDateArray(
     xAccessor(props.data[0]),
     xAccessor(props.data[props.data.length - 1])
-  )
-);
+  );
+});
 
-const xScale = computed(() =>
-  scaleBand().domain(xScaleDomain.value).range([0, innerWidth.value])
-);
+const xScale = computed(() => {
+  if (props.xScale) {
+    return props.xScale;
+  }
+  return scaleBand().domain(xScaleDomain.value).range([0, innerWidth.value]);
+});
 
 const yScale = computed(() =>
   scaleLinear()
@@ -219,12 +227,6 @@ const handleBlur = () => {
   emit("leave");
 };
 
-// Chart container inline styles
-const chartContainerStyle = computed(() => ({
-  position: "relative",
-  ...containerMargins.value,
-}));
-
 // Aria label with data summary
 const ariaLabel = computed(() => {
   const title = `${props.yAxisLabel} over ${props.xAxisLabel}`;
@@ -255,6 +257,11 @@ const liveRegionText = computed(() => {
 });
 
 // Inline styles
+const chartContainerStyle = computed(() => ({
+  position: "relative",
+  ...containerMargins.value,
+}));
+
 const srOnlyStyle = {
   position: 'absolute',
   width: '1px',
@@ -393,7 +400,7 @@ const lollipopPointStyle = {
           </g>
         </g>
 
-        <!-- lollipops  -->
+        <!-- lollipops -->
         <g
           v-for="(d, i) in data"
           :key="i"
