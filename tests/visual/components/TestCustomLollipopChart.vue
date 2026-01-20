@@ -1,6 +1,7 @@
 <template>
   <div class="test-container">
     <h1>Custom Lollipop Component Test</h1>
+    <h2>Single visualization</h2>
     <CustomLollipopChart
       :data="mockDataSet1"
       valueKey="val"
@@ -8,6 +9,7 @@
       yAxisLabel="samples"
       marginLeft="70"
     />
+    <h2>Linked visualizations</h2>
     <CustomLollipopChart
       :data="mockDataSet1"
       valueKey="val"
