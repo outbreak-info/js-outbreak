@@ -1,11 +1,15 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale';
+import { scaleLinear, scaleBand, scaleOrdinal } from "d3-scale";
 import { min, max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
-import { stack, area, curveBundle } from 'd3-shape';
-import { createDateArray, findWeekEnd, createStackedAreaArray } from "../utils/arrays";
+import { stack, area, curveBundle } from "d3-shape";
+import {
+  createDateArray,
+  findWeekEnd,
+  createStackedAreaArray,
+} from "../utils/arrays";
 import { filterXTicks } from "../utils/tickFilters";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
 import CustomTooltipWithBarChart from "./CustomTooltipWithBarChart.vue";
@@ -38,6 +42,9 @@ const props = defineProps({
   containerMarginRight: { type: Number, default: 10 },
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
+
+  // Scale props
+  xScale: { type: Function, default: null },
 });
 
 const width = ref(500);
@@ -81,28 +88,60 @@ const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
 
 const uniqueLabels = computed(() =>
-  [...new Set(props.aggregatedData.map(labelAccessor))]
-    .sort((a, b) => {
-      if (a === 'Other') return 1;
-      if (b === 'Other') return -1;
-      return a.localeCompare(b);
-    }),
+  [...new Set(props.aggregatedData.map(labelAccessor))].sort((a, b) => {
+    if (a === "Other") return 1;
+    if (b === "Other") return -1;
+    return a.localeCompare(b);
+  })
 );
 
-const numOfUniqueWeeks = computed(() => [...new Set(props.aggregatedData.map(weekAccessor))].length);
-
-const firstWeekEnd = computed(() => findWeekEnd(props.firstWeek, props.aggregatedData, weekAccessor, weekEndAccessor ));
-
-const lastWeekEnd = computed(() => findWeekEnd(props.lastWeek, props.aggregatedData, weekAccessor, weekEndAccessor ));
-
-const xScaleDomain = computed(() =>
-  createDateArray(firstWeekEnd.value, lastWeekEnd.value, props.areaChartRange),
+const numOfUniqueWeeks = computed(
+  () => [...new Set(props.aggregatedData.map(weekAccessor))].length
 );
 
-const data = computed(() => createStackedAreaArray(props.aggregatedData, uniqueLabels.value, weekAccessor, weekStartAccessor, weekEndAccessor, labelAccessor, yAccessor));
+const firstWeekEnd = computed(() =>
+  findWeekEnd(
+    props.firstWeek,
+    props.aggregatedData,
+    weekAccessor,
+    weekEndAccessor
+  )
+);
+
+const lastWeekEnd = computed(() =>
+  findWeekEnd(
+    props.lastWeek,
+    props.aggregatedData,
+    weekAccessor,
+    weekEndAccessor
+  )
+);
+
+const xScaleDomain = computed(() => {
+  if (props.xScale) {
+    return props.xScale.domain();
+  }
+  return createDateArray(
+    firstWeekEnd.value,
+    lastWeekEnd.value,
+    props.areaChartRange
+  );
+});
+
+const data = computed(() =>
+  createStackedAreaArray(
+    props.aggregatedData,
+    uniqueLabels.value,
+    weekAccessor,
+    weekStartAccessor,
+    weekEndAccessor,
+    labelAccessor,
+    yAccessor
+  )
+);
 
 const datesWithData = computed(() => {
-  const dates = [...new Set(props.aggregatedData.map(d => d.week_end))];
+  const dates = [...new Set(props.aggregatedData.map((d) => d.week_end))];
   return dates.sort((a, b) => new Date(a) - new Date(b));
 });
 
@@ -114,18 +153,19 @@ const marginLeft = props.marginLeft;
 const innerWidth = computed(() => width.value - marginLeft - marginRight);
 const innerHeight = computed(() => props.height - marginTop - marginBottom);
 
-const stackSeries = computed(() => stack()
-  .keys(uniqueLabels.value)
-);
+const stackSeries = computed(() => stack().keys(uniqueLabels.value));
 
 const series = computed(() => stackSeries.value(data.value));
 
-const xScale = computed(() => 
-  scaleBand()
+const xScale = computed(() => {
+  if (props.xScale) {
+    return props.xScale;
+  }
+  return scaleBand()
     .domain(xScaleDomain.value)
     .range([0, innerWidth.value])
-    .padding(0)
-  );
+    .padding(0);
+});
 
 const yScale = scaleLinear()
   .domain([0, 100])
@@ -143,21 +183,23 @@ const yTicks = computed(() => {
   return yScale.ticks(numberOfYTicks);
 });
 
-const areaGenerator = computed(() => 
+const areaGenerator = computed(() =>
   area()
     .x((d) => {
       return xScale.value(weekEndAccessor(d.data));
     })
     .y1((d) => yScale(d[1]))
     .y0((d) => yScale(d[0]))
-    .curve(curveBundle.beta(1)),
+    .curve(curveBundle.beta(1))
 );
 
 const colors = computed(() => selectAccessibleColorPalette(uniqueLabels.value));
 
-const colorScale = computed(() => scaleOrdinal(colors.value).domain(uniqueLabels.value));
+const colorScale = computed(() =>
+  scaleOrdinal(colors.value).domain(uniqueLabels.value)
+);
 
-const handleMouseMove = e => {
+const handleMouseMove = (e) => {
   const xPosition = e.offsetX - marginLeft;
   const yPosition = e.offsetY - marginTop;
 
@@ -166,24 +208,25 @@ const handleMouseMove = e => {
     hoveredDate.value = datesWithData.value.reduce((prev, curr) => {
       const prevX = xScale.value(prev);
       const currX = xScale.value(curr);
-      return Math.abs(prevX - xPosition) < Math.abs(currX - xPosition) ? prev : curr;
+      return Math.abs(prevX - xPosition) < Math.abs(currX - xPosition)
+        ? prev
+        : curr;
     });
 
     // filter data for the hovered date
-    tooltipData.value = props.aggregatedData.filter(item =>
-      weekEndAccessor(item) === hoveredDate.value
+    tooltipData.value = props.aggregatedData.filter(
+      (item) => weekEndAccessor(item) === hoveredDate.value
     );
-
   } else {
     hoveredDate.value = null;
     tooltipData.value = [];
   }
-}
+};
 
 const handleMouseLeave = () => {
   hoveredDate.value = null;
   tooltipData.value = [];
-}
+};
 
 // Chart container inline styles
 const chartContainerStyle = computed(() => ({
@@ -245,7 +288,7 @@ const chartContainerStyle = computed(() => ({
             </text>
           </g>
         </g>
-        
+
         <!-- x-axis -->
         <g :transform="`translate(0, ${innerHeight})`">
           <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
@@ -275,7 +318,8 @@ const chartContainerStyle = computed(() => ({
               {{ formatTime(parseTime(tick)) }}
             </text>
           </g>
-          <g v-if="hoveredDate && tooltipData.length > 0"
+          <g
+            v-if="hoveredDate && tooltipData.length > 0"
             :transform="`translate(${xScale(hoveredDate)}, 0)`"
           >
             <text
@@ -303,7 +347,7 @@ const chartContainerStyle = computed(() => ({
 
         <g>
           <path
-            v-for="(s, index) in series" 
+            v-for="(s, index) in series"
             :key="'s-' + index"
             :d="areaGenerator(s)"
             stroke="none"
@@ -312,7 +356,8 @@ const chartContainerStyle = computed(() => ({
         </g>
 
         <!-- vertical line -->
-        <g v-if="hoveredDate && tooltipData.length > 0"
+        <g
+          v-if="hoveredDate && tooltipData.length > 0"
           :transform="`translate(${xScale(hoveredDate)}, 0)`"
         >
           <line
@@ -344,7 +389,7 @@ const chartContainerStyle = computed(() => ({
         />
       </g>
     </svg>
-    <CustomTooltipWithBarChart 
+    <CustomTooltipWithBarChart
       v-if="hoveredDate && tooltipData.length > 0"
       :width="width"
       :hoveredDate="hoveredDate"
