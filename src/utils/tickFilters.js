@@ -13,7 +13,7 @@ export function filterXTicks(ticks, width) {
   // find the appropriate config based on number of ticks
   const config = filterConfig.find(c => numberOfTicks > c.minTicks);
   
-  // deetermine the interval based on width
+  // determine the interval based on width
   const getInterval = (intervals) => {
     if (width > 700) return intervals[700];
     if (width > 550) return intervals[550];

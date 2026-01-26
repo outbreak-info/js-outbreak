@@ -1,0 +1,384 @@
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { scaleThreshold, scaleLinear, scaleBand } from "d3-scale";
+import { format } from "d3-format";
+import { min, max } from "d3-array";
+import { timeFormat, timeParse } from "d3-time-format";
+import {
+  ylOrRdDiscrete11,
+  diagonalHatchPatternDef,
+} from "../utils/colorSchemes";
+import { createDateArray } from "../utils/arrays";
+import { filterXTicks } from "../utils/tickFilters";
+import CustomLegendWithQuantizeScale from "./CustomLegendWithQuantizeScale.vue";
+import CustomTooltipWithLineChart from "./CustomTooltipWithLineChart.vue";
+
+const props = defineProps({
+  aggregatedData: { type: Array, required: true },
+  dateRange: { type: Number, default: 30 },
+  
+  // Property key configuration
+  rowKey: { type: String, default: "name" },
+  columnKey: { type: String, default: "collection_date" },
+  colorKey: { type: String, default: "prevalence" },
+  sraKey: { type: String, default: "sra_accession" },
+  populationKey: { type: String, default: "ww_population" },
+  viralLoadKey: { type: String, default: "viral_load" },
+
+  // Color scale configuration
+  colorDomain: {
+    type: Array,
+    default: () => [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+  },
+  colorRange: { type: Array, default: () => ylOrRdDiscrete11 },
+
+  // Chart margins
+  marginTop: { type: Number, default: 5 },
+  marginRight: { type: Number, default: 130 },
+  marginBottom: { type: Number, default: 10 },
+  marginLeft: { type: Number, default: 70 },
+
+  // Container margins
+  containerMarginTop: { type: Number, default: 0 },
+  containerMarginRight: { type: Number, default: 10 },
+  containerMarginBottom: { type: Number, default: 0 },
+  containerMarginLeft: { type: Number, default: 10 },
+
+  // Heatmap appearance
+  createCellsWithRoundedCorners: { type: Boolean, default: true },
+  rowPadding: { type: Number, default: 0.1 },
+});
+
+const width = ref(500);
+const axisHeight = 25;
+const cellHeight = 25;
+const cellPadding = 0.15;
+
+const hoveredCell = ref(null);
+const hoveredCellKey = ref(null);
+
+const cellKey = d =>
+  `${d[props.columnKey]}-${d[props.rowKey]}`;
+
+const tooltipData = ref(null);
+const tooltipTitle = ref(null);
+
+const parseTime = timeParse("%Y-%m-%d");
+const formatTime = timeFormat("%b %e");
+
+onMounted(() => {
+  window.addEventListener("resize", handleResize);
+  handleResize();
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+});
+
+const handleResize = () => {
+  width.value = window.innerWidth >= 1000 ? 1000 : window.innerWidth;
+};
+
+const colorAccessor = (d) => d[props.colorKey];
+const xAccessor = (d) => d[props.columnKey];
+const yAccessor = (d) => d[props.rowKey];
+const sraAccessor = (d) => d[props.sraKey];
+const populationAccessor = (d) => d[props.populationKey];
+const viralLoadAccessor = (d) => d[props.viralLoadKey];
+
+const containerMargins = computed(() => ({
+  marginTop: props.containerMarginTop + "px",
+  marginRight: props.containerMarginRight + "px",
+  marginBottom: props.containerMarginBottom + "px",
+  marginLeft: props.containerMarginLeft + "px",
+}));
+
+const marginTop = props.marginTop;
+const marginRight = props.marginRight;
+const marginBottom = props.marginBottom;
+const marginLeft = props.marginLeft;
+
+const colorScale = computed(() =>
+  scaleThreshold().domain(props.colorDomain).range(props.colorRange)
+);
+
+const rowLabels = computed(() =>
+  [...new Set(props.aggregatedData.map(yAccessor))]
+    .sort((a, b) => {
+      if (a === 'Other') return 1;
+      if (b === 'Other') return -1;
+      return a.localeCompare(b);
+    }),
+);
+
+const minMaxDates = computed(() => {
+  const dates = props.aggregatedData.map(xAccessor).sort();
+  return [dates[0], dates[dates.length - 1]];
+});
+
+const xScaleDomain = computed(() =>
+  createDateArray(minMaxDates.value[0], minMaxDates.value[1], props.dateRange),
+);
+
+const height = computed(() =>
+  rowLabels.value.length * cellHeight + marginTop + marginBottom
+);
+
+const innerWidth = computed(() => width.value - marginLeft - marginRight);
+const innerHeight = computed(() => rowLabels.value.length * cellHeight);
+
+const xScale = computed(() =>
+  scaleBand()
+    .domain(xScaleDomain.value)
+    .range([0, innerWidth.value])
+    .paddingInner(cellPadding)
+);
+
+const yScale = computed(() =>
+  scaleBand()
+    .domain(rowLabels.value)
+    .range([0, rowLabels.value.length * cellHeight])
+    .paddingInner(props.rowPadding) 
+);
+
+const datesWithData = computed(() => {
+  const dates = [...new Set(props.aggregatedData.map(xAccessor))];
+  return dates.sort((a, b) => new Date(a) - new Date(b));
+});
+
+const allXTicks = computed(() => xScale.value.domain());
+
+const xTicksToBeRendered = computed(() =>
+  filterXTicks(allXTicks.value, innerWidth.value)
+);
+
+const generateDataToBeRendered = (columnLabels, rowLabels, data) => {
+  const lookup = new Map(
+    data.map(d => [`${d[props.columnKey]}-${d[props.rowKey]}`, d])
+  );
+
+  const result = [];
+
+  for (const columnLabel of columnLabels) {
+    for (const rowLabel of rowLabels) {
+      const key = `${columnLabel}-${rowLabel}`;
+      if (lookup.has(key)) {
+        result.push(lookup.get(key));
+      } else {
+        result.push({
+          [props.colorKey]: "hatching",
+          [props.columnKey]: columnLabel,
+          [props.rowKey]: rowLabel,
+        });
+      }
+    }
+  }
+  return result.sort((a, b) => {
+    return a[props.columnKey].localeCompare(b[props.columnKey]);
+  });
+}
+
+const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.value, rowLabels.value, props.aggregatedData));
+
+const handleMouseEnter = d => {
+  hoveredCell.value = d;
+  hoveredCellKey.value = cellKey(d);
+  tooltipTitle.value = `${hoveredCell.value.name} · ${hoveredCell.value.collection_site_id}`;
+
+  tooltipData.value = dataToBeRendered.value.filter(
+    element => 
+      yAccessor(element) === yAccessor(hoveredCell.value) &&
+      typeof element.prevalence === "number"
+    );
+};
+
+const handleMouseLeave = () => {
+  hoveredCell.value = null;
+  hoveredCellKey.value = null;
+  tooltipData.value = null;
+  tooltipTitle.value = null;
+};
+
+const heatmapAriaLabel = computed(
+  () =>
+    `Heatmap showing ${props.colorKey} by ${props.rowKey} and date.`
+);
+
+const cellAriaLabel = d => {
+  const date = formatTime(parseTime(xAccessor(d)));
+  if (d[props.colorKey] === "hatching") {
+    return `No data for ${yAccessor(d)} on ${date}`;
+  }
+  return `${yAccessor(d)} on ${date}: ${d[props.colorKey]}`;
+};
+
+// Heatmap container inline styles
+const heatmapContainerStyle = computed(() => ({
+  position: "relative",
+  ...containerMargins.value,
+}));
+</script>
+
+<template>
+  <div :style="heatmapContainerStyle">
+    <CustomLegendWithQuantizeScale :colorScale="colorScale" />
+
+    <!-- Top x-axis -->
+    <div>
+      <svg
+        role="img"
+        aria-hidden="true"
+        :width="width - containerMarginLeft - containerMarginRight"
+        :height="axisHeight"
+      >
+        <g :transform="`translate(${marginLeft}, 5)`">
+          <g
+            v-for="(xtick, index) in xTicksToBeRendered"
+            :key="'xtick-' + index"
+            :transform="`translate(${xScale(xtick) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              y="0"
+              dy="0.8em"
+              text-anchor="middle"
+              :fill="hoveredCellKey ? '#bdc3c7' : '#2c3e50'"
+              font-size="14px"
+            >
+              {{ formatTime(parseTime(xtick)) }}
+            </text>
+          </g>
+          <g
+            v-if="hoveredCell"
+            :transform="`translate(${xScale(xAccessor(hoveredCell)) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              y="0"
+              dy="0.8em"
+              text-anchor="middle"
+              fill="#000dcb"
+              font-size="14px"
+              font-weight="700"
+            >
+              {{ formatTime(parseTime(xAccessor(hoveredCell))) }}
+            </text>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Grid -->
+    <div>
+      <svg
+        role="img"
+        :aria-label="heatmapAriaLabel"
+        :width="width - containerMarginLeft - containerMarginRight"
+        :height="height"
+      >
+        <defs v-html="diagonalHatchPatternDef('heatmapDiagonalHatch')" />
+        <g :transform="`translate(${marginLeft}, ${marginTop})`">
+          <g v-for="rowLabel in rowLabels">
+            <text
+              text-anchor="end"
+              x="-10"
+              :y="yScale(rowLabel) + yScale.bandwidth() / 2"
+              dy=".30em"
+              fill="2c3e50"
+              font-size="14px"
+              font-weight="400"
+            >
+              {{ rowLabel }}
+            </text>
+            <rect
+              v-for="d in dataToBeRendered.filter(x => x[rowKey] === rowLabel)"
+              :key="cellKey(d)"
+              role="gridcell"
+              :aria-label="cellAriaLabel(d)"
+              aria-describedby="heatmap-tooltip"
+              :x="xScale(xAccessor(d))"
+              :y="yScale(rowLabel)"
+              :width="xScale.bandwidth()"
+              :height="yScale.bandwidth()"
+              :rx="createCellsWithRoundedCorners ? 4 : 0"
+              :tabindex="d[colorKey] !== 'hatching' ? 0 : -1"
+              stroke="#a9a9a9"
+              :fill="
+                d[colorKey] === 'hatching'
+                  ? 'url(#heatmapDiagonalHatch)'
+                  : hoveredCellKey === cellKey(d)
+                    ? '#000dcb'
+                    : colorScale(colorAccessor(d))
+              "
+              @mouseenter="d[colorKey] !== 'hatching' && handleMouseEnter(d)"
+              @mouseleave="handleMouseLeave"
+              @focus="d[colorKey] !== 'hatching' && handleMouseEnter(d)"
+              @blur="handleMouseLeave"
+              @keydown.enter.prevent="handleMouseEnter(d)"
+              @keydown.space.prevent="handleMouseEnter(d)"
+             />
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Bottom x-axis -->
+    <div>
+      <svg
+        role="img"
+        aria-hidden="true"
+        :width="width - containerMarginLeft - containerMarginRight"
+        :height="axisHeight"
+      >
+        <g :transform="`translate(${marginLeft}, 0)`">
+          <g
+            v-for="(xtick, index) in xTicksToBeRendered"
+            :key="'xtick-' + index"
+            :transform="`translate(${xScale(xtick) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              y="0"
+              dy="0.8em"
+              text-anchor="middle"
+              :fill="hoveredCellKey ? '#bdc3c7' : '#2c3e50'"
+              font-size="14px"
+            >
+              {{ formatTime(parseTime(xtick)) }}
+            </text>
+          </g>
+          <g
+            v-if="hoveredCell"
+            :transform="`translate(${xScale(xAccessor(hoveredCell)) + xScale.bandwidth() / 2}, 0)`"
+          >
+            <text
+              y="0"
+              dy="0.8em"
+              text-anchor="middle"
+              fill="#000dcb"
+              font-size="14px"
+              font-weight="700"
+            >
+              {{ formatTime(parseTime(xAccessor(hoveredCell))) }}
+            </text>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <CustomTooltipWithLineChart
+      v-if="hoveredCell && tooltipData.length > 0"
+      id="heatmap-tooltip"
+      :width="width"
+      :hoveredCell="hoveredCell"
+      :tooltipData="tooltipData"
+      :tooltipTitle="tooltipTitle"
+      :xScale="xScale"
+      :xScaleDomain="xScaleDomain"
+      :yScale="yScale"
+      :xAccessor="xAccessor"
+      :yAccessor="colorAccessor"
+      :rowAccessor="yAccessor"
+      :colorScale="colorScale"
+      :sraAccessor="sraAccessor"
+      :populationAccessor="populationAccessor"
+      :viralLoadAccessor="viralLoadAccessor"
+    />
+  </div>
+</template>

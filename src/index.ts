@@ -33,6 +33,7 @@ import CustomHeatmap from "./components/CustomHeatmap.vue";
 import CustomMultiLineChart from "./components/CustomMultiLineChart.vue";
 import CustomCategoricalLegend from "./components/CustomCategoricalLegend.vue";
 import CustomAreaChart from "./components/CustomAreaChart.vue";
+import CustomTimeSeriesHeatmap from "./components/CustomTimeSeriesHeatmap.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -74,6 +75,7 @@ export {
   CustomMultiLineChart,
   CustomCategoricalLegend,
   CustomAreaChart,
+  CustomTimeSeriesHeatmap,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -115,5 +117,7 @@ export default {
     app.component("CustomMultiLineChart", CustomMultiLineChart);
     app.component("CustomCategoricalLegend", CustomCategoricalLegend);
     app.component("CustomAreaChart", CustomAreaChart);
+    app.component("CustomTimeSeriesHeatmap", CustomTimeSeriesHeatmap);
+
   },
 };

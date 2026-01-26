@@ -9,6 +9,7 @@ import {
 import { format } from "d3-format";
 import { min, max } from "d3-array";
 import usGeoJson from "../assets/geo/us_states.json";
+import CustomLegendWithQuantizeScale from "./CustomLegendWithQuantizeScale.vue";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -56,8 +57,6 @@ const hoveredState = ref(null);
 const eventPosition = ref(null);
 const xPosition = ref(null);
 const yPosition = ref(null);
-
-const formatLegendValue = format(".2s");
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
@@ -198,29 +197,6 @@ const hoveredStateFeature = computed(() =>
   )
 );
 
-const legendWidth = 300;
-const legendHeight = 45;
-const rectWidth = 25;
-const rectHeight = 15;
-
-const rangeMin = 12;
-const rangeMax = 288;
-
-const legendScale = scaleLinear()
-  .domain([min(colorScale.value.domain()), max(colorScale.value.domain())])
-  .rangeRound([rangeMin, rangeMax]);
-
-const colorBands = colorScale.value.range().map((color) => {
-  const d = colorScale.value.invertExtent(color);
-
-  if (d[0] == null) d[0] = legendScale.domain()[0];
-  if (d[1] == null) d[1] = legendScale.domain()[1];
-
-  return d;
-});
-
-const ticks = colorScale.value.domain();
-
 const mapAriaLabel = computed(
   () =>
     `Interactive choropleth map showing ${props.valueKey} data across the United States. Hover over states for detailed information.`
@@ -231,30 +207,6 @@ const choroplethContainerStyle = computed(() => ({
   position: "relative",
   ...containerMargins.value,
 }));
-
-// Legend inline styles
-const legendWrapperStyle = {
-  display: "flex",
-  flexFlow: "row wrap",
-  alignItems: "center",
-  marginBottom: "0px",
-};
-
-const legendStyle = {
-  marginLeft: "0px",
-  marginRight: "0px",
-};
-
-const titleStyle = {
-  marginBottom: "5px",
-  textAlign: "left",
-  fontSize: "14px",
-  marginLeft: "10px",
-};
-
-const noDataStyle = {
-  marginLeft: "7px",
-};
 
 // Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
@@ -318,57 +270,10 @@ const tooltipBarStyle = computed(() => {
 
 <template>
   <div class="choropleth-container" :style="choroplethContainerStyle">
-    <!-- Legend -->
-    <div class="legend-wrapper" :style="legendWrapperStyle">
-      <div class="legend" :style="legendStyle">
-        <div class="title" :style="titleStyle">
-          <span>{{ legendTitle }}</span>
-        </div>
-        <svg role="img" :width="legendWidth" :height="legendHeight">
-          <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')"></defs>
-          <g>
-            <rect
-              v-for="band in colorBands"
-              :x="legendScale(band[0])"
-              :width="legendScale(band[1]) - legendScale(band[0])"
-              :height="rectHeight"
-              :fill="colorScale(band[0])"
-            />
-            <g
-              v-for="tick in ticks"
-              :transform="`translate(${legendScale(tick)}, 0)`"
-            >
-              <text
-                y="18"
-                dy="0.8em"
-                text-anchor="middle"
-                fill="#2c3e50"
-                font-size="14px"
-              >
-                {{ tick == 0 ? tick : formatLegendValue(tick) }}
-              </text>
-            </g>
-          </g>
-        </svg>
-      </div>
-      <div class="no-data" :style="noDataStyle">
-        <svg width="125" height="24">
-          <defs v-html="diagonalHatchPatternDef('legendDiagonalHatch')"></defs>
-          <rect
-            x="5"
-            y="2"
-            :width="rectWidth"
-            :height="rectHeight"
-            fill="url(#legendDiagonalHatch)"
-            stroke="#888"
-            stroke-width="0.5"
-          />
-          <text x="40" y="12" dy="0.1em" fill="#2c3e50" font-size="14px">
-            {{ hatchPatternString }}
-          </text>
-        </svg>
-      </div>
-    </div>
+    <CustomLegendWithQuantizeScale
+      :colorScale="colorScale"
+      :hatchPatternString="hatchPatternString"
+    />
 
     <!-- Map -->
     <svg
