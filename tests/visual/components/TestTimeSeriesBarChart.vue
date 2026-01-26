@@ -60,6 +60,16 @@
         :legendDomain="['C', 'A', 'B']"
     />
 
+    Custom y-axis limits
+    <TimeSeriesBarChart
+        :data="chartData"
+        :isPreBinned="false"
+        :legendDomain="['C', 'A', 'B']"
+        :yMin="0"
+        :yMax="3000"
+    />
+
+
   </div>
 </template>
 

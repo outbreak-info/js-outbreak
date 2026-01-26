@@ -127,6 +127,34 @@
         xLabel="Key"
         yLabel="Value"
     />
+
+    With custom y-axis limits
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="false"
+        sortOrder="None"
+        :categoryOrder="['T', 'M', 'K', 'E', 'A']"
+        xLabel="Key"
+        yLabel="Value"
+        :yMin="0"
+        :yMax="100"
+    />
+
+    With custom x-axis limits
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="true"
+        sortOrder="None"
+        :categoryOrder="['T', 'M', 'K', 'E', 'A']"
+        xLabel="Key"
+        yLabel="Value"
+        :xMin="0"
+        :xMax="100"
+    />
   </div>
 </template>
 
