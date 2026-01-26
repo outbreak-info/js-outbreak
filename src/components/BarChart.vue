@@ -16,7 +16,7 @@ const props = defineProps({
   marginTop: { type: Number, default: 50 },
   marginBottom: { type: Number, default: 50 },
   barColor: { type: String, default: defaultColor },
-  xKey: { type: String, default: 'value' },
+  xKey: { type: String, default: 'value' }, // TODO: xKey is currently used for x-axis in horizontal and y-axis in vertical. Fix this.
   yKey: { type: String, default: 'key' },
   xLabel: { type: String, default: 'value' },
   yLabel: { type: String, default: 'key' },
@@ -29,7 +29,11 @@ const props = defineProps({
   legendDomain: { type: Array, default: null },
   legendRange: { type: Array, default: null },
   showLegend: { type: Boolean, default: true },
-  categoryOrder: { type: Array, default: null }
+  categoryOrder: { type: Array, default: null },
+  xMin: { type: Number, default: null },
+  xMax: { type: Number, default: null },
+  yMin: { type: Number, default: null },
+  yMax: { type: Number, default: null }
 });
 
 const chartContainer = ref(null);
@@ -98,7 +102,11 @@ function renderChart() {
           label: props.yLabel,
           ...(props.categoryOrder && { domain: props.categoryOrder })
         },
-        x: {label: props.xLabel, grid: true},
+        x: {
+          label: props.xLabel,
+          ...(props.xMin !== null && props.xMax !== null ? { domain: [props.xMin, props.xMax] } : {}),
+          grid: true
+        },
         color: {
           legend: props.showLegend,
           ...(props.legendDomain && { domain: props.legendDomain }),
@@ -137,7 +145,11 @@ function renderChart() {
           label: props.xLabel,
           ...(props.categoryOrder && { domain: props.categoryOrder })
         },
-        y: {grid: true, label: props.yLabel},
+        y: {
+          grid: true,
+          label: props.yLabel,
+          ...(props.yMin !== null && props.yMax !== null ? { domain: [props.yMin, props.yMax] } : {})
+        },
         color: {
           legend: props.showLegend,
           ...(props.legendDomain && { domain: props.legendDomain }),
@@ -181,6 +193,10 @@ watch(() => props.legendDomain, renderChart, { deep: true });
 watch(() => props.legendRange, renderChart, { deep: true });
 watch(() => props.showLegend, renderChart);
 watch(() => props.categoryOrder, renderChart, { deep: true });
+watch(() => props.xMin, renderChart);
+watch(() => props.xMax, renderChart);
+watch(() => props.yMin, renderChart);
+watch(() => props.yMax, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {

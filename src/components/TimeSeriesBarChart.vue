@@ -31,6 +31,8 @@ const props = defineProps({
   isPreBinned: { type: Boolean, default: false },
   xTickMin: { type: [Date, String], default: null },
   xTickMax: { type: [Date, String], default: null },
+  yMin: { type: Number, default: null },
+  yMax: { type: Number, default: null },
   showProportion: { type: Boolean, default: false },
   tooltipDecimalPlaces: { type: Number, default: 1 },
   legendDomain: { type: Array, default: null },
@@ -240,6 +242,7 @@ function renderChart() {
     y: {
       label: props.yLabel,
       ...(props.categoryOrder && { domain: props.categoryOrder }),
+      ...(props.yMin !== null && props.yMax !== null ? { domain: [props.yMin, props.yMax] } : {}),
       grid: true
     },
     color: {
