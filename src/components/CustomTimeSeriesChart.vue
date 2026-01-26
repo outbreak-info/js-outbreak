@@ -171,10 +171,17 @@ const ariaLabel = computed(
   () =>
     `Line chart showing ${props.yAxisLabel} over time. Hover over chart for detailed information.`
 );
+
+
+// Chart container inline styles
+const chartContainerStyle = computed(() => ({
+  position: "relative",
+  ...containerMargins.value,
+}));
 </script>
 
 <template>
-  <div class="chart-container" :style="containerMargins">
+  <div :style="chartContainerStyle">
     <svg
       role="img"
       :aria-label="ariaLabel"
@@ -336,9 +343,3 @@ const ariaLabel = computed(
     </svg>
   </div>
 </template>
-
-<style scoped>
-.chart-container {
-  position: relative;
-}
-</style>
