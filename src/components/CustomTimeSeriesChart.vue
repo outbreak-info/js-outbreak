@@ -49,6 +49,11 @@ const props = defineProps({
 
 const width = ref(500);
 const hoveredPoint = ref(null);
+const focusedIndex = ref(0);
+
+const chartId = `chart-${Math.random().toString(36).slice(2, 9)}`;
+const liveRegionId = `${chartId}-live`;
+const pointId = (index) => `${chartId}-point-${index}`;
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -127,9 +132,7 @@ const lineGenerator = computed(() =>
   line()
     .x(xAccessorScaled.value)
     .y(yAccessorScaled.value)
-    .defined(function (d) {
-      return !Number.isNaN(d.valueKey);
-    })
+    .defined((d) => !Number.isNaN(yAccessor(d)))
     .curve(curveBundle)
 );
 
@@ -167,11 +170,30 @@ const handleMouseLeave = () => {
   hoveredPoint.value = null;
 };
 
-const ariaLabel = computed(
-  () =>
-    `Line chart showing ${props.yAxisLabel} over time. Hover over chart for detailed information.`
-);
+const setFocusedPoint = (index) => {
+  focusedIndex.value = Math.max(0, Math.min(index, props.data.length - 1));
+  hoveredPoint.value = props.data[focusedIndex.value];
+};
 
+const handleKeydown = (e) => {
+  if (e.key === "ArrowRight") {
+    e.preventDefault();
+    setFocusedPoint(focusedIndex.value + 1);
+  }
+  if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    setFocusedPoint(focusedIndex.value - 1);
+  }
+};
+
+const liveRegionStyle = {
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+};
 
 // Chart container inline styles
 const chartContainerStyle = computed(() => ({
@@ -182,17 +204,46 @@ const chartContainerStyle = computed(() => ({
 
 <template>
   <div :style="chartContainerStyle">
+    <!-- screen reader live region -->
+    <div
+      :id="liveRegionId"
+      aria-live="polite"
+      aria-atomic="true"
+      :style="liveRegionStyle"
+    >
+      <span v-if="hoveredPoint">
+        {{ formatTime(parseTime(xAccessor(hoveredPoint))) }},
+        {{ yAxisLabel }}:
+        {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
+      </span>
+    </div>
+
     <svg
-      role="img"
-      :aria-label="ariaLabel"
+      role="listbox"
+      aria-roledescription="Interactive line chart"
+      :aria-labelledby="`${chartId}-title ${chartId}-desc`"
+      :aria-describedby="liveRegionId"
+      :aria-activedescendant="pointId(focusedIndex)"
+      tabindex="0"
       :width="width - containerMarginLeft - containerMarginRight"
       :height="height"
       @mousemove="handleMouseMove"
       @mouseleave="handleMouseLeave"
+      @keydown="handleKeydown"
+      @focus="setFocusedPoint(0)"
+      @blur="hoveredPoint = null"
     >
+      <title :id="`${chartId}-title`">
+        {{ yAxisLabel }} over time
+      </title>
+      <desc :id="`${chartId}-desc`">
+        Line chart showing {{ yAxisLabel }} by {{ xAxisLabel }}.
+        Use left and right arrow keys to explore values.
+      </desc>
+
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
         <!-- y-axis -->
-        <g>
+        <g aria-hidden="true">
           <line
             x1="0"
             x2="0"
@@ -230,7 +281,7 @@ const chartContainerStyle = computed(() => ({
         </g>
 
         <!-- x-axis -->
-        <g :transform="`translate(0, ${innerHeight})`">
+        <g aria-hidden="true" :transform="`translate(0, ${innerHeight})`">
           <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
           <text
             :x="innerWidth / 2"
@@ -262,7 +313,7 @@ const chartContainerStyle = computed(() => ({
 
         <!-- line -->
         <path
-          class="line"
+          aria-hidden="true"
           :d="chartLine"
           :stroke="lineColor"
           stroke-width="3px"
@@ -270,7 +321,7 @@ const chartContainerStyle = computed(() => ({
           stroke-linecap="round"
         />
 
-        <!-- point -->
+        <!-- points -->
         <g>
           <circle
             v-for="(dataPoint, index) in data"
@@ -339,6 +390,16 @@ const chartContainerStyle = computed(() => ({
             {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
           </text>
         </g>
+      </g>
+      <g>
+        <g
+          v-for="(dataPoint, index) in data"
+          :key="'sr-point-' + index"
+          :id="pointId(index)"
+          role="option"
+          tabindex="-1"
+          :aria-label="`${formatTime(parseTime(xAccessor(dataPoint)))}, ${yAxisLabel} ${formatHoveredValueKey(yAccessor(dataPoint))}`"
+        />
       </g>
     </svg>
   </div>
