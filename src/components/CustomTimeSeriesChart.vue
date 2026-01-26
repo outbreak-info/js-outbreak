@@ -6,6 +6,7 @@ import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import { quadtree } from "d3-quadtree";
 import { createDateArray } from "../utils/arrays";
+import { filterXTicks } from "../utils/tickFilters";
 import { line, curveBundle } from "d3-shape";
 
 const props = defineProps({
@@ -142,31 +143,8 @@ const yTicks = computed(() => {
 
 const allXTicks = computed(() => xScale.value.domain());
 
-const filterXTicks = (numberOfXTicks, width) => {
-  if (numberOfXTicks > 270) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 60));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 90));
-    else return allXTicks.value.filter((d, i) => !(i % 210));
-  }
-  if (numberOfXTicks > 210) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 30));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 60));
-    else return allXTicks.value.filter((d, i) => !(i % 90));
-  }
-  if (numberOfXTicks > 120) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 21));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 30));
-    else return allXTicks.value.filter((d, i) => !(i % 60));
-  } else {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 14));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 21));
-    else if (width > 400) return allXTicks.value.filter((d, i) => !(i % 30));
-    else return allXTicks.value.filter((d, i) => !(i % 45));
-  }
-};
-
 const xTicksToBeRendered = computed(() =>
-  filterXTicks(xScaleDomain.value.length, innerWidth.value)
+  filterXTicks(allXTicks.value, innerWidth.value)
 );
 
 const handleMouseMove = (e) => {
