@@ -38,6 +38,9 @@ const props = defineProps({
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
 
+  // Scale padding configuration
+  cellPadding: { type: Number, default: 0.15 },
+
   // Color props
   pointColor: { type: String, default: "#d13b62" },
   lineColor: { type: String, default: "#bdc3c7" },
@@ -95,7 +98,10 @@ const xScaleDomain = computed(() =>
 );
 
 const xScale = computed(() =>
-  scaleBand().domain(xScaleDomain.value).range([0, innerWidth.value])
+  scaleBand()
+    .domain(xScaleDomain.value)
+    .range([0, innerWidth.value])
+    .paddingInner(props.cellPadding)
 );
 
 const yScaleDomain = computed(() => {
@@ -114,7 +120,7 @@ const yScale = computed(() =>
   scaleLinear().domain(yScaleDomain.value).range([innerHeight.value, 0]).nice()
 );
 
-const xAccessorScaled = computed(() => (d) => xScale.value(xAccessor(d)));
+const xAccessorScaled = computed(() => (d) => xScale.value(xAccessor(d)) + xScale.value.bandwidth() / 2);
 const yAccessorScaled = computed(() => (d) => yScale.value(yAccessor(d)));
 
 const lineGenerator = computed(() =>
@@ -129,7 +135,7 @@ const lineGenerator = computed(() =>
 
 const quadtreeInstance = computed(() =>
   quadtree()
-    .x((d) => xScale.value(xAccessor(d)))
+    .x((d) => xScale.value(xAccessor(d)) + xScale.value.bandwidth() / 2)
     .y((d) => yScale.value(yAccessor(d)))
     .addAll(props.data)
 );
@@ -232,7 +238,7 @@ const ariaLabel = computed(
           <g
             v-for="(tick, index) in xTicksToBeRendered"
             :key="'tick-' + index"
-            :transform="`translate(${xScale(tick)}, 0)`"
+            :transform="`translate(${xScale(tick) + xScale.bandwidth() / 2}, 0)`"
           >
             <line :y1="0" :y2="6" stroke="#bdc3c7" />
             <text
@@ -303,7 +309,7 @@ const ariaLabel = computed(
           v-if="hoveredPoint"
           :transform="`translate(${xScale(
             xAccessor(hoveredPoint)
-          )}, ${innerHeight})`"
+          ) + xScale.bandwidth() / 2}, ${innerHeight})`"
         >
           <text
             y="10"
