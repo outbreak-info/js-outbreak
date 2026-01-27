@@ -205,12 +205,12 @@ const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.v
 const handleMouseEnter = d => {
   hoveredCell.value = d;
   hoveredCellKey.value = cellKey(d);
-  tooltipTitle.value = `${hoveredCell.value.name} · ${hoveredCell.value.collection_site_id}`;
+  tooltipTitle.value = `${hoveredCell.value.name} · ${hoveredCell.value.ww_site_id}`;
 
   tooltipData.value = dataToBeRendered.value.filter(
     element => 
       yAccessor(element) === yAccessor(hoveredCell.value) &&
-      typeof element.prevalence === "number"
+      typeof element.abundance === "number"
     );
 };
 
