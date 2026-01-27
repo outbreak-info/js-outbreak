@@ -6,6 +6,7 @@ import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import { quadtree } from "d3-quadtree";
 import { createDateArray } from "../utils/arrays";
+import { filterXTicks } from "../utils/tickFilters";
 import { line, curveBundle } from "d3-shape";
 
 const props = defineProps({
@@ -37,14 +38,25 @@ const props = defineProps({
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
 
+  // Scale padding configuration
+  cellPadding: { type: Number, default: 0.15 },
+
   // Color props
   pointColor: { type: String, default: "#d13b62" },
   lineColor: { type: String, default: "#bdc3c7" },
   hoverColor: { type: String, default: "#000dcb" },
+
+  // xScale domain
+  xScaleDomain: { type: Array, default: null },
 });
 
 const width = ref(500);
 const hoveredPoint = ref(null);
+const focusedIndex = ref(0);
+
+const chartId = `chart-${Math.random().toString(36).slice(2, 9)}`;
+const liveRegionId = `${chartId}-live`;
+const pointId = (index) => `${chartId}-point-${index}`;
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -73,6 +85,12 @@ const handleResize = () => {
 const xAccessor = (d) => d[props.dateKey];
 const yAccessor = (d) => d[props.valueKey];
 
+const dataSortedByDate = computed(() =>
+  [...props.data].sort(
+    (a, b) => xAccessor(a).localeCompare(xAccessor(b))
+  )
+);
+
 const formatHoveredValueKey = format(",.2f");
 const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
@@ -86,26 +104,32 @@ const marginLeft = props.marginLeft;
 const innerWidth = computed(() => width.value - marginLeft - marginRight);
 const innerHeight = computed(() => props.height - marginTop - marginBottom);
 
-const xScaleDomain = computed(() =>
-  createDateArray(
-    xAccessor(props.data[0]),
-    xAccessor(props.data[props.data.length - 1])
-  )
-);
+const xScaleDomain = computed(() => {
+  if (props.xScaleDomain) {
+    return props.xScaleDomain;
+  }
+  return createDateArray(
+    xAccessor(dataSortedByDate.value[0]),
+    xAccessor(dataSortedByDate.value[dataSortedByDate.value.length - 1])
+  );
+});
 
 const xScale = computed(() =>
-  scaleBand().domain(xScaleDomain.value).range([0, innerWidth.value])
+  scaleBand()
+    .domain(xScaleDomain.value)
+    .range([0, innerWidth.value])
+    .paddingInner(props.cellPadding)
 );
 
 const yScaleDomain = computed(() => {
   if (props.yDomainType === "custom") {
     const minVal =
-      props.yDomainMin !== null ? props.yDomainMin : min(props.data, yAccessor);
+      props.yDomainMin !== null ? props.yDomainMin : min(dataSortedByDate.value, yAccessor);
     const maxVal =
-      props.yDomainMax !== null ? props.yDomainMax : max(props.data, yAccessor);
+      props.yDomainMax !== null ? props.yDomainMax : max(dataSortedByDate.value, yAccessor);
     return [minVal, maxVal];
   } else {
-    return [min(props.data, yAccessor), max(props.data, yAccessor)];
+    return [min(dataSortedByDate.value, yAccessor), max(dataSortedByDate.value, yAccessor)];
   }
 });
 
@@ -113,7 +137,7 @@ const yScale = computed(() =>
   scaleLinear().domain(yScaleDomain.value).range([innerHeight.value, 0]).nice()
 );
 
-const xAccessorScaled = computed(() => (d) => xScale.value(xAccessor(d)));
+const xAccessorScaled = computed(() => (d) => xScale.value(xAccessor(d)) + xScale.value.bandwidth() / 2);
 const yAccessorScaled = computed(() => (d) => yScale.value(yAccessor(d)));
 
 const lineGenerator = computed(() =>
@@ -128,12 +152,12 @@ const lineGenerator = computed(() =>
 
 const quadtreeInstance = computed(() =>
   quadtree()
-    .x((d) => xScale.value(xAccessor(d)))
+    .x((d) => xScale.value(xAccessor(d)) + xScale.value.bandwidth() / 2)
     .y((d) => yScale.value(yAccessor(d)))
-    .addAll(props.data)
+    .addAll(dataSortedByDate.value)
 );
 
-const chartLine = computed(() => lineGenerator.value(props.data));
+const chartLine = computed(() => lineGenerator.value(dataSortedByDate.value));
 
 const yTicks = computed(() => {
   const numberOfYTicks = Math.floor(innerHeight.value / 40);
@@ -142,31 +166,8 @@ const yTicks = computed(() => {
 
 const allXTicks = computed(() => xScale.value.domain());
 
-const filterXTicks = (numberOfXTicks, width) => {
-  if (numberOfXTicks > 270) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 60));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 90));
-    else return allXTicks.value.filter((d, i) => !(i % 210));
-  }
-  if (numberOfXTicks > 210) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 30));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 60));
-    else return allXTicks.value.filter((d, i) => !(i % 90));
-  }
-  if (numberOfXTicks > 120) {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 21));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 30));
-    else return allXTicks.value.filter((d, i) => !(i % 60));
-  } else {
-    if (width > 700) return allXTicks.value.filter((d, i) => !(i % 14));
-    else if (width > 550) return allXTicks.value.filter((d, i) => !(i % 21));
-    else if (width > 400) return allXTicks.value.filter((d, i) => !(i % 30));
-    else return allXTicks.value.filter((d, i) => !(i % 45));
-  }
-};
-
 const xTicksToBeRendered = computed(() =>
-  filterXTicks(xScaleDomain.value.length, innerWidth.value)
+  filterXTicks(allXTicks.value, innerWidth.value)
 );
 
 const handleMouseMove = (e) => {
@@ -183,25 +184,80 @@ const handleMouseLeave = () => {
   hoveredPoint.value = null;
 };
 
-const ariaLabel = computed(
-  () =>
-    `Line chart showing ${props.yAxisLabel} over time. Hover over chart for detailed information.`
-);
+const setFocusedPoint = (index) => {
+  focusedIndex.value = Math.max(0, Math.min(index, dataSortedByDate.value.length - 1));
+  hoveredPoint.value = dataSortedByDate.value[focusedIndex.value];
+};
+
+const handleKeydown = (e) => {
+  if (e.key === "ArrowRight") {
+    e.preventDefault();
+    setFocusedPoint(focusedIndex.value + 1);
+  }
+  if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    setFocusedPoint(focusedIndex.value - 1);
+  }
+};
+
+const liveRegionStyle = {
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+};
+
+// Chart container inline styles
+const chartContainerStyle = computed(() => ({
+  position: "relative",
+  ...containerMargins.value,
+}));
 </script>
 
 <template>
-  <div class="chart-container" :style="containerMargins">
+  <div :style="chartContainerStyle">
+    <!-- screen reader live region -->
+    <div
+      :id="liveRegionId"
+      aria-live="polite"
+      aria-atomic="true"
+      :style="liveRegionStyle"
+    >
+      <span v-if="hoveredPoint">
+        {{ formatTime(parseTime(xAccessor(hoveredPoint))) }},
+        {{ yAxisLabel }}:
+        {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
+      </span>
+    </div>
+
     <svg
-      role="img"
-      :aria-label="ariaLabel"
+      role="listbox"
+      aria-roledescription="Interactive line chart"
+      :aria-labelledby="`${chartId}-title ${chartId}-desc`"
+      :aria-describedby="liveRegionId"
+      :aria-activedescendant="pointId(focusedIndex)"
+      tabindex="0"
       :width="width - containerMarginLeft - containerMarginRight"
       :height="height"
       @mousemove="handleMouseMove"
       @mouseleave="handleMouseLeave"
+      @keydown="handleKeydown"
+      @focus="setFocusedPoint(0)"
+      @blur="hoveredPoint = null"
     >
+      <title :id="`${chartId}-title`">
+        {{ yAxisLabel }} over time
+      </title>
+      <desc :id="`${chartId}-desc`">
+        Line chart showing {{ yAxisLabel }} by {{ xAxisLabel }}.
+        Use left and right arrow keys to explore values.
+      </desc>
+
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
         <!-- y-axis -->
-        <g>
+        <g aria-hidden="true">
           <line
             x1="0"
             x2="0"
@@ -239,7 +295,7 @@ const ariaLabel = computed(
         </g>
 
         <!-- x-axis -->
-        <g :transform="`translate(0, ${innerHeight})`">
+        <g aria-hidden="true" :transform="`translate(0, ${innerHeight})`">
           <line x1="0" :x2="innerWidth" stroke="#bdc3c7" />
           <text
             :x="innerWidth / 2"
@@ -254,7 +310,7 @@ const ariaLabel = computed(
           <g
             v-for="(tick, index) in xTicksToBeRendered"
             :key="'tick-' + index"
-            :transform="`translate(${xScale(tick)}, 0)`"
+            :transform="`translate(${xScale(tick) + xScale.bandwidth() / 2}, 0)`"
           >
             <line :y1="0" :y2="6" stroke="#bdc3c7" />
             <text
@@ -271,7 +327,7 @@ const ariaLabel = computed(
 
         <!-- line -->
         <path
-          class="line"
+          aria-hidden="true"
           :d="chartLine"
           :stroke="lineColor"
           stroke-width="3px"
@@ -279,10 +335,10 @@ const ariaLabel = computed(
           stroke-linecap="round"
         />
 
-        <!-- point -->
+        <!-- points -->
         <g>
           <circle
-            v-for="(dataPoint, index) in data"
+            v-for="(dataPoint, index) in dataSortedByDate"
             :key="'point-' + index"
             :r="width > 600 ? 4 : 3"
             :cx="xAccessorScaled(dataPoint)"
@@ -325,7 +381,7 @@ const ariaLabel = computed(
           v-if="hoveredPoint"
           :transform="`translate(${xScale(
             xAccessor(hoveredPoint)
-          )}, ${innerHeight})`"
+          ) + xScale.bandwidth() / 2}, ${innerHeight})`"
         >
           <text
             y="10"
@@ -349,12 +405,16 @@ const ariaLabel = computed(
           </text>
         </g>
       </g>
+      <g>
+        <g
+          v-for="(dataPoint, index) in dataSortedByDate"
+          :key="'sr-point-' + index"
+          :id="pointId(index)"
+          role="option"
+          tabindex="-1"
+          :aria-label="`${formatTime(parseTime(xAccessor(dataPoint)))}, ${yAxisLabel} ${formatHoveredValueKey(yAccessor(dataPoint))}`"
+        />
+      </g>
     </svg>
   </div>
 </template>
-
-<style scoped>
-.chart-container {
-  position: relative;
-}
-</style>
