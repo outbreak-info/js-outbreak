@@ -45,6 +45,9 @@ const props = defineProps({
   pointColor: { type: String, default: "#d13b62" },
   lineColor: { type: String, default: "#bdc3c7" },
   hoverColor: { type: String, default: "#000dcb" },
+
+  // xScale domain
+  xScaleDomain: { type: Array, default: null },
 });
 
 const width = ref(500);
@@ -82,6 +85,12 @@ const handleResize = () => {
 const xAccessor = (d) => d[props.dateKey];
 const yAccessor = (d) => d[props.valueKey];
 
+const dataSortedByDate = computed(() =>
+  [...props.data].sort(
+    (a, b) => xAccessor(a).localeCompare(xAccessor(b))
+  )
+);
+
 const formatHoveredValueKey = format(",.2f");
 const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
@@ -95,12 +104,15 @@ const marginLeft = props.marginLeft;
 const innerWidth = computed(() => width.value - marginLeft - marginRight);
 const innerHeight = computed(() => props.height - marginTop - marginBottom);
 
-const xScaleDomain = computed(() =>
-  createDateArray(
-    xAccessor(props.data[0]),
-    xAccessor(props.data[props.data.length - 1])
-  )
-);
+const xScaleDomain = computed(() => {
+  if (props.xScaleDomain) {
+    return props.xScaleDomain;
+  }
+  return createDateArray(
+    xAccessor(dataSortedByDate.value[0]),
+    xAccessor(dataSortedByDate.value[dataSortedByDate.value.length - 1])
+  );
+});
 
 const xScale = computed(() =>
   scaleBand()
@@ -112,12 +124,12 @@ const xScale = computed(() =>
 const yScaleDomain = computed(() => {
   if (props.yDomainType === "custom") {
     const minVal =
-      props.yDomainMin !== null ? props.yDomainMin : min(props.data, yAccessor);
+      props.yDomainMin !== null ? props.yDomainMin : min(dataSortedByDate.value, yAccessor);
     const maxVal =
-      props.yDomainMax !== null ? props.yDomainMax : max(props.data, yAccessor);
+      props.yDomainMax !== null ? props.yDomainMax : max(dataSortedByDate.value, yAccessor);
     return [minVal, maxVal];
   } else {
-    return [min(props.data, yAccessor), max(props.data, yAccessor)];
+    return [min(dataSortedByDate.value, yAccessor), max(dataSortedByDate.value, yAccessor)];
   }
 });
 
@@ -132,7 +144,9 @@ const lineGenerator = computed(() =>
   line()
     .x(xAccessorScaled.value)
     .y(yAccessorScaled.value)
-    .defined((d) => !Number.isNaN(yAccessor(d)))
+    .defined(function (d) {
+      return !Number.isNaN(d.valueKey);
+    })
     .curve(curveBundle)
 );
 
@@ -140,10 +154,10 @@ const quadtreeInstance = computed(() =>
   quadtree()
     .x((d) => xScale.value(xAccessor(d)) + xScale.value.bandwidth() / 2)
     .y((d) => yScale.value(yAccessor(d)))
-    .addAll(props.data)
+    .addAll(dataSortedByDate.value)
 );
 
-const chartLine = computed(() => lineGenerator.value(props.data));
+const chartLine = computed(() => lineGenerator.value(dataSortedByDate.value));
 
 const yTicks = computed(() => {
   const numberOfYTicks = Math.floor(innerHeight.value / 40);
@@ -171,8 +185,8 @@ const handleMouseLeave = () => {
 };
 
 const setFocusedPoint = (index) => {
-  focusedIndex.value = Math.max(0, Math.min(index, props.data.length - 1));
-  hoveredPoint.value = props.data[focusedIndex.value];
+  focusedIndex.value = Math.max(0, Math.min(index, dataSortedByDate.value.length - 1));
+  hoveredPoint.value = dataSortedByDate.value[focusedIndex.value];
 };
 
 const handleKeydown = (e) => {
@@ -324,7 +338,7 @@ const chartContainerStyle = computed(() => ({
         <!-- points -->
         <g>
           <circle
-            v-for="(dataPoint, index) in data"
+            v-for="(dataPoint, index) in dataSortedByDate"
             :key="'point-' + index"
             :r="width > 600 ? 4 : 3"
             :cx="xAccessorScaled(dataPoint)"
@@ -393,7 +407,7 @@ const chartContainerStyle = computed(() => ({
       </g>
       <g>
         <g
-          v-for="(dataPoint, index) in data"
+          v-for="(dataPoint, index) in dataSortedByDate"
           :key="'sr-point-' + index"
           :id="pointId(index)"
           role="option"
