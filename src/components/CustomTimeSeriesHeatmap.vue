@@ -47,6 +47,9 @@ const props = defineProps({
   // Heatmap appearance
   createCellsWithRoundedCorners: { type: Boolean, default: true },
   rowPadding: { type: Number, default: 0.1 },
+
+  // xScale domain
+  xScaleDomain: { type: Array, default: null },
 });
 
 const width = ref(500);
@@ -111,14 +114,33 @@ const rowLabels = computed(() =>
     }),
 );
 
-const minMaxDates = computed(() => {
-  const dates = props.aggregatedData.map(xAccessor).sort();
-  return [dates[0], dates[dates.length - 1]];
+console.log("aggregatedData", props.aggregatedData);
+
+const xScaleDomain = computed(() => {
+  if (props.xScaleDomain) return props.xScaleDomain;
+  if (!props.aggregatedData.length) return [];
+
+  let min = xAccessor(props.aggregatedData[0]);
+  let max = min;
+
+  for (const d of props.aggregatedData) {
+    const value = xAccessor(d);
+    if (value < min) min = value;
+    if (value > max) max = value;
+  }
+
+  return createDateArray(min, max);
 });
 
-const xScaleDomain = computed(() =>
-  createDateArray(minMaxDates.value[0], minMaxDates.value[1], props.dateRange),
-);
+
+// const minMaxDates = computed(() => {
+//   const dates = props.aggregatedData.map(xAccessor).sort();
+//   return [dates[0], dates[dates.length - 1]];
+// });
+
+// const xScaleDomain = computed(() =>
+//   createDateArray(minMaxDates.value[0], minMaxDates.value[1], props.dateRange),
+// );
 
 const height = computed(() =>
   rowLabels.value.length * cellHeight + marginTop + marginBottom
@@ -183,12 +205,12 @@ const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.v
 const handleMouseEnter = d => {
   hoveredCell.value = d;
   hoveredCellKey.value = cellKey(d);
-  tooltipTitle.value = `${hoveredCell.value.name} · ${hoveredCell.value.collection_site_id}`;
+  tooltipTitle.value = `${hoveredCell.value.lineage_group} · ${hoveredCell.value.ww_site_id}`;
 
   tooltipData.value = dataToBeRendered.value.filter(
     element => 
       yAccessor(element) === yAccessor(hoveredCell.value) &&
-      typeof element.prevalence === "number"
+      typeof element.abundance === "number"
     );
 };
 
