@@ -16,6 +16,7 @@ import CustomLollipopChart from "./components/CustomLollipopChart.vue";
 import LoadingSpinner from "./components/LoadingSpinner.vue";
 import MultiSelectComponent from "./components/MultiSelectComponent.vue";
 import DumbbellChart from "./components/DumbbellChart.vue";
+import PopulationPyramidChart from "./components/PopulationPyramidChart.vue";
 import CustomTimeSeriesChart from "./components/CustomTimeSeriesChart.vue";
 import TextInput from "./components/TextInput.vue";
 import Divider from "./components/Divider.vue";
@@ -34,6 +35,7 @@ import CustomMultiLineChart from "./components/CustomMultiLineChart.vue";
 import CustomCategoricalLegend from "./components/CustomCategoricalLegend.vue";
 import CustomAreaChart from "./components/CustomAreaChart.vue";
 import CustomTimeSeriesHeatmap from "./components/CustomTimeSeriesHeatmap.vue";
+import DonutChart from "./components/DonutChart.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -58,6 +60,7 @@ export {
   LoadingSpinner,
   MultiSelectComponent,
   DumbbellChart,
+  PopulationPyramidChart,
   CustomTimeSeriesChart,
   TextInput,
   Divider,
@@ -76,6 +79,7 @@ export {
   CustomCategoricalLegend,
   CustomAreaChart,
   CustomTimeSeriesHeatmap,
+  DonutChart,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -100,6 +104,7 @@ export default {
     app.component("LoadingSpinner", LoadingSpinner);
     app.component("MultiSelectComponent", MultiSelectComponent);
     app.component("DumbbellChart", DumbbellChart);
+    app.component("PopulationPyramidChart", PopulationPyramidChart);
     app.component("CustomTimeSeriesChart", CustomTimeSeriesChart);
     app.component("TextInput", TextInput);
     app.component("Divider", Divider);
@@ -118,6 +123,7 @@ export default {
     app.component("CustomCategoricalLegend", CustomCategoricalLegend);
     app.component("CustomAreaChart", CustomAreaChart);
     app.component("CustomTimeSeriesHeatmap", CustomTimeSeriesHeatmap);
+    app.component("DonutChart", DonutChart);
 
   },
 };
