@@ -24,6 +24,7 @@ const props = defineProps({
   sraKey: { type: String, default: "sra_accession" },
   populationKey: { type: String, default: "ww_population" },
   viralLoadKey: { type: String, default: "viral_load" },
+  siteKey: { type: String, default: "collection_site_id" },
 
   // Color scale configuration
   colorDomain: {
@@ -88,6 +89,7 @@ const yAccessor = (d) => d[props.rowKey];
 const sraAccessor = (d) => d[props.sraKey];
 const populationAccessor = (d) => d[props.populationKey];
 const viralLoadAccessor = (d) => d[props.viralLoadKey];
+const siteAccessor = (d) => d[props.siteKey];
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -205,12 +207,12 @@ const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.v
 const handleMouseEnter = d => {
   hoveredCell.value = d;
   hoveredCellKey.value = cellKey(d);
-  tooltipTitle.value = `${hoveredCell.value.lineage_group} · ${hoveredCell.value.ww_site_id}`;
+  tooltipTitle.value = `${yAccessor(hoveredCell.value)} · ${siteAccessor(hoveredCell.value)}`;
 
   tooltipData.value = dataToBeRendered.value.filter(
-    element => 
+    element =>
       yAccessor(element) === yAccessor(hoveredCell.value) &&
-      typeof element.abundance === "number"
+      typeof colorAccessor(element) === "number"
     );
 };
 
