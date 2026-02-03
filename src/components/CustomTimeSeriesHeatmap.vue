@@ -116,8 +116,6 @@ const rowLabels = computed(() =>
     }),
 );
 
-console.log("aggregatedData", props.aggregatedData);
-
 const xScaleDomain = computed(() => {
   if (props.xScaleDomain) return props.xScaleDomain;
   if (!props.aggregatedData.length) return [];
@@ -133,16 +131,6 @@ const xScaleDomain = computed(() => {
 
   return createDateArray(min, max);
 });
-
-
-// const minMaxDates = computed(() => {
-//   const dates = props.aggregatedData.map(xAccessor).sort();
-//   return [dates[0], dates[dates.length - 1]];
-// });
-
-// const xScaleDomain = computed(() =>
-//   createDateArray(minMaxDates.value[0], minMaxDates.value[1], props.dateRange),
-// );
 
 const height = computed(() =>
   rowLabels.value.length * cellHeight + marginTop + marginBottom
