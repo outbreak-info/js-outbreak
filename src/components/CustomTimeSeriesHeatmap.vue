@@ -1,8 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { scaleThreshold, scaleLinear, scaleBand } from "d3-scale";
-import { format } from "d3-format";
-import { min, max } from "d3-array";
+import { scaleThreshold, scaleBand } from "d3-scale";
 import { timeFormat, timeParse } from "d3-time-format";
 import {
   ylOrRdDiscrete11,
@@ -391,6 +389,11 @@ const heatmapContainerStyle = computed(() => ({
       :sraAccessor="sraAccessor"
       :populationAccessor="populationAccessor"
       :viralLoadAccessor="viralLoadAccessor"
+      :marginLeft="marginLeft"
+      :marginTop="marginTop"
+      :axisHeight="axisHeight"
+      :containerMarginLeft="containerMarginLeft"
+      :containerMarginRight="containerMarginRight"
     />
   </div>
 </template>
