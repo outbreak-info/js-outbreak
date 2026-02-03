@@ -1,10 +1,7 @@
 <script setup>
 import { computed } from "vue";
-import { scaleLinear, scaleBand } from 'd3-scale';
 import { timeParse, timeFormat } from 'd3-time-format';
-import { max } from "d3-array";
 import { format } from "d3-format";
-import { line, curveBundle } from "d3-shape";
 import CustomLineChartWithHighlightedPoint from "./CustomLineChartWithHighlightedPoint.vue";
 
 const props = defineProps({
@@ -33,6 +30,11 @@ const props = defineProps({
   sraAccessor: { type: Function, default: null },
   populationAccessor: { type: Function, default: null},
   viralLoadAccessor: { type: Function, default: null},
+  marginLeft: { type: Number, default: 70 },
+  marginTop: { type: Number, default: 5 },
+  axisHeight: { type: Number, default: 25 },
+  containerMarginLeft: { type: Number, default: 10 },
+  containerMarginRight: { type: Number, default: 10 },
 });
 
 const formatTime = timeFormat('%b %e, %Y');
@@ -68,30 +70,6 @@ const viralLoadValue = computed(() => {
 });
 
 const tooltipWidth = computed(() => (props.width > 400 ? 215 : 185));
-const xPosForSmallScreens = 50;
-
-const fontSize = computed(() => (props.width > 400 ? '14px' : '13px'));
-
-const dateIndex = computed(() =>
-  props.xScaleDomain.indexOf(props.xAccessor(hovered.value)),
-);
-
-const dateArrayLength = props.xScaleDomain.length;
-const midPoint = Math.floor(dateArrayLength / 2);
-
-const xPosition = computed(() => {
-  if (props.width <= 700) {
-    return xPosForSmallScreens;
-  }
-  
-  return dateIndex.value <= midPoint
-    ? props.xScale(props.xAccessor(hovered.value)) + xPosForSmallScreens
-    : props.xScale(props.xAccessor(hovered.value)) - (tooltipWidth.value - xPosForSmallScreens);
-});
-
-const yPosition = computed(
-  () => props.yScale(props.rowAccessor(hovered.value)) - 200
-);
 
 const shouldRenderGrid = computed(() => {
   return (
@@ -102,9 +80,48 @@ const shouldRenderGrid = computed(() => {
   );
 });
 
+// Tooltip positioning
+const cellWidth = computed(() => props.xScale.bandwidth());
+const cellHeight = computed(() => props.yScale.bandwidth());
+
+const availableWidth = computed(() => 
+  props.width - props.containerMarginLeft - props.containerMarginRight
+);
+
+const tooltipPosition = computed(() => {
+  const cellX = props.xScale(props.xAccessor(hovered.value));
+  const cellY = props.yScale(props.rowAccessor(hovered.value));
+  
+  const cellAbsoluteTop = props.axisHeight + props.marginTop + cellY;
+  const cellAbsoluteBottom = cellAbsoluteTop + cellHeight.value;
+  
+  const gap = 110;
+  const yPos = cellAbsoluteBottom + gap;
+  
+  const absoluteCellX = props.marginLeft + cellX;
+  const cellCenterX = absoluteCellX + (cellWidth.value / 2);
+  const tooltipHalfWidth = tooltipWidth.value / 2;
+  
+  let xPos = cellCenterX - tooltipHalfWidth;
+  
+  const minX = props.marginLeft / 2;
+  const maxX = availableWidth.value - tooltipWidth.value - (props.marginLeft / 2);
+  
+  if (xPos < minX) {
+    xPos = minX;
+  }
+  
+  if (xPos > maxX) {
+    xPos = maxX;
+  }
+  
+  return { x: xPos, y: yPos };
+});
+
 // Tooltip inline styles
 const tooltipWrapperStyle = computed(() => ({
-  transform: `translate(${xPosition.value}px, ${yPosition.value}px)`,
+  top: `${tooltipPosition.value.y}px`,
+  left: `${tooltipPosition.value.x}px`,
   width: `${tooltipWidth.value}px`,
   background: "#ffffff",
   boxShadow: "1px 2px 7px rgba(0, 0, 0, 0.2)",

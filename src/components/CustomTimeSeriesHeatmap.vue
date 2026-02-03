@@ -1,8 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { scaleThreshold, scaleLinear, scaleBand } from "d3-scale";
-import { format } from "d3-format";
-import { min, max } from "d3-array";
+import { scaleThreshold, scaleBand } from "d3-scale";
 import { timeFormat, timeParse } from "d3-time-format";
 import {
   ylOrRdDiscrete11,
@@ -24,6 +22,7 @@ const props = defineProps({
   sraKey: { type: String, default: "sra_accession" },
   populationKey: { type: String, default: "ww_population" },
   viralLoadKey: { type: String, default: "viral_load" },
+  siteKey: { type: String, default: "collection_site_id" },
 
   // Color scale configuration
   colorDomain: {
@@ -88,6 +87,7 @@ const yAccessor = (d) => d[props.rowKey];
 const sraAccessor = (d) => d[props.sraKey];
 const populationAccessor = (d) => d[props.populationKey];
 const viralLoadAccessor = (d) => d[props.viralLoadKey];
+const siteAccessor = (d) => d[props.siteKey];
 
 const containerMargins = computed(() => ({
   marginTop: props.containerMarginTop + "px",
@@ -114,8 +114,6 @@ const rowLabels = computed(() =>
     }),
 );
 
-console.log("aggregatedData", props.aggregatedData);
-
 const xScaleDomain = computed(() => {
   if (props.xScaleDomain) return props.xScaleDomain;
   if (!props.aggregatedData.length) return [];
@@ -131,16 +129,6 @@ const xScaleDomain = computed(() => {
 
   return createDateArray(min, max);
 });
-
-
-// const minMaxDates = computed(() => {
-//   const dates = props.aggregatedData.map(xAccessor).sort();
-//   return [dates[0], dates[dates.length - 1]];
-// });
-
-// const xScaleDomain = computed(() =>
-//   createDateArray(minMaxDates.value[0], minMaxDates.value[1], props.dateRange),
-// );
 
 const height = computed(() =>
   rowLabels.value.length * cellHeight + marginTop + marginBottom
@@ -205,12 +193,12 @@ const dataToBeRendered = computed(() => generateDataToBeRendered(datesWithData.v
 const handleMouseEnter = d => {
   hoveredCell.value = d;
   hoveredCellKey.value = cellKey(d);
-  tooltipTitle.value = `${hoveredCell.value.lineage_group} · ${hoveredCell.value.ww_site_id}`;
+  tooltipTitle.value = `${yAccessor(hoveredCell.value)} · ${siteAccessor(hoveredCell.value)}`;
 
   tooltipData.value = dataToBeRendered.value.filter(
-    element => 
+    element =>
       yAccessor(element) === yAccessor(hoveredCell.value) &&
-      typeof element.abundance === "number"
+      typeof colorAccessor(element) === "number"
     );
 };
 
@@ -401,6 +389,11 @@ const heatmapContainerStyle = computed(() => ({
       :sraAccessor="sraAccessor"
       :populationAccessor="populationAccessor"
       :viralLoadAccessor="viralLoadAccessor"
+      :marginLeft="marginLeft"
+      :marginTop="marginTop"
+      :axisHeight="axisHeight"
+      :containerMarginLeft="containerMarginLeft"
+      :containerMarginRight="containerMarginRight"
     />
   </div>
 </template>
