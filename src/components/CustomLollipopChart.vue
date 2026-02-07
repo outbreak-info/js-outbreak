@@ -29,11 +29,17 @@ const props = defineProps({
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
 
+  // Scale padding configuration
+  cellPadding: { type: Number, default: 0 },
+
+  // Bandwidth offset behavior
+  useBandwidthOffset: { type: Boolean, default: false },
+
   // Color props
   lollipopColor: { type: String, default: "#d13b62" },
   hoverColor: { type: String, default: "#000dcb" },
   showXAxisLabelAndTicks: { type: Boolean, default: true },
-  
+
   // Scale props
   xScale: { type: Function, default: null },
 });
@@ -43,7 +49,9 @@ const emit = defineEmits(["hover", "leave"]);
 const width = ref(500);
 const internalHoveredPoint = ref(null);
 const focusedIndex = ref(-1);
-const chartId = ref(`lollipop-chart-${Math.random().toString(36).substr(2, 9)}`);
+const chartId = ref(
+  `lollipop-chart-${Math.random().toString(36).substr(2, 9)}`
+);
 const liveRegionId = ref(`${chartId.value}-live`);
 
 const containerMargins = computed(() => ({
@@ -118,7 +126,10 @@ const xScale = computed(() => {
   if (props.xScale) {
     return props.xScale;
   }
-  return scaleBand().domain(xScaleDomain.value).range([0, innerWidth.value]);
+  return scaleBand()
+    .domain(xScaleDomain.value)
+    .range([0, innerWidth.value])
+    .paddingInner(props.cellPadding);
 });
 
 const yScale = computed(() =>
@@ -128,12 +139,19 @@ const yScale = computed(() =>
     .nice()
 );
 
-const xAccessorScaled = computed(() => (d) => xScale.value(xAccessor(d)));
+const bandwidthOffset = computed(() =>
+  props.useBandwidthOffset ? xScale.value.bandwidth() / 2 : 0
+);
+
+const xAccessorScaled = computed(
+  () => (d) => xScale.value(xAccessor(d)) + bandwidthOffset.value
+);
+
 const yAccessorScaled = computed(() => (d) => yScale.value(yAccessor(d)));
 
 const quadtreeInstance = computed(() =>
   quadtree()
-    .x((d) => xScale.value(xAccessor(d)))
+    .x((d) => xScale.value(xAccessor(d)) + bandwidthOffset.value)
     .y((d) => yScale.value(yAccessor(d)))
     .addAll(props.data)
 );
@@ -151,9 +169,7 @@ const xTicksToBeRendered = computed(() =>
 
 const hoveredPoint = computed(() => {
   if (props.activeKey) {
-    return (
-      props.data.find((d) => xAccessor(d) === props.activeKey) || null
-    );
+    return props.data.find((d) => xAccessor(d) === props.activeKey) || null;
   }
   return internalHoveredPoint.value;
 });
@@ -179,7 +195,7 @@ const handleMouseLeave = () => {
 
 const handleKeyDown = (e, d, index) => {
   let newIndex = index;
-  
+
   switch (e.key) {
     case "ArrowRight":
     case "ArrowDown":
@@ -202,12 +218,14 @@ const handleKeyDown = (e, d, index) => {
     default:
       return;
   }
-  
+
   if (newIndex !== index) {
     focusedIndex.value = newIndex;
     internalHoveredPoint.value = props.data[newIndex];
     // Focus the next element
-    const elements = document.querySelectorAll(`[data-chart-id="${chartId.value}"] g[role="button"]`);
+    const elements = document.querySelectorAll(
+      `[data-chart-id="${chartId.value}"] g[role="button"]`
+    );
     if (elements[newIndex]) {
       elements[newIndex].focus();
     }
@@ -232,7 +250,9 @@ const ariaLabel = computed(() => {
   const title = `${props.yAxisLabel} over ${props.xAxisLabel}`;
   const description =
     `A lollipop chart displaying ${props.data.length} data points. ` +
-    `Values range from ${formatHoveredValueKey(minValue.value)} to ${formatHoveredValueKey(maxValue.value)}.`;
+    `Values range from ${formatHoveredValueKey(
+      minValue.value
+    )} to ${formatHoveredValueKey(maxValue.value)}.`;
   return `${title}. ${description}`;
 });
 
@@ -244,8 +264,9 @@ const getPointAriaLabel = (d) => {
 };
 
 // Screen reader instructions
-const srInstructions = computed(() =>
-  "Use arrow keys to navigate between data points. Press Home or End to jump to first or last point."
+const srInstructions = computed(
+  () =>
+    "Use arrow keys to navigate between data points. Press Home or End to jump to first or last point."
 );
 
 // Live region announcement for screen readers
@@ -263,20 +284,20 @@ const chartContainerStyle = computed(() => ({
 }));
 
 const srOnlyStyle = {
-  position: 'absolute',
-  width: '1px',
-  height: '1px',
-  padding: '0',
-  margin: '-1px',
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  whiteSpace: 'nowrap',
-  borderWidth: '0'
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  padding: "0",
+  margin: "-1px",
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  borderWidth: "0",
 };
 
 const lollipopPointStyle = {
-  cursor: 'pointer',
-  outline: 'none'
+  cursor: "pointer",
+  outline: "none",
 };
 </script>
 
@@ -286,7 +307,7 @@ const lollipopPointStyle = {
     <div :style="srOnlyStyle" :id="`${chartId}-instructions`">
       {{ srInstructions }}
     </div>
-    
+
     <!-- live region for announcing changes to screen readers -->
     <div
       :id="liveRegionId"
@@ -302,7 +323,7 @@ const lollipopPointStyle = {
       role="img"
       :aria-label="ariaLabel"
       :aria-describedby="`${chartId}-instructions`"
-      :width="width"
+      :width="width - containerMarginLeft - containerMarginRight"
       :height="effectiveHeight"
       :data-chart-id="chartId"
       @mousemove="handleMouseMove"
@@ -310,10 +331,16 @@ const lollipopPointStyle = {
     >
       <!-- title for assistive technologies -->
       <title>{{ `${yAxisLabel} over ${xAxisLabel} lollipop chart` }}</title>
-      
+
       <!-- description for assistive technologies -->
       <desc>
-        {{ `A lollipop chart showing ${yAxisLabel} over ${xAxisLabel.toLowerCase()}. The chart contains ${data.length} data points ranging from ${formatHoveredValueKey(minValue)} to ${formatHoveredValueKey(maxValue)}.` }}
+        {{
+          `A lollipop chart showing ${yAxisLabel} over ${xAxisLabel.toLowerCase()}. The chart contains ${
+            data.length
+          } data points ranging from ${formatHoveredValueKey(
+            minValue
+          )} to ${formatHoveredValueKey(maxValue)}.`
+        }}
       </desc>
 
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
@@ -368,12 +395,12 @@ const lollipopPointStyle = {
               {{ xAxisLabel }}
             </text>
           </g>
-          
+
           <g v-if="showXAxisLabelAndTicks">
             <g
               v-for="tick in xTicksToBeRendered"
               :key="tick"
-              :transform="`translate(${xScale(tick)}, 0)`"
+              :transform="`translate(${xScale(tick) + bandwidthOffset}, 0)`"
             >
               <line y1="0" y2="6" stroke="#bdc3c7" />
               <text
@@ -409,7 +436,11 @@ const lollipopPointStyle = {
           role="button"
           :aria-label="getPointAriaLabel(d)"
           :aria-describedby="liveRegionId"
-          :aria-pressed="hoveredPoint && xAccessor(d) === xAccessor(hoveredPoint) ? 'true' : 'false'"
+          :aria-pressed="
+            hoveredPoint && xAccessor(d) === xAccessor(hoveredPoint)
+              ? 'true'
+              : 'false'
+          "
           @focus="handleFocus(d, i)"
           @blur="handleBlur"
           @keydown="handleKeyDown($event, d, i)"
@@ -442,7 +473,7 @@ const lollipopPointStyle = {
             "
             pointer-events="none"
           />
-          
+
           <!-- focus ring for keyboard navigation -->
           <circle
             v-if="focusedIndex === i"
