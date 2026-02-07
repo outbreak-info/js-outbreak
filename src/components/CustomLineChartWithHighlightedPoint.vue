@@ -1,9 +1,9 @@
 <script setup>
-import { scaleBand, scaleLinear } from 'd3-scale';
-import { timeParse, timeFormat } from 'd3-time-format';
+import { scaleBand, scaleLinear } from "d3-scale";
+import { timeParse, timeFormat } from "d3-time-format";
 import { line, curveBundle } from "d3-shape";
-import { max } from 'd3-array';
-import { format } from 'd3-format';
+import { max } from "d3-array";
+import { format } from "d3-format";
 import { filterXTicks } from "../utils/tickFilters";
 
 const props = defineProps({
@@ -17,8 +17,8 @@ const props = defineProps({
   hoveredCell: Object,
 });
 
-const parseTime = timeParse('%Y-%m-%d');
-const formatTime = timeFormat('%b %e');
+const parseTime = timeParse("%Y-%m-%d");
+const formatTime = timeFormat("%b %e");
 
 const lineChartHeight = 80;
 
@@ -51,7 +51,7 @@ const yAccessorScaled = (d) => lineChartYScale(props.yAccessor(d));
 const lineGenerator = line()
   .x(xAccessorScaled)
   .y(yAccessorScaled)
-  .defined(d => {
+  .defined((d) => {
     const y = props.yAccessor(d);
     return Number.isFinite(y);
   })
@@ -61,11 +61,11 @@ const prevalenceLine = lineGenerator(props.data);
 
 const allXTicks = lineChartXScale.domain();
 
-const xTicksToBeRendered = filterXTicks(allXTicks, innerWidth);
+const xTicksToBeRendered = filterXTicks(allXTicks, lineChartInnerWidth);
 
-const formatPrevalence = format(',.1f');
+const formatPrevalence = format(",.1f");
 
-const yTicks =lineChartYScale.domain();
+const yTicks = lineChartYScale.domain();
 
 const yMin = lineChartYScale.range()[0];
 const yMax = lineChartYScale.range()[1];
@@ -77,10 +77,10 @@ const yMax = lineChartYScale.range()[1];
       :transform="`translate(${lineChartMargin.left}, ${lineChartMargin.top})`"
     >
       <g :transform="`translate(0 ${lineChartInnerHeight})`">
-        <line 
-          :x1="-lineChartXScale.bandwidth() / 2" 
-          :x2="lineChartInnerWidth" 
-          stroke='#bdc3c7' 
+        <line
+          :x1="-lineChartXScale.bandwidth() / 2"
+          :x2="lineChartInnerWidth"
+          stroke="#bdc3c7"
         />
         <g
           v-for="(tick, index) in xTicksToBeRendered"
@@ -111,13 +111,7 @@ const yMax = lineChartYScale.range()[1];
         >
           {{ yAxisTitle }}
         </text>
-        <line 
-          :x1="0" 
-          :x2="0" 
-          :y1="yMin" 
-          :y2="yMax" 
-          stroke='#bdc3c7' 
-        />
+        <line :x1="0" :x2="0" :y1="yMin" :y2="yMax" stroke="#bdc3c7" />
         <g
           v-for="(tick, index) in yTicks"
           :key="'yTick-' + index"
@@ -131,7 +125,7 @@ const yMax = lineChartYScale.range()[1];
             fill="#2c3e50"
             font-size="12px"
           >
-            {{ tick == 0 ? 0 : formatPrevalence(tick) }} 
+            {{ tick == 0 ? 0 : formatPrevalence(tick) }}
           </text>
         </g>
       </g>
@@ -146,8 +140,8 @@ const yMax = lineChartYScale.range()[1];
         :cx="xAccessorScaled(hoveredCell)"
         :cy="yAccessorScaled(hoveredCell)"
         fill="#000dcb"
-        :r="lineChartXScale.bandwidth() / 2 + 1"
-      /> 
+        r="4"
+      />
     </g>
   </svg>
 </template>

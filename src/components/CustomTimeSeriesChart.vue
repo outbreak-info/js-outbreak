@@ -41,6 +41,9 @@ const props = defineProps({
   // Scale padding configuration
   cellPadding: { type: Number, default: 0.15 },
 
+  // Bandwidth offset behavior
+  useBandwidthOffset: { type: Boolean, default: true },
+
   // Color props
   pointColor: { type: String, default: "#d13b62" },
   lineColor: { type: String, default: "#bdc3c7" },
@@ -86,9 +89,7 @@ const xAccessor = (d) => d[props.dateKey];
 const yAccessor = (d) => d[props.valueKey];
 
 const dataSortedByDate = computed(() =>
-  [...props.data].sort(
-    (a, b) => xAccessor(a).localeCompare(xAccessor(b))
-  )
+  [...props.data].sort((a, b) => xAccessor(a).localeCompare(xAccessor(b)))
 );
 
 const formatHoveredValueKey = format(",.2f");
@@ -124,12 +125,19 @@ const xScale = computed(() =>
 const yScaleDomain = computed(() => {
   if (props.yDomainType === "custom") {
     const minVal =
-      props.yDomainMin !== null ? props.yDomainMin : min(dataSortedByDate.value, yAccessor);
+      props.yDomainMin !== null
+        ? props.yDomainMin
+        : min(dataSortedByDate.value, yAccessor);
     const maxVal =
-      props.yDomainMax !== null ? props.yDomainMax : max(dataSortedByDate.value, yAccessor);
+      props.yDomainMax !== null
+        ? props.yDomainMax
+        : max(dataSortedByDate.value, yAccessor);
     return [minVal, maxVal];
   } else {
-    return [min(dataSortedByDate.value, yAccessor), max(dataSortedByDate.value, yAccessor)];
+    return [
+      min(dataSortedByDate.value, yAccessor),
+      max(dataSortedByDate.value, yAccessor),
+    ];
   }
 });
 
@@ -137,7 +145,14 @@ const yScale = computed(() =>
   scaleLinear().domain(yScaleDomain.value).range([innerHeight.value, 0]).nice()
 );
 
-const xAccessorScaled = computed(() => (d) => xScale.value(xAccessor(d)) + xScale.value.bandwidth() / 2);
+const bandwidthOffset = computed(() =>
+  props.useBandwidthOffset ? xScale.value.bandwidth() / 2 : 0
+);
+
+const xAccessorScaled = computed(
+  () => (d) => xScale.value(xAccessor(d)) + bandwidthOffset.value
+);
+
 const yAccessorScaled = computed(() => (d) => yScale.value(yAccessor(d)));
 
 const lineGenerator = computed(() =>
@@ -152,7 +167,7 @@ const lineGenerator = computed(() =>
 
 const quadtreeInstance = computed(() =>
   quadtree()
-    .x((d) => xScale.value(xAccessor(d)) + xScale.value.bandwidth() / 2)
+    .x((d) => xScale.value(xAccessor(d)) + bandwidthOffset.value)
     .y((d) => yScale.value(yAccessor(d)))
     .addAll(dataSortedByDate.value)
 );
@@ -185,7 +200,10 @@ const handleMouseLeave = () => {
 };
 
 const setFocusedPoint = (index) => {
-  focusedIndex.value = Math.max(0, Math.min(index, dataSortedByDate.value.length - 1));
+  focusedIndex.value = Math.max(
+    0,
+    Math.min(index, dataSortedByDate.value.length - 1)
+  );
   hoveredPoint.value = dataSortedByDate.value[focusedIndex.value];
 };
 
@@ -226,8 +244,7 @@ const chartContainerStyle = computed(() => ({
       :style="liveRegionStyle"
     >
       <span v-if="hoveredPoint">
-        {{ formatTime(parseTime(xAccessor(hoveredPoint))) }},
-        {{ yAxisLabel }}:
+        {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}, {{ yAxisLabel }}:
         {{ formatHoveredValueKey(yAccessor(hoveredPoint)) }}
       </span>
     </div>
@@ -247,12 +264,10 @@ const chartContainerStyle = computed(() => ({
       @focus="setFocusedPoint(0)"
       @blur="hoveredPoint = null"
     >
-      <title :id="`${chartId}-title`">
-        {{ yAxisLabel }} over time
-      </title>
+      <title :id="`${chartId}-title`">{{ yAxisLabel }} over time</title>
       <desc :id="`${chartId}-desc`">
-        Line chart showing {{ yAxisLabel }} by {{ xAxisLabel }}.
-        Use left and right arrow keys to explore values.
+        Line chart showing {{ yAxisLabel }} by {{ xAxisLabel }}. Use left and
+        right arrow keys to explore values.
       </desc>
 
       <g :transform="`translate(${marginLeft}, ${marginTop})`">
@@ -310,7 +325,7 @@ const chartContainerStyle = computed(() => ({
           <g
             v-for="(tick, index) in xTicksToBeRendered"
             :key="'tick-' + index"
-            :transform="`translate(${xScale(tick) + xScale.bandwidth() / 2}, 0)`"
+            :transform="`translate(${xScale(tick) + bandwidthOffset}, 0)`"
           >
             <line :y1="0" :y2="6" stroke="#bdc3c7" />
             <text
@@ -379,9 +394,9 @@ const chartContainerStyle = computed(() => ({
         </text>
         <g
           v-if="hoveredPoint"
-          :transform="`translate(${xScale(
-            xAccessor(hoveredPoint)
-          ) + xScale.bandwidth() / 2}, ${innerHeight})`"
+          :transform="`translate(${
+            xScale(xAccessor(hoveredPoint)) + bandwidthOffset
+          }, ${innerHeight})`"
         >
           <text
             y="10"
@@ -412,7 +427,9 @@ const chartContainerStyle = computed(() => ({
           :id="pointId(index)"
           role="option"
           tabindex="-1"
-          :aria-label="`${formatTime(parseTime(xAccessor(dataPoint)))}, ${yAxisLabel} ${formatHoveredValueKey(yAccessor(dataPoint))}`"
+          :aria-label="`${formatTime(
+            parseTime(xAccessor(dataPoint))
+          )}, ${yAxisLabel} ${formatHoveredValueKey(yAccessor(dataPoint))}`"
         />
       </g>
     </svg>
