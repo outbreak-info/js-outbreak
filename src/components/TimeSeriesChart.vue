@@ -57,6 +57,12 @@ const props = defineProps({
   yDomainMin: { type: Number, default: 0 },
   yDomainMax: { type: Number, default: 100 },
   yDomainNice: { type: Boolean, default: true }, // "nice" rounding when not using custom domain
+
+  // Multi-series support
+  fill: { type: String, default: null },  // Category field name for multi-series
+  legendDomain: { type: Array, default: null },  // Explicit category order
+  legendRange: { type: Array, default: null },  // Custom color array
+  showLegend: { type: Boolean, default: true }
 });
 
 const chartContainer = ref(null);
@@ -154,28 +160,57 @@ function renderChart() {
     );
   }
 
-  // Main line
-  marks.push(
-    Plot.line(processedData, {
-      x: props.dateKey,
-      y: props.valueKey,
-      stroke: props.lineColor,
-      strokeWidth: 2,
-      curve: props.curve
-    })
-  );
+  // Main line(s)
+  if (props.fill) {
+    // Multi-series mode: use z channel to split by category
+    marks.push(
+      Plot.line(processedData, {
+        x: props.dateKey,
+        y: props.valueKey,
+        z: props.fill,  // Split into separate lines
+        stroke: props.fill,  // Color by category
+        strokeWidth: 2,
+        curve: props.curve
+      })
+    );
+  } else {
+    // Single-series
+    marks.push(
+      Plot.line(processedData, {
+        x: props.dateKey,
+        y: props.valueKey,
+        stroke: props.lineColor,
+        strokeWidth: 2,
+        curve: props.curve
+      })
+    );
+  }
 
   // Data points
   if (props.showDots) {
-    marks.push(
-      Plot.dot(processedData, {
-        x: props.dateKey,
-        y: props.valueKey,
-        fill: effectiveDotColor.value,
-        r: props.dotRadius,
-        fillOpacity: 0.8,
-      })
-    );
+    if (props.fill) {
+      // Multi-series mode: dots colored by category
+      marks.push(
+        Plot.dot(processedData, {
+          x: props.dateKey,
+          y: props.valueKey,
+          fill: props.fill,  // Color dots by category
+          r: props.dotRadius,
+          fillOpacity: 0.8,
+        })
+      );
+    } else {
+      // Single-series
+      marks.push(
+        Plot.dot(processedData, {
+          x: props.dateKey,
+          y: props.valueKey,
+          fill: effectiveDotColor.value,
+          r: props.dotRadius,
+          fillOpacity: 0.8,
+        })
+      );
+    }
   }
 
   // Tooltip
@@ -191,7 +226,11 @@ function renderChart() {
           const month = months[date.getUTCMonth()];
           const day = date.getUTCDate();
           const year = date.getUTCFullYear();
-          return `${month} ${day}, ${year}\n${props.yLabel}: ${Number(d[props.valueKey]).toFixed(props.tooltipDecimalPlaces)}`;
+
+          // Add category info if in multi-series mode
+          const categoryInfo = props.fill ? `${d[props.fill]}\n` : '';
+
+          return `${categoryInfo}${month} ${day}, ${year}\n${props.yLabel}: ${Number(d[props.valueKey]).toFixed(props.tooltipDecimalPlaces)}`;
         },
         fontSize: props.fontSize,
         fill: "white",
@@ -224,8 +263,12 @@ function renderChart() {
       tickPadding: props.tickPadding,
     },
     y: yAxisConfig.value,
-    color:{
-      legend: true,
+    color: props.fill ? {
+      legend: props.showLegend,
+      ...(props.legendDomain && { domain: props.legendDomain }),
+      range: props.legendRange || colorPalette
+    } : {
+      legend: false,
       range: colorPalette
     },
     marks,
@@ -265,6 +308,10 @@ watch(
     props.yDomainMin,
     props.yDomainMax,
     props.yDomainNice,
+    props.fill,
+    props.legendDomain,
+    props.legendRange,
+    props.showLegend,
   ],
   renderChart
 );
