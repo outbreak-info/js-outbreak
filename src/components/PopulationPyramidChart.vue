@@ -6,6 +6,7 @@
 import { ref, onMounted, watch, onBeforeUnmount } from "vue";
 import * as Plot from "@observablehq/plot";
 import { colorPalette } from "../utils/colorSchemes";
+import { defaultFontSize, defaultFontFamily } from "../utils/chartDefaults";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -19,6 +20,7 @@ const props = defineProps({
   femaleColor: { type: String, default: colorPalette[6] },
   xLabel: { type: String, default: "Population" },
   yLabel: { type: String, default: "Age Group" },
+  fontSize: { type: Number, default: defaultFontSize }
 });
 
 const chartContainer = ref(null);
@@ -57,6 +59,11 @@ const renderChart = () => {
     marginRight: props.marginRight,
     marginTop: props.marginTop,
     marginBottom: props.marginBottom,
+    style: {
+      fontSize: `${props.fontSize}px`,
+      fontFamily: defaultFontFamily,
+      background: "transparent",
+    },
     x: {
       domain: [-maxValue, maxValue],
       label: props.xLabel,
@@ -94,6 +101,7 @@ onMounted(renderChart);
 watch(() => props.data, renderChart, { deep: true });
 watch(() => props.maleColor, renderChart);
 watch(() => props.femaleColor, renderChart);
+watch(() => props.fontSize, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {

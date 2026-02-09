@@ -5,6 +5,7 @@ import { scaleOrdinal } from "d3-scale";
 import { sum } from "d3-array";
 import { format } from "d3-format";
 import { colorPalette as defaultColorPalette } from "../utils/colorSchemes";
+import { defaultFontSize } from "../utils/chartDefaults";
 
 const props = defineProps({
   // Data
@@ -38,6 +39,9 @@ const props = defineProps({
   // Center content
   centerLabel: { type: String, default: null },
   centerValue: { type: [String, Number], default: null },
+
+  // Typography
+  fontSize: { type: Number, default: defaultFontSize }
 });
 
 // Data accessors
@@ -167,7 +171,7 @@ const ariaLabel = computed(() => {
             :y="getLabelPosition(slice).y"
             :text-anchor="getLabelAnchor(slice)"
             fill="#000000"
-            font-size="14px"
+            :font-size="`${fontSize}px`"
           >
             <tspan
               v-for="(line, lineIndex) in getLabelText(slice)"
@@ -194,7 +198,7 @@ const ariaLabel = computed(() => {
           text-anchor="middle"
           dy="-0.3em"
           fill="#000000"
-          font-size="14px"
+          :font-size="`${fontSize}px`"
           font-weight="600"
         >
           {{ centerLabel }}
@@ -206,7 +210,7 @@ const ariaLabel = computed(() => {
           text-anchor="middle"
           :dy="centerLabel ? '1.2em' : '0.35em'"
           fill="#000000"
-          font-size="20px"
+          :font-size="`${fontSize}px`"
           font-weight="700"
         >
           {{ centerValue }}

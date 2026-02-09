@@ -5,6 +5,7 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount, computed } from "vue";
 import {colorPalette, defaultColor} from "../utils/colorSchemes";
+import { defaultFontSize, defaultFontFamily } from "../utils/chartDefaults";
 import * as Plot from "@observablehq/plot";
 
 const props = defineProps({
@@ -17,7 +18,7 @@ const props = defineProps({
   yLabel: { type: String, default: "Count" },
 
   // Typography
-  fontSize: { type: Number, default: 12 },
+  fontSize: { type: Number, default: defaultFontSize },
   fontColor: { type: String, default: "#333" },
 
   // Dots
@@ -251,7 +252,7 @@ function renderChart() {
     marginLeft: margin.value.left,
     style: {
       fontSize: `${props.fontSize}px`,
-      fontFamily: "inherit",
+      fontFamily: defaultFontFamily,
       background: "transparent",
       color: props.fontColor,
     },

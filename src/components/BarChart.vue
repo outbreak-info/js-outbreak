@@ -5,6 +5,7 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
 import { defaultColor, colorPalette } from '../utils/colorSchemes';
+import { defaultFontSize, defaultFontFamily } from '../utils/chartDefaults';
 import * as Plot from '@observablehq/plot';
 
 const props = defineProps({
@@ -33,7 +34,8 @@ const props = defineProps({
   xMin: { type: Number, default: null },
   xMax: { type: Number, default: null },
   yMin: { type: Number, default: null },
-  yMax: { type: Number, default: null }
+  yMax: { type: Number, default: null },
+  fontSize: { type: Number, default: defaultFontSize }
 });
 
 const chartContainer = ref(null);
@@ -98,6 +100,11 @@ function renderChart() {
         height: props.height,
         width: props.width,
         fx: props.groupBy,
+        style: {
+          fontSize: `${props.fontSize}px`,
+          fontFamily: defaultFontFamily,
+          background: "transparent",
+        },
         y: {
           label: props.yLabel,
           ...(props.categoryOrder && { domain: props.categoryOrder })
@@ -140,6 +147,11 @@ function renderChart() {
         height: props.height,
         width: props.width,
         fx: props.groupBy,
+        style: {
+          fontSize: `${props.fontSize}px`,
+          fontFamily: defaultFontFamily,
+          background: "transparent",
+        },
         x: {
           tickRotate: 45,
           label: props.xLabel,
@@ -197,6 +209,7 @@ watch(() => props.xMin, renderChart);
 watch(() => props.xMax, renderChart);
 watch(() => props.yMin, renderChart);
 watch(() => props.yMax, renderChart);
+watch(() => props.fontSize, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {

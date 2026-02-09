@@ -5,6 +5,7 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
 import { defaultColor, colorPalette } from '../utils/colorSchemes';
+import { defaultFontSize, defaultFontFamily } from '../utils/chartDefaults';
 import * as Plot from '@observablehq/plot';
 import { sum, rollup } from 'd3-array';
 import { timeFormat, timeParse } from 'd3-time-format';
@@ -38,7 +39,8 @@ const props = defineProps({
   legendDomain: { type: Array, default: null },
   legendRange: { type: Array, default: null },
   showLegend: { type: Boolean, default: true },
-  categoryOrder: { type: Array, default: null }
+  categoryOrder: { type: Array, default: null },
+  fontSize: { type: Number, default: defaultFontSize }
 });
 
 const chartContainer = ref(null);
@@ -227,6 +229,11 @@ function renderChart() {
     marginLeft: props.marginLeft,
     marginBottom: props.marginBottom,
     marginTop: props.marginTop,
+    style: {
+      fontSize: `${props.fontSize}px`,
+      fontFamily: defaultFontFamily,
+      background: "transparent",
+    },
     x: {
       label: props.xLabel,
       type: "time",
@@ -258,6 +265,7 @@ function renderChart() {
 
 onMounted(renderChart);
 watch(() => props.data, renderChart, { deep: true });
+watch(() => props.fontSize, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {

@@ -5,6 +5,7 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
 import { colorPalette } from '../utils/colorSchemes';
+import { defaultFontSize, defaultFontFamily } from '../utils/chartDefaults';
 import * as Plot from '@observablehq/plot';
 
 const props = defineProps({
@@ -27,7 +28,9 @@ const props = defineProps({
   xLabel: { type: String, default: 'Key' },
   yLabel: { type: String, default: 'Count' },
   yMin: { type: Number, default: null },
-  yMax: { type: Number, default: null }
+  yMax: { type: Number, default: null },
+  fontSize: { type: Number, default: defaultFontSize },
+  fontFamily: { type: String, default: defaultFontFamily }
 });
 
 const chartContainer = ref(null);
@@ -42,6 +45,11 @@ function renderChart() {
     width: props.width,
     marginBottom: props.marginBottom,
     marginLeft: props.marginLeft,
+    style: {
+      fontSize: `${props.fontSize}px`,
+      fontFamily: props.fontFamily,
+      background: "transparent",
+    },
     x: {
       label: props.xLabel,
       tickRotate: 45
@@ -99,6 +107,8 @@ onMounted(renderChart);
 watch(() => props.data, renderChart, { deep: true });
 watch(() => props.yMin, renderChart);
 watch(() => props.yMax, renderChart);
+watch(() => props.fontSize, renderChart);
+watch(() => props.fontFamily, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
