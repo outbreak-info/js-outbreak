@@ -82,11 +82,12 @@ function renderChart() {
     return d;
   };
 
-  const tipFormat = {
-    format: {
-      y: formatValue,
-      fill: true
-    }
+  const horizontalTipFormat = {
+    format: { x: formatValue, fill: true }
+  };
+
+  const verticalTipFormat = {
+    format: { y: formatValue, fill: true }
   };
 
 
@@ -127,7 +128,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy,
                 ...(props.legendDomain && { order: props.legendDomain }),
-                tip: tipFormat
+                tip: horizontalTipFormat
               }))
             : Plot.barX(props.data, {
                 y: props.colorBy || props.yKey,
@@ -135,7 +136,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy || props.barColor,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
-                tip: tipFormat
+                tip: horizontalTipFormat
               }),
           Plot.ruleX([0]),
         ]
@@ -175,7 +176,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy,
                 ...(props.legendDomain && { order: props.legendDomain }),
-                tip: tipFormat
+                tip: verticalTipFormat
               }))
             : Plot.barY(props.data, {
                 x: props.colorBy || props.yKey,
@@ -183,7 +184,7 @@ function renderChart() {
                 fx: props.groupBy,
                 fill: props.colorBy || props.barColor,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
-                tip: tipFormat
+                tip: verticalTipFormat
               }),
           Plot.ruleY([0])
         ]
