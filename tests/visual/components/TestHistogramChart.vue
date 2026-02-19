@@ -1,22 +1,27 @@
 <template>
   <div class="test-container">
     <h1>HistogramChart Component Test</h1>
-    
-    <div class="chart-wrapper">
-      <HistogramChart
-        :data=testData
-        :xMin="0"
-        :xMax="1"
-        :binCount="10"
-      />
-    </div>
+
+    <h2>Raw data, binned internally</h2>
+    <HistogramChart
+      :data="testData"
+      :xMin="0"
+      :xMax="1"
+      :binCount="10"
+    />
+
+    <h2>Pre-computed counts</h2>
+    <HistogramChart
+      :data="objectData"
+      xLabel="Value"
+      yLabel="Count"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import HistogramChart from '../../../src/components/HistogramChart.vue'
-import { colorPalette } from '../../../src/utils/colorSchemes'
 
 const testData = ref([
   { id: 1, frequency: 0.1 },
@@ -32,4 +37,6 @@ const testData = ref([
   { id: 11, frequency: 0.8 },
   { id: 12, frequency: 0.9 }
 ]);
+
+const objectData = ref({ "4": 24, "2": 29, "1": 14, "0": 13, "3": 24, "5": 19, "7": 6, "6": 7, "11": 1, "8": 1, "9": 1 });
 </script>
