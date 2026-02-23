@@ -86,11 +86,7 @@ onBeforeUnmount(() => {
 });
 
 const handleResize = () => {
-  if (window.innerWidth >= 1000) {
-    width.value = 1000;
-  } else {
-    width.value = window.innerWidth;
-  }
+  width.value = window.innerWidth;
   renderChart();
 };
 
@@ -259,6 +255,9 @@ function renderChart() {
     x: {
       label: props.xLabel,
       type: "time",
+      tickFormat: "%b %d '%y",
+      tickRotate: -45,
+      interval: "day",
       labelOffset: props.xAxisLabelOffset,
       tickSize: props.tickSize,
       tickPadding: props.tickPadding,
