@@ -6,6 +6,7 @@ import {colorPalette} from "../../../src/utils/colorSchemes.js";
 const genderData = [
   { label: "Male", value: 487 },
   { label: "Female", value: 513 },
+  { label: "Missing", value: 513 },
 ];
 
 const totalCount = computed(() =>
@@ -26,7 +27,7 @@ const totalCount = computed(() =>
     :margin-right="50"
     :margin-top="50"
     :margin-bottom="50"
-    :color-palette="[colorPalette[0], colorPalette[6]]"
+    :color-palette="colorPalette"
     center-label="Total"
     :center-value="totalCount"
   />
