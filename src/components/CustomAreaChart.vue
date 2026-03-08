@@ -87,18 +87,6 @@ const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
 
-const uniqueLabels = computed(() =>
-  [...new Set(props.aggregatedData.map(labelAccessor))].sort((a, b) => {
-    if (a === "Other") return 1;
-    if (b === "Other") return -1;
-    return a.localeCompare(b);
-  })
-);
-
-const numOfUniqueWeeks = computed(
-  () => [...new Set(props.aggregatedData.map(weekAccessor))].length
-);
-
 const firstWeekEnd = computed(() =>
   findWeekEnd(
     props.firstWeek,
@@ -128,9 +116,27 @@ const xScaleDomain = computed(() => {
   );
 });
 
+// Only keep rows whose week_end falls within the x-scale domain
+const filteredData = computed(() => {
+  const domainSet = new Set(xScaleDomain.value);
+  return props.aggregatedData.filter((d) => domainSet.has(weekEndAccessor(d)));
+});
+
+const uniqueLabels = computed(() =>
+  [...new Set(filteredData.value.map(labelAccessor))].sort((a, b) => {
+    if (a === "Other") return 1;
+    if (b === "Other") return -1;
+    return a.localeCompare(b);
+  })
+);
+
+const numOfUniqueWeeks = computed(
+  () => [...new Set(filteredData.value.map(weekAccessor))].length
+);
+
 const data = computed(() =>
   createStackedAreaArray(
-    props.aggregatedData,
+    filteredData.value,
     uniqueLabels.value,
     weekAccessor,
     weekStartAccessor,
@@ -141,7 +147,7 @@ const data = computed(() =>
 );
 
 const datesWithData = computed(() => {
-  const dates = [...new Set(props.aggregatedData.map((d) => d.week_end))];
+  const dates = [...new Set(filteredData.value.map((d) => d.week_end))];
   return dates.sort((a, b) => new Date(a) - new Date(b));
 });
 
@@ -204,7 +210,6 @@ const handleMouseMove = (e) => {
   const yPosition = e.offsetY - marginTop;
 
   if (datesWithData.value.length > 0) {
-    // find the closest date with data (horizontal snapping)
     hoveredDate.value = datesWithData.value.reduce((prev, curr) => {
       const prevX = xScale.value(prev);
       const currX = xScale.value(curr);
@@ -213,7 +218,6 @@ const handleMouseMove = (e) => {
         : curr;
     });
 
-    // filter data for the hovered date
     tooltipData.value = props.aggregatedData.filter(
       (item) => weekEndAccessor(item) === hoveredDate.value
     );
