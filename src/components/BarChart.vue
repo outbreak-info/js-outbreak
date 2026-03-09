@@ -35,7 +35,8 @@ const props = defineProps({
   xMax: { type: Number, default: null },
   yMin: { type: Number, default: null },
   yMax: { type: Number, default: null },
-  fontSize: { type: Number, default: defaultFontSize }
+  fontSize: { type: Number, default: defaultFontSize },
+  showLabels: { type: Boolean, default: false },
 });
 
 const chartContainer = ref(null);
@@ -139,6 +140,26 @@ function renderChart() {
                 tip: horizontalTipFormat
               }),
           Plot.ruleX([0]),
+          props.showLabels && !props.stacked
+            ? Plot.text(props.data, {
+                x: props.xKey,
+                y: props.colorBy || props.yKey,
+                text: d => Number(d[props.xKey]).toLocaleString(),
+                textAnchor: "start",
+                dx: 4,
+                sort: getSortOrder(props.sortOrder, props.horizontal),
+              })
+            : null,
+          props.showLabels && props.stacked
+            ? Plot.text(props.data, Plot.stackX({
+                x: props.xKey,
+                y: props.yKey,
+                fill: props.colorBy,
+                text: d => Number(d[props.xKey]).toLocaleString(),
+                textAnchor: "middle",
+                ...(props.legendDomain && { order: props.legendDomain }),
+              }))
+            : null,
         ]
       })
     : Plot.plot({
@@ -186,7 +207,27 @@ function renderChart() {
                 sort: getSortOrder(props.sortOrder, props.horizontal),
                 tip: verticalTipFormat
               }),
-          Plot.ruleY([0])
+          Plot.ruleY([0]),
+          props.showLabels && !props.stacked
+            ? Plot.text(props.data, {
+                x: props.colorBy || props.yKey,
+                y: props.xKey,
+                text: d => Number(d[props.xKey]).toLocaleString(),
+                textAnchor: "middle",
+                dy: -6,
+                sort: getSortOrder(props.sortOrder, props.horizontal),
+              })
+            : null,
+          props.showLabels && props.stacked
+            ? Plot.text(props.data, Plot.stackY({
+                x: props.yKey,
+                y: props.xKey,
+                fill: props.colorBy,
+                text: d => Number(d[props.xKey]).toLocaleString(),
+                textAnchor: "middle",
+                ...(props.legendDomain && { order: props.legendDomain }),
+              }))
+            : null,
         ]
       });
 
@@ -211,6 +252,7 @@ watch(() => props.xMax, renderChart);
 watch(() => props.yMin, renderChart);
 watch(() => props.yMax, renderChart);
 watch(() => props.fontSize, renderChart);
+watch(() => props.showLabels, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {

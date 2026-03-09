@@ -155,6 +155,28 @@
         :xMin="0"
         :xMax="100"
     />
+
+    Show Labels - Horizontal
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        barColor="currentColor"
+        :showLabels="true"
+    />
+
+    Show Labels - Vertical
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        barColor="currentColor"
+        :horizontal="false"
+        sortOrder="asc"
+        xLabel="key"
+        yLabel="value"
+        :showLabels="true"
+    />
   </div>
 </template>
 
