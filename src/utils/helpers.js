@@ -5,3 +5,12 @@ export const insertYearWeekSeparator = (week) => {
   const weekString = week.toString();
   return `${weekString.slice(0, position)}${separator}${weekString.slice(position)}`;
 };
+
+// debounce function
+export const debounce = (fn, delay) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), delay);
+  };
+}
