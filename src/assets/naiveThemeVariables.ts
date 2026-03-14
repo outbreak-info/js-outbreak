@@ -1,7 +1,8 @@
 export const themeOverrides = {
     common: {
         primaryColor: '#d13b62',
-        primaryColorHover: '#d13b62',
+        primaryColorHover: '#e05179',
+        primaryColorPressed: '#a62a4c'
     },
     Form: {
         labelHeightMedium: '22px',
@@ -31,9 +32,16 @@ export const themeOverrides = {
         railColorActive: '#d13b62',
         boxShadowFocus: '0 0 0 2px rgba(209, 59, 98, 0.2)',
     },
-    Anchor : {
+    Anchor: {
         linkFontSize: '16px',
         railColor: '#d13b62',
         linkTextColor: '#2c3e50',
+    },
+    Radio: {
+        dotColorActive: '#d13b62',
+        boxShadowActive: 'inset 0 0 0 1px #d13b62',
+        boxShadowHover: 'inset 0 0 0 1px #d13b62',
+        boxShadowFocus: 'inset 0 0 0 1px #d13b62',
+       boxShadowActiveHover: 'inset 0 0 0 1px #d13b62'
     }
-};
+  };

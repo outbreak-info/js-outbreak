@@ -35,4 +35,5 @@ declare module "outbreakInfo" {
   export const ButtonComponent: DefineComponent<{}, {}, any>;
   export const CheckBox: DefineComponent<{}, {}, any>;
   export const SliderWithInput: DefineComponent<{}, {}, any>;
+  export const RadioButtonGroup: DefineComponent<{}, {}, any>;
 }
