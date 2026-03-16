@@ -177,6 +177,16 @@
         yLabel="value"
         :showLabels="true"
     />
+
+    Show Labels with labelKey - Horizontal
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        barColor="currentColor"
+        :showLabels="true"
+        labelKey="label"
+    />
   </div>
 </template>
 
@@ -190,32 +200,33 @@ const height = ref(400)
 const currentColor = colorPalette[7];
 
 const chartData = ref([
-  {"key": "A", "value": 15, "cat1": "A", "cat2": "A1"},
-  {"key": "B", "value": 7, "cat1": "A", "cat2": "B2"},
-  {"key": "C", "value": 12, "cat1": "A", "cat2": "B2"},
-  {"key": "D", "value": 9, "cat1": "A", "cat2": "B2"},
-  {"key": "E", "value": 18, "cat1": "A", "cat2": "B2"},
-  {"key": "F", "value": 3, "cat1": "B", "cat2": "B2"},
-  {"key": "G", "value": 14, "cat1": "B", "cat2": "B2"},
-  {"key": "H", "value": 5, "cat1": "B", "cat2": "B2"},
-  {"key": "I", "value": 11, "cat1": "B", "cat2": "B2"},
-  {"key": "J", "value": 2, "cat1": "B", "cat2": "B2"},
-  {"key": "K", "value": 17, "cat1": "B", "cat2": "B2"},
-  {"key": "L", "value": 8, "cat1": "B", "cat2": "A1"},
-  {"key": "M", "value": 19, "cat1": "B", "cat2": "A1"},
-  {"key": "N", "value": 6, "cat1": "C", "cat2": "A1"},
-  {"key": "O", "value": 13, "cat1": "C", "cat2": "A1"},
-  {"key": "P", "value": 1, "cat1": "C", "cat2": "A1"},
-  {"key": "Q", "value": 16, "cat1": "C", "cat2": "A1"},
-  {"key": "R", "value": 4, "cat1": "C", "cat2": "A1"},
-  {"key": "S", "value": 10, "cat1": "D", "cat2": "A1"},
-  {"key": "T", "value": 20, "cat1": "D", "cat2": "A1"}
+  {"key": "A", "value": 15, "cat1": "A", "cat2": "A1", "label": "Item A"},
+  {"key": "B", "value": 7, "cat1": "A", "cat2": "B2", "label": "Item B"},
+  {"key": "C", "value": 12, "cat1": "A", "cat2": "B2", "label": "Item C"},
+  {"key": "D", "value": 9, "cat1": "A", "cat2": "B2", "label": "Item D"},
+  {"key": "E", "value": 18, "cat1": "A", "cat2": "B2", "label": "Item E"},
+  {"key": "F", "value": 3, "cat1": "B", "cat2": "B2", "label": "Item F"},
+  {"key": "G", "value": 14, "cat1": "B", "cat2": "B2", "label": "Item G"},
+  {"key": "H", "value": 5, "cat1": "B", "cat2": "B2", "label": "Item H"},
+  {"key": "I", "value": 11, "cat1": "B", "cat2": "B2", "label": "Item I"},
+  {"key": "J", "value": 2, "cat1": "B", "cat2": "B2", "label": "Item J"},
+  {"key": "K", "value": 17, "cat1": "B", "cat2": "B2", "label": "Item K"},
+  {"key": "L", "value": 8, "cat1": "B", "cat2": "A1", "label": "Item L"},
+  {"key": "M", "value": 19, "cat1": "B", "cat2": "A1", "label": "Item M"},
+  {"key": "N", "value": 6, "cat1": "C", "cat2": "A1", "label": "Item N"},
+  {"key": "O", "value": 13, "cat1": "C", "cat2": "A1", "label": "Item O"},
+  {"key": "P", "value": 1, "cat1": "C", "cat2": "A1", "label": "Item P"},
+  {"key": "Q", "value": 16, "cat1": "C", "cat2": "A1", "label": "Item Q"},
+  {"key": "R", "value": 4, "cat1": "C", "cat2": "A1", "label": "Item R"},
+  {"key": "S", "value": 10, "cat1": "D", "cat2": "A1", "label": "Item S"},
+  {"key": "T", "value": 20, "cat1": "D", "cat2": "A1", "label": "Item T"}
 ])
 
 const randomizeData = () => {
   chartData.value = chartData.value.map(item => ({
     key: item.key,
-    value: Math.floor(Math.random() * 20) + 1
+    value: Math.floor(Math.random() * 20) + 1,
+    label: item.label
   }))
 }
 

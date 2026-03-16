@@ -37,6 +37,7 @@ const props = defineProps({
   yMax: { type: Number, default: null },
   fontSize: { type: Number, default: defaultFontSize },
   showLabels: { type: Boolean, default: false },
+  labelKey: { type: String, default: '' },
 });
 
 const chartContainer = ref(null);
@@ -144,7 +145,7 @@ function renderChart() {
             ? Plot.text(props.data, {
                 x: props.xKey,
                 y: props.colorBy || props.yKey,
-                text: d => Number(d[props.xKey]).toLocaleString(),
+                text: d => props.labelKey && d[props.labelKey] != null ? String(d[props.labelKey]) : Number(d[props.xKey]).toLocaleString(),
                 textAnchor: "start",
                 dx: 4,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
@@ -155,7 +156,7 @@ function renderChart() {
                 x: props.xKey,
                 y: props.yKey,
                 fill: props.colorBy,
-                text: d => Number(d[props.xKey]).toLocaleString(),
+                text: d => props.labelKey && d[props.labelKey] != null ? String(d[props.labelKey]) : Number(d[props.xKey]).toLocaleString(),
                 textAnchor: "middle",
                 ...(props.legendDomain && { order: props.legendDomain }),
               }))
@@ -212,7 +213,7 @@ function renderChart() {
             ? Plot.text(props.data, {
                 x: props.colorBy || props.yKey,
                 y: props.xKey,
-                text: d => Number(d[props.xKey]).toLocaleString(),
+                text: d => props.labelKey && d[props.labelKey] != null ? String(d[props.labelKey]) : Number(d[props.xKey]).toLocaleString(),
                 textAnchor: "middle",
                 dy: -6,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
@@ -223,7 +224,7 @@ function renderChart() {
                 x: props.yKey,
                 y: props.xKey,
                 fill: props.colorBy,
-                text: d => Number(d[props.xKey]).toLocaleString(),
+                text: d => props.labelKey && d[props.labelKey] != null ? String(d[props.labelKey]) : Number(d[props.xKey]).toLocaleString(),
                 textAnchor: "middle",
                 ...(props.legendDomain && { order: props.legendDomain }),
               }))
@@ -253,6 +254,7 @@ watch(() => props.yMin, renderChart);
 watch(() => props.yMax, renderChart);
 watch(() => props.fontSize, renderChart);
 watch(() => props.showLabels, renderChart);
+watch(() => props.labelKey, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
