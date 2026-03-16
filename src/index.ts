@@ -36,6 +36,8 @@ import CustomCategoricalLegend from "./components/CustomCategoricalLegend.vue";
 import CustomAreaChart from "./components/CustomAreaChart.vue";
 import CustomTimeSeriesHeatmap from "./components/CustomTimeSeriesHeatmap.vue";
 import DonutChart from "./components/DonutChart.vue";
+import SliderWithInput from "./components/SliderWithInput.vue";
+import RadioButtonGroup from "./components/RadioButtonGroup.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -80,6 +82,8 @@ export {
   CustomAreaChart,
   CustomTimeSeriesHeatmap,
   DonutChart,
+  SliderWithInput,
+  RadioButtonGroup,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -124,6 +128,8 @@ export default {
     app.component("CustomAreaChart", CustomAreaChart);
     app.component("CustomTimeSeriesHeatmap", CustomTimeSeriesHeatmap);
     app.component("DonutChart", DonutChart);
-
+    app.component("SliderWithInput", SliderWithInput);
+    app.component("SliderWithInput", SliderWithInput);
+    app.component("RadioButtonGroup", RadioButtonGroup);
   },
 };
