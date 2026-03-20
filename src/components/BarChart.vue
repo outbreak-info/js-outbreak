@@ -110,10 +110,14 @@ function renderChart() {
         },
         y: {
           label: props.yLabel,
+          labelAnchor: "center",
+          labelArrow: "none",
           ...(props.categoryOrder && { domain: props.categoryOrder })
         },
         x: {
           label: props.xLabel,
+          labelAnchor: "center",
+          labelArrow: "none",
           ...(props.xMin !== null && props.xMax !== null ? { domain: [props.xMin, props.xMax] } : {}),
           grid: true
         },
@@ -176,13 +180,17 @@ function renderChart() {
           background: "transparent",
         },
         x: {
-          tickRotate: 45,
+          tickRotate: -45,
           label: props.xLabel,
+          labelAnchor: "center",
+          labelArrow: "none",
           ...(props.categoryOrder && { domain: props.categoryOrder })
         },
         y: {
           grid: true,
           label: props.yLabel,
+          labelAnchor: "center",
+          labelArrow: "none",
           ...(props.yMin !== null && props.yMax !== null ? { domain: [props.yMin, props.yMax] } : {})
         },
         color: {

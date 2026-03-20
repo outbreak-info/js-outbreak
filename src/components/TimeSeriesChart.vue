@@ -46,10 +46,6 @@ const props = defineProps({
   tickSize: { type: Number, default: 6 },
   tickPadding: { type: Number, default: 8 },
 
-  // Container margins
-  containerLeftMargin: { type: Number, default: 50 },
-  containerRightMargin: { type: Number, default: 50 },
-
   // Tooltip decimal places
   tooltipDecimalPlaces: { type: Number, default: 2 },
 
@@ -104,8 +100,9 @@ const effectiveDotColor = computed(() => props.dotColor || props.lineColor);
 const yAxisConfig = computed(() => {
   const config = {
     label: props.yLabel,
+    labelAnchor: "center",
+    labelArrow: "none",
     grid: true,
-    labelOffset: props.yAxisLabelOffset,
     tickSize: props.tickSize,
     tickPadding: props.tickPadding,
   };
@@ -241,7 +238,7 @@ function renderChart() {
   // Create chart
   const chart = Plot.plot({
     height: props.height,
-    width: width.value - props.containerLeftMargin - props.containerRightMargin,
+    width: width.value,
     marginTop: margin.value.top,
     marginRight: margin.value.right,
     marginBottom: margin.value.bottom,
@@ -254,11 +251,12 @@ function renderChart() {
     },
     x: {
       label: props.xLabel,
+      labelAnchor: "center",
+      labelArrow: "none",
       type: "time",
       tickFormat: "%b %d '%y",
       tickRotate: -45,
       interval: "day",
-      labelOffset: props.xAxisLabelOffset,
       tickSize: props.tickSize,
       tickPadding: props.tickPadding,
     },
@@ -299,8 +297,6 @@ watch(
     props.yAxisLabelOffset,
     props.tickSize,
     props.tickPadding,
-    props.containerLeftMargin,
-    props.containerRightMargin,
     props.xLabel,
     props.yLabel,
     props.tooltipDecimalPlaces,

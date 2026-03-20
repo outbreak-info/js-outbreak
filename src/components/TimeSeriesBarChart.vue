@@ -236,10 +236,12 @@ function renderChart() {
     },
     x: {
       label: props.xLabel,
+      labelAnchor: "center",
+      labelArrow: "none",
       type: "time",
       tickFormat: getTickFormat(props.binInterval),
       ticks: props.tickInterval,
-      ...(props.xTickMin && props.xTickMax ? { 
+      ...(props.xTickMin && props.xTickMax ? {
         domain: [
           props.xTickMin instanceof Date ? props.xTickMin : new Date(props.xTickMin),
           props.xTickMax instanceof Date ? props.xTickMax : new Date(props.xTickMax)
@@ -248,6 +250,8 @@ function renderChart() {
     },
     y: {
       label: props.yLabel,
+      labelAnchor: "center",
+      labelArrow: "none",
       ...(props.categoryOrder && { domain: props.categoryOrder }),
       ...(props.yMin !== null && props.yMax !== null ? { domain: [props.yMin, props.yMax] } : {}),
       grid: true

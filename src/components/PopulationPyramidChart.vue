@@ -67,11 +67,15 @@ const renderChart = () => {
     x: {
       domain: [-maxValue, maxValue],
       label: props.xLabel,
+      labelAnchor: "center",
+      fontWeight: "bold",
       tickFormat: (d) => Math.abs(d).toLocaleString(),
     },
     y: {
       domain: props.data.map((d) => d.ageGroup),
       label: props.yLabel,
+      labelAnchor: "center",
+      fontWeight: "bold",
     },
     color: {
       domain: ["Male", "Female"],
