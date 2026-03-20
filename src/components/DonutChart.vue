@@ -169,10 +169,10 @@ const getLabelLayout = (slice) => {
 const getLabelText = (slice) => {
   const label = labelAccessor(slice.data);
   if (props.showValues) {
-    return [label, valueFormat(valueAccessor(slice.data))];
+    return [label + " " + valueFormat(valueAccessor(slice.data))];
   }
   if (props.showPercentages) {
-    return [label, percentFormat(getPercentage(slice))];
+    return [label + " " + percentFormat(getPercentage(slice))];
   }
   return [label];
 };
