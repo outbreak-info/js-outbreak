@@ -4,7 +4,15 @@ import { scaleLinear, scaleBand, scaleOrdinal } from "d3-scale";
 import { min, max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
-import { stack, area, curveBundle } from "d3-shape";
+import {
+  stack,
+  area,
+  curveBasis,
+  curveCardinal,
+  curveLinear,
+  curveMonotoneX,
+  curveNatural,
+} from "d3-shape";
 import {
   createDateArray,
   findWeekEnd,
@@ -45,6 +53,10 @@ const props = defineProps({
 
   // Scale props
   xScale: { type: Function, default: null },
+
+  // Interpolation curve used for the area chart.
+  // Accepted values: 'basis', 'cardinal', 'linear', 'monotoneX' or 'natural'
+  curveType: { type: String, default: "monotoneX" },
 });
 
 const width = ref(500);
@@ -58,6 +70,14 @@ const containerMargins = computed(() => ({
   marginBottom: props.containerMarginBottom + "px",
   marginLeft: props.containerMarginLeft + "px",
 }));
+
+const CURVE_MAP = {
+  basis: curveBasis,
+  cardinal: curveCardinal,
+  linear: curveLinear,
+  monotoneX: curveMonotoneX,
+  natural: curveNatural,
+};
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
@@ -189,6 +209,8 @@ const yTicks = computed(() => {
   return yScale.ticks(numberOfYTicks);
 });
 
+const resolvedCurve = computed(() => CURVE_MAP[props.curveType] ?? curveMonotoneX);
+
 const areaGenerator = computed(() =>
   area()
     .x((d) => {
@@ -196,7 +218,7 @@ const areaGenerator = computed(() =>
     })
     .y1((d) => yScale(d[1]))
     .y0((d) => yScale(d[0]))
-    .curve(curveBundle.beta(1))
+    .curve(resolvedCurve.value)
 );
 
 const colors = computed(() => selectAccessibleColorPalette(uniqueLabels.value));
