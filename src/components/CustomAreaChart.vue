@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { scaleLinear, scaleBand, scaleOrdinal } from "d3-scale";
-import { min, max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import {
@@ -61,7 +60,6 @@ const props = defineProps({
 
 const width = ref(500);
 const hoveredDate = ref(null);
-const hoveredPoint = ref(null);
 const tooltipData = ref([]);
 
 const containerMargins = computed(() => ({
@@ -229,7 +227,6 @@ const colorScale = computed(() =>
 
 const handleMouseMove = (e) => {
   const xPosition = e.offsetX - marginLeft;
-  const yPosition = e.offsetY - marginTop;
 
   if (datesWithData.value.length > 0) {
     hoveredDate.value = datesWithData.value.reduce((prev, curr) => {
