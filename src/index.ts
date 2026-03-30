@@ -38,6 +38,7 @@ import CustomTimeSeriesHeatmap from "./components/CustomTimeSeriesHeatmap.vue";
 import DonutChart from "./components/DonutChart.vue";
 import SliderWithInput from "./components/SliderWithInput.vue";
 import RadioButtonGroup from "./components/RadioButtonGroup.vue";
+import SingleSelect from "./components/SingleSelect.vue";
 
 // Import utilities
 import { colorPalette } from "./utils/colorSchemes";
@@ -84,6 +85,7 @@ export {
   DonutChart,
   SliderWithInput,
   RadioButtonGroup,
+  SingleSelect,
   colorPalette as outbreakInfoColorPalette,
   themeOverrides as outbreakInfoThemeOverrides,
 };
@@ -131,5 +133,6 @@ export default {
     app.component("SliderWithInput", SliderWithInput);
     app.component("SliderWithInput", SliderWithInput);
     app.component("RadioButtonGroup", RadioButtonGroup);
+    app.component("SingleSelect", SingleSelect);
   },
 };

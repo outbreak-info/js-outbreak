@@ -1,12 +1,16 @@
 <template>
   <div class="test-container">
     <h1>Custom Area Chart Component Test</h1>
-    <CustomAreaChart 
-      :aggregatedData="mockData" 
-      :firstWeek="firstWeek" 
-      :lastWeek="lastWeek"
-      :areaChartRange="areaChartRange"
-    />
+    <template v-for="curveType in curveTypes" :key="curveType">
+      <h2>Curve type: {{ curveType }}</h2>
+      <CustomAreaChart
+        :aggregatedData="mockData"
+        :firstWeek="firstWeek"
+        :lastWeek="lastWeek"
+        :areaChartRange="areaChartRange"
+        :curveType="curveType"
+      />
+    </template>
   </div>
 </template>
 
@@ -17,6 +21,8 @@ import CustomAreaChart from "../../../src/components/CustomAreaChart.vue";
 const firstWeek = 202515;
 const lastWeek = 202532;
 const areaChartRange = 120;
+
+const curveTypes = ["basis", "cardinal", "linear", "monotoneX", "natural"];
 
 const mockData = ref([
   {
