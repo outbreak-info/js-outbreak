@@ -16,6 +16,7 @@ const props = defineProps({
   marginLeft: { type: Number, default: 50 },
   marginTop: { type: Number, default: 50 },
   marginBottom: { type: Number, default: 50 },
+  marginRight: { type: Number, default: 50 },
   barColor: { type: String, default: defaultColor },
   xKey: { type: String, default: 'value' }, // TODO: xKey is currently used for x-axis in horizontal and y-axis in vertical. Fix this.
   yKey: { type: String, default: 'key' },
@@ -100,6 +101,7 @@ function renderChart() {
         marginLeft: props.marginLeft,
         marginTop: props.marginTop,
         marginBottom: props.marginBottom,
+        marginRight: props.marginRight,
         height: props.height,
         width: props.width,
         fx: props.groupBy,
@@ -171,6 +173,7 @@ function renderChart() {
         marginBottom: props.marginBottom,
         marginTop: props.marginTop,
         marginLeft: props.marginLeft,
+        marginRight: props.marginRight,
         height: props.height,
         width: props.width,
         fx: props.groupBy,
