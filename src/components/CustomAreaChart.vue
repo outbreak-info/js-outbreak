@@ -56,6 +56,8 @@ const props = defineProps({
   // Interpolation curve used for the area chart.
   // Accepted values: 'basis', 'cardinal', 'linear', 'monotoneX' or 'natural'
   curveType: { type: String, default: "monotoneX" },
+
+  colors: { type: Array, default: () => [] },
 });
 
 const width = ref(500);
@@ -219,7 +221,9 @@ const areaGenerator = computed(() =>
     .curve(resolvedCurve.value)
 );
 
-const colors = computed(() => selectAccessibleColorPalette(uniqueLabels.value));
+const colors = computed(() =>
+  props.colors.length > 0 ? props.colors : selectAccessibleColorPalette(uniqueLabels.value)
+);
 
 const colorScale = computed(() =>
   scaleOrdinal(colors.value).domain(uniqueLabels.value)
@@ -374,7 +378,7 @@ const chartContainerStyle = computed(() => ({
             :key="'s-' + index"
             :d="areaGenerator(s)"
             stroke="none"
-            :fill="colorScale(index)"
+            :fill="colorScale(s.key)"
           />
         </g>
 

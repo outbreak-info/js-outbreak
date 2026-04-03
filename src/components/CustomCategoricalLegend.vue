@@ -137,7 +137,7 @@ const spanStyle = {
       :style="paragraphStyle"
       :title="props.textOverflow === 'truncate' ? category : undefined"
     >
-      <span :style="{ ...spanStyle, background: colorScale(index) }" />
+      <span :style="{ ...spanStyle, background: colorScale(category) }" />
       {{ category }}
     </p>
   </div>
