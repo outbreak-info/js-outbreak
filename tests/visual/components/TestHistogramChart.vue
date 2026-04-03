@@ -10,6 +10,11 @@
       :binCount="10"
     />
 
+    <HistogramChart
+        :data="testData"
+        :integerTicks="true"
+    />
+
     <h2>Pre-computed counts</h2>
     <HistogramChart
       :data="objectData"

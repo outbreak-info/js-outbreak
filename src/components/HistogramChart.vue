@@ -18,6 +18,7 @@ const props = defineProps({
   bins: { type: Array, default: null },
   // Object mode props
   binWidth: { type: Number, default: 1 },
+  integerTicks: { type: Boolean, default: false },
   // Shared props
   height: { type: Number, default: 500 },
   width: { type: Number, default: 800 },
@@ -64,7 +65,7 @@ function createFrequencyBins() {
   });
 
   return bins.slice(0, -1).map((bin, index) => {
-    return { key: bin.toFixed(2), value: counts[index] };
+    return { key: props.integerTicks ? String(Math.round(bin)) : bin.toFixed(2), value: counts[index] };
   });
 }
 
@@ -102,9 +103,16 @@ function renderChart() {
 
     if (!chartData.length) return;
 
+    const xAxisOptions = { label: props.xLabel };
+    if (props.integerTicks) {
+      const xMin = chartData[0].x1;
+      const xMax = chartData[chartData.length - 1].x2;
+      xAxisOptions.ticks = Array.from({ length: xMax - xMin + 1 }, (_, i) => xMin + i);
+    }
+
     chart = Plot.plot({
       ...sharedPlotOptions,
-      x: { label: props.xLabel },
+      x: xAxisOptions,
       marks: [
         Plot.rectY(chartData, { x1: 'x1', x2: 'x2', y: 'value', fill: props.barColor }),
         Plot.ruleY([0]),
@@ -142,6 +150,7 @@ watch(() => props.xMin, renderChart);
 watch(() => props.xMax, renderChart);
 watch(() => props.binCount, renderChart);
 watch(() => props.bins, renderChart);
+watch(() => props.integerTicks, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
