@@ -10,6 +10,7 @@
       :binCount="10"
     />
 
+    <h2>With integer ticks</h2>
     <HistogramChart
         :data="testData"
         :integerTicks="true"
@@ -20,6 +21,17 @@
       :data="objectData"
       xLabel="Value"
       yLabel="Count"
+    />
+
+    <h2>With integer ticks</h2>
+    <HistogramChart
+        :data="testData3"
+        :integerTicks="true"
+    />
+
+    <HistogramChart
+        :data="testData2"
+        :integerTicks="true"
     />
   </div>
 </template>
@@ -42,6 +54,26 @@ const testData = ref([
   { id: 11, frequency: 0.8 },
   { id: 12, frequency: 0.9 }
 ]);
+
+const testData2 = ref({
+    "0": 20,
+    "1": 2,
+    "2": 1,
+    "4": 1,
+    "8": 2,
+    "9": 2,
+    "10": 2,
+    "15": 4,
+    "23": 1,
+    "24": 1,
+    "32": 43,
+    "38": 35,
+    "53": 34
+})
+
+const testData3 = ref({
+  "0": 25
+});
 
 const objectData = ref({ "4": 24, "2": 29, "1": 14, "0": 13, "3": 24, "5": 19, "7": 6, "6": 7, "11": 1, "8": 1, "9": 1 });
 </script>

@@ -107,7 +107,10 @@ function renderChart() {
     if (props.integerTicks) {
       const xMin = chartData[0].x1;
       const xMax = chartData[chartData.length - 1].x2;
-      xAxisOptions.ticks = Array.from({ length: xMax - xMin + 1 }, (_, i) => xMin + i);
+      const step = Math.max(1, Math.ceil((xMax - xMin) / props.binCount));
+      const ticks = [];
+      for (let t = xMin; t <= xMax; t += step) ticks.push(t);
+      xAxisOptions.ticks = ticks;
     }
 
     chart = Plot.plot({
