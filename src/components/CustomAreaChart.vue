@@ -37,6 +37,7 @@ const props = defineProps({
   yAxisLabel: { type: String, default: "prevalence (%)" },
   height: { type: Number, default: 330 },
   barChartTitle: { type: String, default: "Average prevalence" },
+  width: { type: Number, default: 500 },
 
   // Margins
   marginTop: { type: Number, default: 50 },
@@ -60,7 +61,7 @@ const props = defineProps({
   colors: { type: Array, default: () => [] },
 });
 
-const width = ref(500);
+const width = ref(props.width);
 const hoveredDate = ref(null);
 const tooltipData = ref([]);
 
