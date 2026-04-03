@@ -4,7 +4,7 @@
     <AreaChart
         :data="testData"
         :stacked="true"
-        curve="curveBasis"
+        curve="basis"
         yLabel="Cases"
     />
   </div>

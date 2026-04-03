@@ -19,7 +19,8 @@ const props = defineProps({
   xLabel: { type: String, default: 'Date' },
   yLabel: { type: String, default: 'Value' },
   showLegend: { type: Boolean, default: true },
-  dateFormat: { type: String, default: '%b %Y' }
+  dateFormat: { type: String, default: '%b %Y' },
+  curve: { type: String, default: 'linear' }
 });
 
 const chartContainer = ref(null);
@@ -43,7 +44,8 @@ function renderChart() {
         fill: "category",
         fillOpacity: 0.7,
         stroke: "category",
-        strokeWidth: 1
+        strokeWidth: 1,
+        curve: props.curve
       })
   );
 
