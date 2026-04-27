@@ -21,11 +21,13 @@ export const createDateArray = (startDate, endDate, desiredNumOfDays = null) => 
   };
 
   let start = startDate ? parse(startDate) : null;
-  const end = parse(endDate);
+  let end = parse(endDate);
 
   // swap if reversed (only when both dates are provided)
   if (start && start > end) {
-    [start, end] = [end, start];
+    const tmp = start;
+    start = end;
+    end = tmp;
   }
 
   // sliding-window mode (desiredNumOfDays provided)
@@ -98,6 +100,12 @@ export const createStackedAreaArray = (data, uniqueLabels, weekAccessor,
 
   // convert wideData object to an array
   const wideDataArray = Object.values(wideData);
+
+  // Keep rows in strict chronological order to avoid self-intersecting
+  // area paths when epiweek identifiers vary in format across years.
+  wideDataArray.sort(
+    (a, b) => new Date(a.week_end).getTime() - new Date(b.week_end).getTime()
+  );
 
   return wideDataArray;
 };
