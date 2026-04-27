@@ -45,7 +45,9 @@ const props = defineProps({
   centerValue: { type: [String, Number], default: null },
 
   // Typography
-  fontSize: { type: Number, default: defaultFontSize }
+  fontSize: { type: Number, default: defaultFontSize },
+
+  percentDecimalPlaces: { type: Number, default: 1 }
 });
 
 // Data accessors
@@ -56,7 +58,7 @@ const valueAccessor = (d) => d[props.valueKey];
 const totalValue = computed(() => sum(props.data, valueAccessor));
 
 // Format functions
-const percentFormat = format(".1%");
+const percentFormat = computed(() => format(`.${props.percentDecimalPlaces}%`));
 const valueFormat = format(",");
 
 // Estimate text width for auto-margin calculation
@@ -172,7 +174,7 @@ const getLabelText = (slice) => {
     return [label + " " + valueFormat(valueAccessor(slice.data))];
   }
   if (props.showPercentages) {
-    return [label + " " + percentFormat(getPercentage(slice))];
+    return [label + " " + percentFormat.value(getPercentage(slice))];
   }
   return [label];
 };
