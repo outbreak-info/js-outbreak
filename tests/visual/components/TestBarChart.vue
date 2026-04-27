@@ -187,6 +187,23 @@
         :showLabels="true"
         labelKey="label"
     />
+
+    Horizontal with missing bars (D and H gray)
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :missingAttribute="['D', 'H']"
+    />
+
+    Vertical with missing bars (D and H gray)
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="false"
+        :missingAttribute="['D', 'H']"
+    />
   </div>
 </template>
 

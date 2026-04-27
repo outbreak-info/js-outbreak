@@ -39,6 +39,7 @@ const props = defineProps({
   fontSize: { type: Number, default: defaultFontSize },
   showLabels: { type: Boolean, default: false },
   labelKey: { type: String, default: '' },
+  missingAttribute: { type: Array, default: () => [] },
 });
 
 const chartContainer = ref(null);
@@ -71,6 +72,24 @@ function renderChart() {
   chartContainer.value.innerHTML = '';
 
   const total = props.data.reduce((sum, d) => sum + Number(d[props.xKey] || 0), 0);
+
+  const hasMissing = props.missingAttribute && props.missingAttribute.length > 0;
+  const missingKey = props.yKey;
+
+  let colorMap = null;
+  if (hasMissing && props.colorBy) {
+    const domain = props.legendDomain ?? [...new Set(props.data.map(d => d[props.colorBy]))];
+    const range = props.legendRange ?? colorPalette;
+    colorMap = new Map(domain.map((v, i) => [v, range[i % range.length]]));
+  }
+
+  const fillFn = hasMissing
+    ? (d => props.missingAttribute.includes(d[missingKey])
+        ? colorPalette[19]
+        : (colorMap ? (colorMap.get(d[props.colorBy]) ?? props.barColor) : props.barColor))
+    : null;
+
+  const fill = hasMissing ? fillFn : (props.colorBy || props.barColor);
 
   // Format function that handles both numeric values and category strings
   const formatValue = (d) => {
@@ -125,7 +144,11 @@ function renderChart() {
         },
         color: {
           legend: props.showLegend,
-          ...(props.legendDomain && { domain: props.legendDomain }),
+          ...(props.legendDomain
+            ? { domain: props.legendDomain }
+            : (hasMissing && props.colorBy
+                ? { domain: [...new Set(props.data.map(d => d[props.colorBy]))] }
+                : {})),
           range: props.legendRange || colorPalette
         },
         marks: [
@@ -134,7 +157,7 @@ function renderChart() {
                 y: props.yKey,
                 x: props.xKey,
                 fx: props.groupBy,
-                fill: props.colorBy,
+                fill: hasMissing ? fillFn : props.colorBy,
                 ...(props.legendDomain && { order: props.legendDomain }),
                 tip: horizontalTipFormat
               }))
@@ -142,7 +165,7 @@ function renderChart() {
                 y: props.colorBy || props.yKey,
                 x: props.xKey,
                 fx: props.groupBy,
-                fill: props.colorBy || props.barColor,
+                fill: fill,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
                 tip: horizontalTipFormat
               }),
@@ -198,7 +221,11 @@ function renderChart() {
         },
         color: {
           legend: props.showLegend,
-          ...(props.legendDomain && { domain: props.legendDomain }),
+          ...(props.legendDomain
+            ? { domain: props.legendDomain }
+            : (hasMissing && props.colorBy
+                ? { domain: [...new Set(props.data.map(d => d[props.colorBy]))] }
+                : {})),
           range: props.legendRange || colorPalette
         },
         marks: [
@@ -207,7 +234,7 @@ function renderChart() {
                 x: props.yKey,
                 y: props.xKey,
                 fx: props.groupBy,
-                fill: props.colorBy,
+                fill: hasMissing ? fillFn : props.colorBy,
                 ...(props.legendDomain && { order: props.legendDomain }),
                 tip: verticalTipFormat
               }))
@@ -215,7 +242,7 @@ function renderChart() {
                 x: props.colorBy || props.yKey,
                 y: props.xKey,
                 fx: props.groupBy,
-                fill: props.colorBy || props.barColor,
+                fill: fill,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
                 tip: verticalTipFormat
               }),
@@ -266,6 +293,7 @@ watch(() => props.yMax, renderChart);
 watch(() => props.fontSize, renderChart);
 watch(() => props.showLabels, renderChart);
 watch(() => props.labelKey, renderChart);
+watch(() => props.missingAttribute, renderChart, { deep: true });
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
