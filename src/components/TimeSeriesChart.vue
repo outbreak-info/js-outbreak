@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import {colorPalette, defaultColor} from "../utils/colorSchemes";
 import { defaultFontSize, defaultFontFamily } from "../utils/chartDefaults";
 import * as Plot from "@observablehq/plot";
@@ -14,6 +14,7 @@ const props = defineProps({
   valueKey: { type: String, default: "value" },
   lineColor: { type: String, default: defaultColor },
   height: { type: Number, default: 350 },
+  width: { type: Number, default: 800 },
   xLabel: { type: String, default: "Date" },
   yLabel: { type: String, default: "Count" },
 
@@ -63,7 +64,6 @@ const props = defineProps({
 });
 
 const chartContainer = ref(null);
-const width = ref(500);
 
 const margin = computed(() => ({
   top: props.marginTop,
@@ -72,23 +72,6 @@ const margin = computed(() => ({
   left: props.marginLeft,
 }));
 
-onMounted(() => {
-  window.addEventListener("resize", handleResize);
-  handleResize();
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("resize", handleResize);
-});
-
-const handleResize = () => {
-  width.value = window.innerWidth;
-  renderChart();
-};
-
-const innerWidth = computed(
-  () => width.value - margin.value.left - margin.value.right
-);
 const innerHeight = computed(
   () => props.height - margin.value.top - margin.value.bottom
 );
@@ -238,7 +221,7 @@ function renderChart() {
   // Create chart
   const chart = Plot.plot({
     height: props.height,
-    width: width.value,
+    width: props.width,
     marginTop: margin.value.top,
     marginRight: margin.value.right,
     marginBottom: margin.value.bottom,
@@ -263,6 +246,7 @@ function renderChart() {
     y: yAxisConfig.value,
     color: props.fill ? {
       legend: props.showLegend,
+      style: { fontSize: `${props.fontSize}px` },
       ...(props.legendDomain && { domain: props.legendDomain }),
       range: props.legendRange || colorPalette
     } : {
@@ -304,6 +288,7 @@ watch(
     props.yDomainMin,
     props.yDomainMax,
     props.yDomainNice,
+    props.width,
     props.fill,
     props.legendDomain,
     props.legendRange,
