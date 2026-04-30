@@ -105,11 +105,11 @@ function renderChart() {
   };
 
   const horizontalTipFormat = {
-    format: { x: formatValue, fill: true }
+    format: { x: formatValue, fill: false }
   };
 
   const verticalTipFormat = {
-    format: { y: formatValue, fill: true }
+    format: { y: formatValue, fill: false }
   };
 
 
