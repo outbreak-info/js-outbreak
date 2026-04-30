@@ -258,6 +258,7 @@ function renderChart() {
     },
     color: {
       legend: props.showLegend,
+      style: { fontSize: `${props.fontSize}px` },
       ...(props.legendDomain && { domain: props.legendDomain }),
       range: props.legendRange || colorPalette
     },

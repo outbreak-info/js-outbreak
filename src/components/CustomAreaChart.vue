@@ -19,6 +19,7 @@ import {
 } from "../utils/arrays";
 import { filterXTicks } from "../utils/tickFilters";
 import { selectAccessibleColorPalette } from "../utils/colorSchemes";
+import { defaultFontSize } from "../utils/chartDefaults";
 import CustomTooltipWithBarChart from "./CustomTooltipWithBarChart.vue";
 import CustomCategoricalLegend from "./CustomCategoricalLegend.vue";
 
@@ -59,6 +60,7 @@ const props = defineProps({
   curveType: { type: String, default: "monotoneX" },
 
   colors: { type: Array, default: () => [] },
+  fontSize: { type: Number, default: defaultFontSize },
 });
 
 const width = ref(props.width);
@@ -294,7 +296,7 @@ const chartContainerStyle = computed(() => ({
             y="-25"
             text-anchor="middle"
             fill="#2c3e50"
-            font-size="14px"
+            :font-size="`${fontSize}px`"
             font-weight="700"
           >
             {{ yAxisLabel }}
@@ -310,7 +312,7 @@ const chartContainerStyle = computed(() => ({
               dy="0.32em"
               text-anchor="end"
               fill="#2c3e50"
-              font-size="14px"
+              :font-size="`${fontSize}px`"
             >
               {{ tick === 0 ? 0 : formatValueKey(tick) }}
             </text>
@@ -325,7 +327,7 @@ const chartContainerStyle = computed(() => ({
             text-anchor="middle"
             y="45"
             fill="#2c3e50"
-            font-size="14px"
+            :font-size="`${fontSize}px`"
             font-weight="700"
           >
             {{ xAxisLabel }}
@@ -341,7 +343,7 @@ const chartContainerStyle = computed(() => ({
               dy="0.8em"
               text-anchor="middle"
               :fill="hoveredDate ? '#bdc3c7' : '#2c3e50'"
-              font-size="14px"
+              :font-size="`${fontSize}px`"
             >
               {{ formatTime(parseTime(tick)) }}
             </text>
@@ -356,7 +358,7 @@ const chartContainerStyle = computed(() => ({
               text-anchor="middle"
               stroke="#ffffff"
               stroke-width="4px"
-              font-size="14px"
+              :font-size="`${fontSize}px`"
             >
               {{ formatTime(parseTime(hoveredDate)) }}
             </text>
@@ -366,7 +368,7 @@ const chartContainerStyle = computed(() => ({
               text-anchor="middle"
               stroke="#000dcb"
               stroke-width="1px"
-              font-size="14px"
+              :font-size="`${fontSize}px`"
             >
               {{ formatTime(parseTime(hoveredDate)) }}
             </text>

@@ -81,6 +81,7 @@ const renderChart = () => {
       domain: ["Male", "Female"],
       range: [props.maleColor, props.femaleColor],
       legend: true,
+      style: { fontSize: `${props.fontSize}px` },
     },
     marks: [
       Plot.barX(transformedData, {
