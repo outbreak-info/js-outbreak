@@ -204,6 +204,25 @@
         :horizontal="false"
         :missingAttribute="['D', 'H']"
     />
+
+    Horizontal with vLine at 10
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        barColor="currentColor"
+        :vLine="10"
+    />
+
+    Vertical with hLine at 10
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        barColor="currentColor"
+        :horizontal="false"
+        :hLine="10"
+    />
   </div>
 </template>
 

@@ -60,7 +60,9 @@ const props = defineProps({
   fill: { type: String, default: null },  // Category field name for multi-series
   legendDomain: { type: Array, default: null },  // Explicit category order
   legendRange: { type: Array, default: null },  // Custom color array
-  showLegend: { type: Boolean, default: true }
+  showLegend: { type: Boolean, default: true },
+  hLine: { type: Number, default: null },
+  vLine: { type: Number, default: null },
 });
 
 const chartContainer = ref(null);
@@ -218,6 +220,9 @@ function renderChart() {
     )
   );
 
+  if (props.hLine !== null) marks.push(Plot.ruleY([props.hLine], { stroke: colorPalette[5] }));
+  if (props.vLine !== null) marks.push(Plot.ruleX([props.vLine], { stroke: colorPalette[5] }));
+
   // Create chart
   const chart = Plot.plot({
     height: props.height,
@@ -293,6 +298,8 @@ watch(
     props.legendDomain,
     props.legendRange,
     props.showLegend,
+    props.hLine,
+    props.vLine,
   ],
   renderChart
 );

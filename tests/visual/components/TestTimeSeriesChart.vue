@@ -32,6 +32,22 @@
       fill="category"
       :showLegend="false"
     />
+
+    <h2>hLine at 100</h2>
+    <TimeSeriesChart
+      :data="chartData"
+      valueKey="val"
+      :lineColor="currentColor"
+      :hLine="100"
+    />
+
+    <h2>vLine at 2023-04-01</h2>
+    <TimeSeriesChart
+      :data="chartData"
+      valueKey="val"
+      :lineColor="currentColor"
+      :vLine="vLineDate"
+    />
   </div>
 </template>
 
@@ -43,6 +59,7 @@ import TimeSeriesChart from "../../../src/components/TimeSeriesChart.vue";
 const width = ref(800)
 const height = ref(400)
 const currentColor = colorPalette[3];
+const vLineDate = new Date('2023-04-01').getTime();
 
 const chartData = ref([
   { key: "2023-01-01", val: 42 },

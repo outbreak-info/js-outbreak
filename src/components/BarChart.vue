@@ -40,6 +40,8 @@ const props = defineProps({
   showLabels: { type: Boolean, default: false },
   labelKey: { type: String, default: '' },
   missingAttribute: { type: Array, default: () => [] },
+  hLine: { type: Number, default: null },
+  vLine: { type: Number, default: null },
 });
 
 const chartContainer = ref(null);
@@ -171,6 +173,8 @@ function renderChart() {
                 tip: horizontalTipFormat
               }),
           Plot.ruleX([0]),
+          props.hLine !== null ? Plot.ruleY([props.hLine], { stroke: colorPalette[5] }) : null,
+          props.vLine !== null ? Plot.ruleX([props.vLine], { stroke: colorPalette[5] }) : null,
           props.showLabels && !props.stacked
             ? Plot.text(props.data, {
                 x: props.xKey,
@@ -249,6 +253,8 @@ function renderChart() {
                 tip: verticalTipFormat
               }),
           Plot.ruleY([0]),
+          props.hLine !== null ? Plot.ruleY([props.hLine], { stroke: colorPalette[5] }) : null,
+          props.vLine !== null ? Plot.ruleX([props.vLine], { stroke: colorPalette[5] }) : null,
           props.showLabels && !props.stacked
             ? Plot.text(props.data, {
                 x: props.colorBy || props.yKey,
@@ -296,6 +302,8 @@ watch(() => props.fontSize, renderChart);
 watch(() => props.showLabels, renderChart);
 watch(() => props.labelKey, renderChart);
 watch(() => props.missingAttribute, renderChart, { deep: true });
+watch(() => props.hLine, renderChart);
+watch(() => props.vLine, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
