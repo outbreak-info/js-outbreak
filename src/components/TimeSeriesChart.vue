@@ -220,8 +220,8 @@ function renderChart() {
     )
   );
 
-  if (props.hLine !== null) marks.push(Plot.ruleY([props.hLine], { stroke: colorPalette[5] }));
-  if (props.vLine !== null) marks.push(Plot.ruleX([props.vLine], { stroke: colorPalette[5] }));
+  if (props.hLine !== null) marks.push(Plot.ruleY([props.hLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }));
+  if (props.vLine !== null) marks.push(Plot.ruleX([props.vLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }));
 
   // Create chart
   const chart = Plot.plot({
