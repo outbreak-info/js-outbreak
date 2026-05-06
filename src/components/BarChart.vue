@@ -173,8 +173,8 @@ function renderChart() {
                 tip: horizontalTipFormat
               }),
           Plot.ruleX([0]),
-          props.hLine !== null ? Plot.ruleY([props.hLine], { stroke: colorPalette[5] }) : null,
-          props.vLine !== null ? Plot.ruleX([props.vLine], { stroke: colorPalette[5] }) : null,
+          props.hLine !== null ? Plot.ruleY([props.hLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }) : null,
+          props.vLine !== null ? Plot.ruleX([props.vLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }) : null,
           props.showLabels && !props.stacked
             ? Plot.text(props.data, {
                 x: props.xKey,
@@ -253,8 +253,8 @@ function renderChart() {
                 tip: verticalTipFormat
               }),
           Plot.ruleY([0]),
-          props.hLine !== null ? Plot.ruleY([props.hLine], { stroke: colorPalette[5] }) : null,
-          props.vLine !== null ? Plot.ruleX([props.vLine], { stroke: colorPalette[5] }) : null,
+          props.hLine !== null ? Plot.ruleY([props.hLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }) : null,
+          props.vLine !== null ? Plot.ruleX([props.vLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }) : null,
           props.showLabels && !props.stacked
             ? Plot.text(props.data, {
                 x: props.colorBy || props.yKey,
