@@ -39,6 +39,7 @@
       valueKey="val"
       :lineColor="currentColor"
       :hLine="100"
+      hLineText="Target Limit"
     />
 
     <h2>vLine at 2023-04-01</h2>
@@ -47,6 +48,7 @@
       valueKey="val"
       :lineColor="currentColor"
       :vLine="vLineDate"
+      vLineText="Target Limit"
     />
   </div>
 </template>

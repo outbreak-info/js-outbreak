@@ -63,6 +63,8 @@ const props = defineProps({
   showLegend: { type: Boolean, default: true },
   hLine: { type: Number, default: null },
   vLine: { type: Number, default: null },
+  hLineText: { type: String, default: null },
+  vLineText: { type: String, default: null },
 });
 
 const chartContainer = ref(null);
@@ -220,8 +222,37 @@ function renderChart() {
     )
   );
 
-  if (props.hLine !== null) marks.push(Plot.ruleY([props.hLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }));
-  if (props.vLine !== null) marks.push(Plot.ruleX([props.vLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }));
+  if (props.hLine !== null) {
+    marks.push(Plot.ruleY([props.hLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }));
+    if (props.hLineText !== null) {
+      marks.push(Plot.text([{ x: processedData[0][props.dateKey], y: props.hLine }], {
+        x: "x", y: "y",
+        text: () => props.hLineText,
+        textAnchor: "start",
+        lineAnchor: "bottom",
+        dy: -4,
+        fill: colorPalette[6],
+        fontSize: props.fontSize,
+      }));
+    }
+  }
+  if (props.vLine !== null) {
+    marks.push(Plot.ruleX([props.vLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }));
+    if (props.vLineText !== null) {
+      const yMax = props.useCustomYDomain
+        ? props.yDomainMax
+        : Math.max(...processedData.map(d => Number(d[props.valueKey])));
+      marks.push(Plot.text([{ x: new Date(props.vLine), y: yMax }], {
+        x: "x", y: "y",
+        text: () => props.vLineText,
+        textAnchor: "start",
+        lineAnchor: "bottom",
+        dx: 6,
+        fill: colorPalette[6],
+        fontSize: props.fontSize,
+      }));
+    }
+  }
 
   // Create chart
   const chart = Plot.plot({
@@ -300,6 +331,8 @@ watch(
     props.showLegend,
     props.hLine,
     props.vLine,
+    props.hLineText,
+    props.vLineText,
   ],
   renderChart
 );
