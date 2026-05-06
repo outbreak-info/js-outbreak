@@ -96,7 +96,7 @@ function renderChart() {
   // Format function that handles both numeric values and category strings
   const formatValue = (d) => {
     if (typeof d === 'number') {
-      const text = d.toLocaleString();
+      const text = d.toLocaleString(undefined, { maximumFractionDigits: props.tooltipDecimalPlaces });
       if (props.showProportion && total > 0) {
         const pct = ((d / total) * 100).toFixed(props.tooltipDecimalPlaces);
         return `${text} (${pct}%)`;
