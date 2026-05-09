@@ -40,7 +40,8 @@ const props = defineProps({
   legendRange: { type: Array, default: null },
   showLegend: { type: Boolean, default: true },
   categoryOrder: { type: Array, default: null },
-  fontSize: { type: Number, default: defaultFontSize }
+  fontSize: { type: Number, default: defaultFontSize },
+  tickRotate: { type: Number, default: 0 },
 });
 
 const chartContainer = ref(null);
@@ -241,6 +242,7 @@ function renderChart() {
       type: "time",
       tickFormat: getTickFormat(props.binInterval),
       ticks: props.tickInterval,
+      tickRotate: props.tickRotate,
       ...(props.xTickMin && props.xTickMax ? {
         domain: [
           props.xTickMin instanceof Date ? props.xTickMin : new Date(props.xTickMin),
