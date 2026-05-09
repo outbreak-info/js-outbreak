@@ -65,6 +65,7 @@ const props = defineProps({
   vLine: { type: Number, default: null },
   hLineText: { type: String, default: null },
   vLineText: { type: String, default: null },
+  tickRotate: { type: Number, default: -45 },
 });
 
 const chartContainer = ref(null);
@@ -274,7 +275,7 @@ function renderChart() {
       labelArrow: "none",
       type: "time",
       tickFormat: "%b %d '%y",
-      tickRotate: -45,
+      tickRotate: props.tickRotate,
       interval: "day",
       tickSize: props.tickSize,
       tickPadding: props.tickPadding,
