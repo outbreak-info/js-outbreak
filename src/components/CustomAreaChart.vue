@@ -60,6 +60,8 @@ const props = defineProps({
   curveType: { type: String, default: "monotoneX" },
 
   colors: { type: Array, default: () => [] },
+  legendRange: { type: Array, default: () => [] },
+  legendDomain: { type: Array, default: null },
   fontSize: { type: Number, default: defaultFontSize },
   tooltipDecimalPlaces: { type: Number, default: 2 },
 });
@@ -226,11 +228,13 @@ const areaGenerator = computed(() =>
 );
 
 const colors = computed(() =>
-  props.colors.length > 0 ? props.colors : selectAccessibleColorPalette(uniqueLabels.value)
+  props.legendRange.length > 0 ? props.legendRange :
+  props.colors.length > 0 ? props.colors :
+  selectAccessibleColorPalette(uniqueLabels.value)
 );
 
 const colorScale = computed(() =>
-  scaleOrdinal(colors.value).domain(uniqueLabels.value)
+  scaleOrdinal(colors.value).domain(props.legendDomain || uniqueLabels.value)
 );
 
 const handleMouseMove = (e) => {
@@ -273,7 +277,7 @@ const chartContainerStyle = computed(() => ({
     :style="containerMargins"
   >
     <CustomCategoricalLegend
-      :categories="uniqueLabels"
+      :categories="legendDomain || uniqueLabels"
       :colorScale="colorScale"
     />
     <svg
