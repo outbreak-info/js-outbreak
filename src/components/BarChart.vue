@@ -69,6 +69,33 @@ function getSortOrder(sortOrder, horizontal) {
   return false;
 }
 
+function computeIntegerTicks(data, valueKey, categoryKey, stacked, propMin, propMax) {
+  if (!data || data.length === 0) return [];
+
+  let effectiveMax;
+  if (propMax !== null) {
+    effectiveMax = propMax;
+  } else if (stacked) {
+    const sums = data.reduce((acc, d) => {
+      const cat = d[categoryKey];
+      acc[cat] = (acc[cat] || 0) + Number(d[valueKey] || 0);
+      return acc;
+    }, {});
+    effectiveMax = Math.max(...Object.values(sums));
+  } else {
+    effectiveMax = Math.max(...data.map(d => Number(d[valueKey] || 0)));
+  }
+
+  const min = Math.floor(propMin !== null ? propMin : 0);
+  const max = Math.ceil(effectiveMax);
+  if (!isFinite(min) || !isFinite(max) || max <= min) return [min, max].filter(isFinite);
+
+  const step = Math.max(1, Math.ceil((max - min) / 10));
+  const ticks = [];
+  for (let t = min; t <= max; t += step) ticks.push(t);
+  return ticks;
+}
+
 function renderChart() {
   if (!props.data || props.data.length === 0 || !chartContainer.value) return;
 
@@ -144,7 +171,7 @@ function renderChart() {
           labelArrow: "none",
           ...(props.xMin !== null && props.xMax !== null ? { domain: [props.xMin, props.xMax] } : {}),
           grid: true,
-          ...(props.integerTicks && { tickFormat: d => Math.round(d).toLocaleString() }),
+          ...(props.integerTicks && { ticks: computeIntegerTicks(props.data, props.xKey, props.yKey, props.stacked, props.xMin, props.xMax) }),
         },
         color: {
           legend: props.showLegend,
@@ -225,7 +252,7 @@ function renderChart() {
           labelAnchor: "center",
           labelArrow: "none",
           ...(props.yMin !== null && props.yMax !== null ? { domain: [props.yMin, props.yMax] } : {}),
-          ...(props.integerTicks && { tickFormat: d => Math.round(d).toLocaleString() }),
+          ...(props.integerTicks && { ticks: computeIntegerTicks(props.data, props.xKey, props.yKey, props.stacked, props.yMin, props.yMax) }),
         },
         color: {
           legend: props.showLegend,
