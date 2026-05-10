@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+
 import { scaleLinear, scaleBand } from 'd3-scale';
 import { timeParse, timeFormat } from 'd3-time-format';
 import { max } from "d3-array";
@@ -26,11 +27,13 @@ const props = defineProps({
   
   // Chart title
   barChartTitle: { type: String, default: "Prevalence" },
+
+  tooltipDecimalPlaces: { type: Number, default: 2 },
 });
 
 const formatTime = timeFormat('%b %e, %Y');
 const parseTime = timeParse('%Y-%m-%d');
-const formatValue = format(',.2f');
+const formatValue = computed(() => format(`,.${props.tooltipDecimalPlaces}f`));
 
 const tooltipWidth = 320;
 const xPosForSmallScreens = 50;

@@ -61,6 +61,7 @@ const props = defineProps({
 
   colors: { type: Array, default: () => [] },
   fontSize: { type: Number, default: defaultFontSize },
+  tooltipDecimalPlaces: { type: Number, default: 2 },
 });
 
 const width = ref(props.width);
@@ -433,6 +434,7 @@ const chartContainerStyle = computed(() => ({
       :weekEndAccessor="weekEndAccessor"
       :regionAccessor="regionAccessor"
       barChartTitle="Average prevalence"
+      :tooltipDecimalPlaces="tooltipDecimalPlaces"
     />
   </div>
 </template>
