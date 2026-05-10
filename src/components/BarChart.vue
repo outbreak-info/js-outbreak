@@ -171,7 +171,7 @@ function renderChart() {
           labelArrow: "none",
           ...(props.xMin !== null && props.xMax !== null ? { domain: [props.xMin, props.xMax] } : {}),
           grid: true,
-          ...(props.integerTicks && { ticks: computeIntegerTicks(props.data, props.xKey, props.yKey, props.stacked, props.xMin, props.xMax) }),
+          ...(props.integerTicks && { ticks: computeIntegerTicks(props.data, props.xKey, props.yKey, props.stacked, props.xMin, props.xMax), tickFormat: d => d.toLocaleString() }),
         },
         color: {
           legend: props.showLegend,
@@ -252,7 +252,7 @@ function renderChart() {
           labelAnchor: "center",
           labelArrow: "none",
           ...(props.yMin !== null && props.yMax !== null ? { domain: [props.yMin, props.yMax] } : {}),
-          ...(props.integerTicks && { ticks: computeIntegerTicks(props.data, props.xKey, props.yKey, props.stacked, props.yMin, props.yMax) }),
+          ...(props.integerTicks && { ticks: computeIntegerTicks(props.data, props.xKey, props.yKey, props.stacked, props.yMin, props.yMax), tickFormat: d => d.toLocaleString() }),
         },
         color: {
           legend: props.showLegend,
