@@ -42,6 +42,7 @@ const props = defineProps({
   missingAttribute: { type: Array, default: () => [] },
   hLine: { type: Number, default: null },
   vLine: { type: Number, default: null },
+  integerTicks: { type: Boolean, default: false },
 });
 
 const chartContainer = ref(null);
@@ -142,7 +143,8 @@ function renderChart() {
           labelAnchor: "center",
           labelArrow: "none",
           ...(props.xMin !== null && props.xMax !== null ? { domain: [props.xMin, props.xMax] } : {}),
-          grid: true
+          grid: true,
+          ...(props.integerTicks && { tickFormat: d => Math.round(d).toLocaleString() }),
         },
         color: {
           legend: props.showLegend,
@@ -222,7 +224,8 @@ function renderChart() {
           label: props.yLabel,
           labelAnchor: "center",
           labelArrow: "none",
-          ...(props.yMin !== null && props.yMax !== null ? { domain: [props.yMin, props.yMax] } : {})
+          ...(props.yMin !== null && props.yMax !== null ? { domain: [props.yMin, props.yMax] } : {}),
+          ...(props.integerTicks && { tickFormat: d => Math.round(d).toLocaleString() }),
         },
         color: {
           legend: props.showLegend,
@@ -302,6 +305,7 @@ watch(() => props.fontSize, renderChart);
 watch(() => props.showLabels, renderChart);
 watch(() => props.labelKey, renderChart);
 watch(() => props.missingAttribute, renderChart, { deep: true });
+watch(() => props.integerTicks, renderChart);
 watch(() => props.hLine, renderChart);
 watch(() => props.vLine, renderChart);
 
