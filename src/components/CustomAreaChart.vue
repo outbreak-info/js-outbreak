@@ -59,6 +59,7 @@ const props = defineProps({
   // Accepted values: 'basis', 'cardinal', 'linear', 'monotoneX' or 'natural'
   curveType: { type: String, default: "monotoneX" },
 
+  maxWidth: { type: Number, default: 1000 },
   colors: { type: Array, default: () => [] },
   legendRange: { type: Array, default: () => [] },
   legendDomain: { type: Array, default: null },
@@ -95,8 +96,8 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  if (window.innerWidth >= 1000) {
-    width.value = 1000;
+  if (window.innerWidth >= props.maxWidth) {
+    width.value = props.maxWidth;
   } else {
     width.value = window.innerWidth;
   }
