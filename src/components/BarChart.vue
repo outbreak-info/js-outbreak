@@ -121,11 +121,18 @@ function renderChart() {
 
   const fill = hasMissing ? fillFn : (props.colorBy || props.barColor);
 
+  const labelMap = props.labelKey
+    ? new Map(props.data.map(d => [Number(d[props.xKey]), d[props.labelKey]]))
+    : null;
+
   // Format function that handles both numeric values and category strings
   const formatValue = (d) => {
     if (typeof d === 'number') {
       const text = d.toLocaleString(undefined, { maximumFractionDigits: props.tooltipDecimalPlaces });
       if (props.showProportion && total > 0) {
+        if (labelMap && labelMap.has(d)) {
+          return `${text} (${labelMap.get(d)})`;
+        }
         const pct = ((d / total) * 100).toFixed(props.tooltipDecimalPlaces);
         return `${text} (${pct}%)`;
       }
