@@ -180,7 +180,7 @@ function renderChart() {
   const tipFormat = {
     format: {
       x: (d) => {
-        _tipBinKey = timeFormat(getTickFormat(props.binInterval))(d);
+        _tipBinKey = timeFormat(getTickFormat(props.binInterval))(binFloor.floor(d));
         return _tipBinKey;
       },
       y: (d) => {
