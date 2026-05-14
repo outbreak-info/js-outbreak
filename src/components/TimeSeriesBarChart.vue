@@ -157,6 +157,12 @@ function renderChart() {
   // Sort by date. Should be the only place with sort
   binnedData = binnedData.sort((a, b) => a.date - b.date);
 
+  const binTotalMap = new Map();
+  binnedData.forEach(d => {
+    const key = timeFormat(getTickFormat(props.binInterval))(d.date);
+    binTotalMap.set(key, (binTotalMap.get(key) || 0) + Number(d.value));
+  });
+
   let cumulative = 0;
   binnedCumulativeData = binnedData.map(d => {
     cumulative += d.value;
@@ -168,18 +174,23 @@ function renderChart() {
   });
 
   // Tooltip format configuration for binned data
+  let _tipBinKey = null;
   const tipFormat = {
     format: {
-      x: (d) => timeFormat(getTickFormat(props.binInterval))(d),
+      x: (d) => {
+        _tipBinKey = timeFormat(getTickFormat(props.binInterval))(d);
+        return _tipBinKey;
+      },
       y: (d) => {
+        const binTotal = _tipBinKey ? (binTotalMap.get(_tipBinKey) || 0) : 0;
         const text = d.toLocaleString();
-        if (props.showProportion && total > 0) {
-          const pct = ((d / total) * 100).toFixed(props.tooltipDecimalPlaces);
+        if (binTotal > 0) {
+          const pct = ((d / binTotal) * 100).toFixed(props.tooltipDecimalPlaces);
           return `${text} (${pct}%)`;
         }
         return text;
       },
-      fill: true
+      fill: false
     }
   };
 
