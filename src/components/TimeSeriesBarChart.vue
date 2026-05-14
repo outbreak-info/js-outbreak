@@ -157,9 +157,11 @@ function renderChart() {
   // Sort by date. Should be the only place with sort
   binnedData = binnedData.sort((a, b) => a.date - b.date);
 
+  const timeIntervalFloor = { day: timeDay, week: timeWeek, month: timeMonth, year: timeYear };
+  const binFloor = timeIntervalFloor[props.binInterval] || timeMonth;
   const binTotalMap = new Map();
   binnedData.forEach(d => {
-    const key = timeFormat(getTickFormat(props.binInterval))(d.date);
+    const key = timeFormat(getTickFormat(props.binInterval))(binFloor.floor(d.date));
     binTotalMap.set(key, (binTotalMap.get(key) || 0) + Number(d.value));
   });
 
