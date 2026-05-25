@@ -44,6 +44,7 @@ const props = defineProps({
 
   // Heatmap appearance
   createCellsWithRoundedCorners: { type: Boolean, default: true },
+  maxWidth: { type: Number, default: 1000 },
 });
 
 const margin = computed(() => ({
@@ -97,10 +98,10 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  if (window.innerWidth >= 1000) {
-    containerWidth.value = 1000;
+  if (window.innerWidth >= props.maxWidth) {
+    width.value = props.maxWidth;
   } else {
-    containerWidth.value = window.innerWidth;
+    width.value = window.innerWidth;
   }
 };
 

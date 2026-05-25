@@ -51,6 +51,9 @@ const props = defineProps({
 
   // xScale domain
   xScaleDomain: { type: Array, default: null },
+
+  // Max width
+  maxWidth: { type: Number, default: 1000 },
 });
 
 const width = ref(500);
@@ -78,8 +81,8 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  if (window.innerWidth >= 1000) {
-    width.value = 1000;
+  if (window.innerWidth >= props.maxWidth) {
+    width.value = props.maxWidth;
   } else {
     width.value = window.innerWidth;
   }

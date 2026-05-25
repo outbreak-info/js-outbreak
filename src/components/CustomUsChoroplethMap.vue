@@ -42,6 +42,9 @@ const props = defineProps({
   containerMarginRight: { type: Number, default: 10 },
   containerMarginBottom: { type: Number, default: 0 },
   containerMarginLeft: { type: Number, default: 10 },
+
+  // Max width
+  maxWidth: { type: Number, default: 1000 },
 });
 
 const containerMargins = computed(() => ({
@@ -68,8 +71,8 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  if (window.innerWidth >= 1000) {
-    width.value = 1000;
+  if (window.innerWidth >= props.maxWidth) {
+    width.value = props.maxWidth;
   } else {
     width.value = window.innerWidth;
   }

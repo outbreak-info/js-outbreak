@@ -46,6 +46,7 @@ const props = defineProps({
   // Heatmap appearance
   createCellsWithRoundedCorners: { type: Boolean, default: true },
   rowPadding: { type: Number, default: 0.1 },
+  maxWidth: { type: Number, default: 1000 },
 
   // xScale domain
   xScaleDomain: { type: Array, default: null },
@@ -78,7 +79,7 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  width.value = window.innerWidth >= 1000 ? 1000 : window.innerWidth;
+  width.value = window.innerWidth >= props.maxWidth ? props.maxWidth : window.innerWidth;
 };
 
 const colorAccessor = (d) => d[props.colorKey];
