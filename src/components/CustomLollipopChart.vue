@@ -42,6 +42,9 @@ const props = defineProps({
 
   // Scale props
   xScale: { type: Function, default: null },
+
+  // Max width
+  maxWidth: { type: Number, default: 1000 },
 });
 
 const emit = defineEmits(["hover", "leave"]);
@@ -71,7 +74,7 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  width.value = window.innerWidth >= 1000 ? 1000 : window.innerWidth;
+  width.value = window.innerWidth >= props.maxWidth ? props.maxWidth : window.innerWidth;
 };
 
 const xAccessor = (d) => d[props.dateKey];

@@ -46,6 +46,9 @@ const props = defineProps({
   // Color props
   pointColor: { type: String, default: "#d13b62" },
   hoverColor: { type: String, default: "#000dcb" },
+
+  // Max width
+  maxWidth: { type: Number, default: 1000 },
 });
 
 const width = ref(500);
@@ -91,7 +94,7 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  width.value = window.innerWidth >= 1000 ? 1000 : window.innerWidth;
+  width.value = window.innerWidth >= props.maxWidth ? props.maxWidth : window.innerWidth;
   isTouchDevice.value = detectTouchDevice();
 };
 
