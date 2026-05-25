@@ -99,9 +99,9 @@ onUnmounted(() => {
 
 const handleResize = () => {
   if (window.innerWidth >= props.maxWidth) {
-    width.value = props.maxWidth;
+    containerWidth.value = props.maxWidth;
   } else {
-    width.value = window.innerWidth;
+    containerWidth.value = window.innerWidth;
   }
 };
 
