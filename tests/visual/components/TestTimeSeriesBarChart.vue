@@ -107,4 +107,4 @@ const chartGroupedData = ref([
   { key: '2025-02', value: 100, group: "D" }
 ]);
 
-</script> 
+</script>
