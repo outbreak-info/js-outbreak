@@ -25,8 +25,15 @@ const props = defineProps({
   showCumulativeLine: { type: Boolean, default: false },
   binInterval: { type: String, default: 'month' },
   tickInterval: { type: String, default: 'month' },
+  // When true (default), the tick interval is computed dynamically to avoid
+  // label overlap. Set to false to use tickInterval as-is.
+  autoTickInterval: { type: Boolean, default: true },
   marginBottom: { type: Number, default: 50 },
   marginLeft: { type: Number, default: 50 },
+  // When true (default), marginLeft is computed dynamically based on the widest
+  // y-axis tick label. Set to false to use marginLeft as-is.
+  autoMarginLeft: { type: Boolean, default: true },
+  marginRight: { type: Number, default: 20 },
   marginTop: { type: Number, default: 20 },
   rangeColor: { type: Array, default: colorPalette },
   isPreBinned: { type: Boolean, default: false },
@@ -107,6 +114,114 @@ function getDateFromBin(binValue) {
   return new Date(binStr);
 }
 
+/**
+ * Dynamically computes the x-axis tick interval to avoid label overlapping.
+ *
+ * @param {Date} minDate     - earliest date in the visible range
+ * @param {Date} maxDate     - latest date in the visible range
+ * @param {string} binInterval - the bar-grouping interval ('day'|'week'|'month'|'year')
+ * @param {number} width       - total chart width in pixels
+ * @param {number} marginLeft  - left margin in pixels
+ * @param {number} marginRight - right margin in pixels
+ * @param {number} fontSize    - font size in pixels (used to estimate label width)
+ * @param {number} tickRotate  - tick label rotation in degrees
+ * @returns {string} - a d3-time interval string suitable for Plot's `ticks`
+ */
+function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, marginRight, fontSize, tickRotate) {
+  const plotWidth = width - marginLeft - marginRight;
+
+  // Approximate character width relative to font size
+  const charWidth = fontSize * 0.6;
+
+  // Estimated label widths (in characters) per format string
+  const labelCharCounts = {
+    day: 10,   // "2024-01-15"
+    week: 6,   // "Jan 15"
+    month: 7,  // "Jan '24"
+    year: 4,   // "2024"
+  };
+  const rawLabelWidth = (labelCharCounts[binInterval] ?? 7) * charWidth;
+
+  // When labels are rotated, their horizontal footprint shrinks.
+  // Use the projected width onto the x-axis: w * |cos(θ)| + h * |sin(θ)|
+  // For simplicity we treat label height as fontSize.
+  const rad = (Math.abs(tickRotate) * Math.PI) / 180;
+  const effectiveLabelWidth = rad > 0
+    ? rawLabelWidth * Math.abs(Math.cos(rad)) + fontSize * Math.abs(Math.sin(rad))
+    : rawLabelWidth;
+
+  // Minimum spacing between tick centres: label width + half a character of breathing room.
+  const minTickSpacing = effectiveLabelWidth + charWidth * 0.5;
+
+  // Maximum number of ticks that fit: n ticks create (n-1) gaps, so the last
+  // tick doesn't need a trailing slot. Solving (n-1) * spacing <= plotWidth gives n.
+  const maxTicks = Math.floor(plotWidth / minTickSpacing) + 1;
+
+  // Align the date range to bin boundaries, matching how Plot pads its x domain
+  // for bar charts (floor the start, ceil the end to the next bin boundary).
+  const binFloorFn = { day: timeDay, week: timeWeek, month: timeMonth, year: timeYear }[binInterval] || timeMonth;
+  const alignedMin = binFloorFn.floor(minDate);
+  const alignedMax = binFloorFn.ceil(maxDate);
+
+  // Candidate intervals ordered finest: coarsest, each paired with a function
+  // that counts how many ticks of that interval fall in [alignedMin, alignedMax].
+  const candidates = [
+    { name: 'day',   countFn: () => timeDay.count(alignedMin, alignedMax) },
+    { name: 'week',  countFn: () => timeWeek.count(alignedMin, alignedMax) },
+    { name: 'month', countFn: () => timeMonth.count(alignedMin, alignedMax) },
+    { name: 'year',  countFn: () => timeYear.count(alignedMin, alignedMax) },
+  ];
+
+  // Only consider intervals that are >= binInterval (no point ticking finer than bins)
+  const binOrder = ['day', 'week', 'month', 'year'];
+  const binIdx = binOrder.indexOf(binInterval);
+  const eligible = candidates.filter((_, i) => i >= binIdx);
+
+  for (const candidate of eligible) {
+    if (candidate.countFn() <= maxTicks) {
+      return candidate.name;
+    }
+  }
+
+  // Fallback: yearly ticks always fit
+  return 'year';
+}
+
+/**
+ * Dynamically computes the left margin to prevent y-axis tick labels from
+ * overlapping the y-axis label.
+ *
+ * @param {number[]} values    - all y values in the dataset
+ * @param {number|null} yMin   - explicit y-axis minimum (or null)
+ * @param {number|null} yMax   - explicit y-axis maximum (or null)
+ * @param {number} fontSize    - font size in pixels
+ * @returns {number} - recommended marginLeft in pixels
+ */
+function computeMarginLeft(values, yMin, yMax, fontSize) {
+  const charWidth = fontSize * 0.6;
+
+  const dataMax = yMax !== null ? yMax : Math.max(...values, 0);
+  const dataMin = yMin !== null ? yMin : Math.min(...values, 0);
+
+  // Generate representative tick values across the domain.
+  // Plot targets roughly 5 ticks; we sample ~10 to be safe and find the widest.
+  const tickCount = 10;
+  const step = (dataMax - dataMin) / tickCount;
+  const candidateTicks = Array.from({ length: tickCount + 1 }, (_, i) =>
+    dataMin + i * step
+  );
+
+  // Format each tick the same way Plot does by default
+  const widestLabel = candidateTicks
+    .map(v => v.toLocaleString())
+    .reduce((a, b) => (a.length >= b.length ? a : b), '');
+
+  const labelWidth = widestLabel.length * charWidth;
+
+  // tick mark (6px) + label + three chars of breathing room between label and plot area
+  return Math.ceil(6 + labelWidth + charWidth * 3);
+}
+
 function renderChart() {
   if (!props.data || props.data.length === 0 || !chartContainer.value) return;
 
@@ -175,6 +290,44 @@ function renderChart() {
     };
   });
 
+  // When autoMarginLeft is true, compute dynamically based on the widest y-axis
+  // tick label. Set autoMarginLeft to false to use marginLeft as-is.
+  const allValues = processedData.map(d => Number(d.value));
+  const resolvedMarginLeft = props.autoMarginLeft
+    ? computeMarginLeft(allValues, props.yMin, props.yMax, props.fontSize)
+    : props.marginLeft;
+
+  // When autoTickInterval is true, compute dynamically to avoid label overlap.
+  // Set autoTickInterval to false to use tickInterval as-is.
+  let resolvedTickInterval;
+  if (!props.autoTickInterval) {
+    // Caller opted out of auto-computation — use tickInterval as-is
+    resolvedTickInterval = props.tickInterval;
+  } else {
+    // Derive the visible date range (respecting xTickMin/xTickMax if provided)
+    const allDates = binnedData.map(d => d.date);
+    const dataMin = allDates.reduce((a, b) => a < b ? a : b, allDates[0]);
+    const dataMax = allDates.reduce((a, b) => a > b ? a : b, allDates[0]);
+
+    const rangeMin = props.xTickMin
+      ? (props.xTickMin instanceof Date ? props.xTickMin : new Date(props.xTickMin))
+      : dataMin;
+    const rangeMax = props.xTickMax
+      ? (props.xTickMax instanceof Date ? props.xTickMax : new Date(props.xTickMax))
+      : dataMax;
+
+    resolvedTickInterval = computeTickInterval(
+      rangeMin,
+      rangeMax,
+      props.binInterval,
+      props.width,
+      resolvedMarginLeft,
+      props.marginRight,
+      props.fontSize,
+      props.tickRotate,
+    );
+  }
+
   // Tooltip format configuration for binned data
   let _tipBinKey = null;
   const tipFormat = {
@@ -240,7 +393,8 @@ function renderChart() {
   const chart = Plot.plot({
     height: props.height,
     width: props.width,
-    marginLeft: props.marginLeft,
+    marginLeft: resolvedMarginLeft,
+    marginRight: props.marginRight,
     marginBottom: props.marginBottom,
     marginTop: props.marginTop,
     style: {
@@ -254,7 +408,7 @@ function renderChart() {
       labelArrow: "none",
       type: "time",
       tickFormat: getTickFormat(props.binInterval),
-      ticks: props.tickInterval,
+      ticks: resolvedTickInterval,
       tickRotate: props.tickRotate,
       ...(props.xTickMin && props.xTickMax ? {
         domain: [
