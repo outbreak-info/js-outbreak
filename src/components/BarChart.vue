@@ -3,10 +3,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
-import { defaultColor, colorPalette } from '../utils/colorSchemes';
-import { defaultFontSize, defaultFontFamily } from '../utils/chartDefaults';
-import * as Plot from '@observablehq/plot';
+import { ref, onMounted, watch, onBeforeUnmount } from "vue";
+import { defaultColor, colorPalette } from "../utils/colorSchemes";
+import { defaultFontSize, defaultFontFamily } from "../utils/chartDefaults";
+import * as Plot from "@observablehq/plot";
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -18,13 +18,17 @@ const props = defineProps({
   marginBottom: { type: Number, default: 50 },
   marginRight: { type: Number, default: 50 },
   barColor: { type: String, default: defaultColor },
-  xKey: { type: String, default: 'value' }, // TODO: xKey is currently used for x-axis in horizontal and y-axis in vertical. Fix this.
-  yKey: { type: String, default: 'key' },
-  xLabel: { type: String, default: 'value' },
-  yLabel: { type: String, default: 'key' },
-  sortOrder: { type: String, default: 'desc' },
-  groupBy: { type: String, default: '' },
-  colorBy: { type: String, default: '' }, // Use barColor to color bars by category and colorBy to set BOTH fill and tick label to attribute. Change this in the future?
+  xKey: { type: String, default: "value" }, // TODO: xKey is currently used for x-axis in horizontal and y-axis in vertical. Fix this.
+  yKey: { type: String, default: "key" },
+  xLabel: { type: String, default: "value" },
+  yLabel: { type: String, default: "key" },
+  // Optional tooltip labels. If empty, the tooltip shows the value only (existing behavior).
+  // Use these when the axis label and tooltip label need to differ.
+  xTooltipLabel: { type: String, default: "" },
+  yTooltipLabel: { type: String, default: "" },
+  sortOrder: { type: String, default: "desc" },
+  groupBy: { type: String, default: "" },
+  colorBy: { type: String, default: "" }, // Use barColor to color bars by category and colorBy to set BOTH fill and tick label to attribute. Change this in the future?
   stacked: { type: Boolean, default: false },
   showProportion: { type: Boolean, default: false },
   tooltipDecimalPlaces: { type: Number, default: 1 },
@@ -38,38 +42,49 @@ const props = defineProps({
   yMax: { type: Number, default: null },
   fontSize: { type: Number, default: defaultFontSize },
   showLabels: { type: Boolean, default: false },
-  labelKey: { type: String, default: '' },
+  labelKey: { type: String, default: "" },
   missingAttribute: { type: Array, default: () => [] },
   hLine: { type: Number, default: null },
   vLine: { type: Number, default: null },
   integerTicks: { type: Boolean, default: false },
+  // Append a literal '%' after the numeric value in the tooltip.
+  // Independent of showProportion, which computes and appends a derived percentage.
+  appendPercentX: { type: Boolean, default: false },
+  appendPercentY: { type: Boolean, default: false },
 });
 
 const chartContainer = ref(null);
 
 function getSortOrder(sortOrder, horizontal) {
-  let desc = {x: "-y"};
-  let asc = {x: "y"};
+  let desc = { x: "-y" };
+  let asc = { x: "y" };
 
   if (horizontal) {
-    desc = {y: "-x"};
-    asc = {y: "x"};
+    desc = { y: "-x" };
+    asc = { y: "x" };
   }
 
   switch (props.sortOrder) {
-    case 'desc':          // descending
+    case "desc": // descending
       return desc;
 
-    case 'asc':           // ascending
+    case "asc": // ascending
       return asc;
 
-    case 'None':          // leave unsorted
+    case "None": // leave unsorted
       return false;
   }
   return false;
 }
 
-function computeIntegerTicks(data, valueKey, categoryKey, stacked, propMin, propMax) {
+function computeIntegerTicks(
+  data,
+  valueKey,
+  categoryKey,
+  stacked,
+  propMin,
+  propMax,
+) {
   if (!data || data.length === 0) return [];
 
   let effectiveMax;
@@ -83,12 +98,13 @@ function computeIntegerTicks(data, valueKey, categoryKey, stacked, propMin, prop
     }, {});
     effectiveMax = Math.max(...Object.values(sums));
   } else {
-    effectiveMax = Math.max(...data.map(d => Number(d[valueKey] || 0)));
+    effectiveMax = Math.max(...data.map((d) => Number(d[valueKey] || 0)));
   }
 
   const min = Math.floor(propMin !== null ? propMin : 0);
   const max = Math.ceil(effectiveMax);
-  if (!isFinite(min) || !isFinite(max) || max <= min) return [min, max].filter(isFinite);
+  if (!isFinite(min) || !isFinite(max) || max <= min)
+    return [min, max].filter(isFinite);
 
   const step = Math.max(1, Math.ceil((max - min) / 10));
   const ticks = [];
@@ -99,57 +115,84 @@ function computeIntegerTicks(data, valueKey, categoryKey, stacked, propMin, prop
 function renderChart() {
   if (!props.data || props.data.length === 0 || !chartContainer.value) return;
 
-  chartContainer.value.innerHTML = '';
+  chartContainer.value.innerHTML = "";
 
-  const total = props.data.reduce((sum, d) => sum + Number(d[props.xKey] || 0), 0);
+  const total = props.data.reduce(
+    (sum, d) => sum + Number(d[props.xKey] || 0),
+    0,
+  );
 
-  const hasMissing = props.missingAttribute && props.missingAttribute.length > 0;
+  const hasMissing =
+    props.missingAttribute && props.missingAttribute.length > 0;
   const missingKey = props.yKey;
 
   let colorMap = null;
   if (hasMissing && props.colorBy) {
-    const domain = props.legendDomain ?? [...new Set(props.data.map(d => d[props.colorBy]))];
+    const domain = props.legendDomain ?? [
+      ...new Set(props.data.map((d) => d[props.colorBy])),
+    ];
     const range = props.legendRange ?? colorPalette;
     colorMap = new Map(domain.map((v, i) => [v, range[i % range.length]]));
   }
 
   const fillFn = hasMissing
-    ? (d => props.missingAttribute.includes(d[missingKey])
-        ? colorPalette[19]
-        : (colorMap ? (colorMap.get(d[props.colorBy]) ?? props.barColor) : props.barColor))
+    ? (d) =>
+        props.missingAttribute.includes(d[missingKey])
+          ? colorPalette[19]
+          : colorMap
+            ? (colorMap.get(d[props.colorBy]) ?? props.barColor)
+            : props.barColor
     : null;
 
-  const fill = hasMissing ? fillFn : (props.colorBy || props.barColor);
+  const fill = hasMissing ? fillFn : props.colorBy || props.barColor;
 
   const labelMap = props.labelKey
-    ? new Map(props.data.map(d => [Number(d[props.xKey]), d[props.labelKey]]))
+    ? new Map(props.data.map((d) => [Number(d[props.xKey]), d[props.labelKey]]))
     : null;
 
-  // Format function that handles both numeric values and category strings
-  const formatValue = (d) => {
-    if (typeof d === 'number') {
-      const text = d.toLocaleString(undefined, { maximumFractionDigits: props.tooltipDecimalPlaces });
+  // Format function for the x (numeric/value) channel in tooltips.
+  // Preserves the existing showProportion behavior and adds optional '%' suffix
+  // and optional tooltip label prefix via xTooltipLabel.
+  const formatXValue = (d) => {
+    if (typeof d === "number") {
+      const text = d.toLocaleString(undefined, {
+        maximumFractionDigits: props.tooltipDecimalPlaces,
+      });
+      const suffix = props.appendPercentX ? "%" : "";
       if (props.showProportion && total > 0) {
         if (labelMap && labelMap.has(d)) {
-          return `${text} (${labelMap.get(d)})`;
+          return `${text}${suffix} (${labelMap.get(d)})`;
         }
         const pct = ((d / total) * 100).toFixed(props.tooltipDecimalPlaces);
-        return `${text} (${pct}%)`;
+        return `${text}${suffix} (${pct}%)`;
       }
-      return text;
+      const value = `${text}${suffix}`;
+      return props.xTooltipLabel ? `${props.xTooltipLabel}: ${value}` : value;
+    }
+    return d;
+  };
+
+  // Format function for the y (numeric/value) channel in tooltips.
+  // Mirrors formatXValue for the vertical chart orientation.
+  const formatYValue = (d) => {
+    if (typeof d === "number") {
+      const text = d.toLocaleString(undefined, {
+        maximumFractionDigits: props.tooltipDecimalPlaces,
+      });
+      const suffix = props.appendPercentY ? "%" : "";
+      const value = `${text}${suffix}`;
+      return props.yTooltipLabel ? `${props.yTooltipLabel}: ${value}` : value;
     }
     return d;
   };
 
   const horizontalTipFormat = {
-    format: { x: formatValue, y: false, fill: false }
+    format: { x: formatXValue, y: false, fill: false },
   };
 
   const verticalTipFormat = {
-    format: { y: formatValue, x: false, fill: false }
+    format: { y: formatYValue, x: false, fill: false },
   };
-
-
 
   // Create chart
   const chart = props.horizontal
@@ -170,68 +213,106 @@ function renderChart() {
           label: props.yLabel,
           labelAnchor: "center",
           labelArrow: "none",
-          ...(props.categoryOrder && { domain: props.categoryOrder })
+          ...(props.categoryOrder && { domain: props.categoryOrder }),
         },
         x: {
           label: props.xLabel,
           labelAnchor: "center",
           labelArrow: "none",
-          ...(props.xMin !== null && props.xMax !== null ? { domain: [props.xMin, props.xMax] } : {}),
+          ...(props.xMin !== null && props.xMax !== null
+            ? { domain: [props.xMin, props.xMax] }
+            : {}),
           grid: true,
-          ...(props.integerTicks && { ticks: computeIntegerTicks(props.data, props.xKey, props.yKey, props.stacked, props.xMin, props.xMax), tickFormat: d => d.toLocaleString() }),
+          ...(props.integerTicks && {
+            ticks: computeIntegerTicks(
+              props.data,
+              props.xKey,
+              props.yKey,
+              props.stacked,
+              props.xMin,
+              props.xMax,
+            ),
+            tickFormat: (d) => d.toLocaleString(),
+          }),
         },
         color: {
           legend: props.showLegend,
           style: { fontSize: `${props.fontSize}px` },
           ...(props.legendDomain
             ? { domain: props.legendDomain }
-            : (hasMissing && props.colorBy
-                ? { domain: [...new Set(props.data.map(d => d[props.colorBy]))] }
-                : {})),
-          range: props.legendRange || colorPalette
+            : hasMissing && props.colorBy
+              ? {
+                  domain: [...new Set(props.data.map((d) => d[props.colorBy]))],
+                }
+              : {}),
+          range: props.legendRange || colorPalette,
         },
         marks: [
           props.stacked
-            ? Plot.barX(props.data, Plot.stackX({
-                y: props.yKey,
-                x: props.xKey,
-                fx: props.groupBy,
-                fill: hasMissing ? fillFn : props.colorBy,
-                ...(props.legendDomain && { order: props.legendDomain }),
-                tip: horizontalTipFormat
-              }))
+            ? Plot.barX(
+                props.data,
+                Plot.stackX({
+                  y: props.yKey,
+                  x: props.xKey,
+                  fx: props.groupBy,
+                  fill: hasMissing ? fillFn : props.colorBy,
+                  ...(props.legendDomain && { order: props.legendDomain }),
+                  tip: horizontalTipFormat,
+                }),
+              )
             : Plot.barX(props.data, {
                 y: props.colorBy || props.yKey,
                 x: props.xKey,
                 fx: props.groupBy,
                 fill: fill,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
-                tip: horizontalTipFormat
+                tip: horizontalTipFormat,
               }),
           Plot.ruleX([0]),
-          props.hLine !== null ? Plot.ruleY([props.hLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }) : null,
-          props.vLine !== null ? Plot.ruleX([props.vLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }) : null,
+          props.hLine !== null
+            ? Plot.ruleY([props.hLine], {
+                stroke: colorPalette[6],
+                strokeDasharray: "6,4",
+                strokeWidth: 2,
+              })
+            : null,
+          props.vLine !== null
+            ? Plot.ruleX([props.vLine], {
+                stroke: colorPalette[6],
+                strokeDasharray: "6,4",
+                strokeWidth: 2,
+              })
+            : null,
           props.showLabels && !props.stacked
             ? Plot.text(props.data, {
                 x: props.xKey,
                 y: props.colorBy || props.yKey,
-                text: d => props.labelKey && d[props.labelKey] != null ? String(d[props.labelKey]) : Number(d[props.xKey]).toLocaleString(),
+                text: (d) =>
+                  props.labelKey && d[props.labelKey] != null
+                    ? String(d[props.labelKey])
+                    : Number(d[props.xKey]).toLocaleString(),
                 textAnchor: "start",
                 dx: 4,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
               })
             : null,
           props.showLabels && props.stacked
-            ? Plot.text(props.data, Plot.stackX({
-                x: props.xKey,
-                y: props.yKey,
-                fill: props.colorBy,
-                text: d => props.labelKey && d[props.labelKey] != null ? String(d[props.labelKey]) : Number(d[props.xKey]).toLocaleString(),
-                textAnchor: "middle",
-                ...(props.legendDomain && { order: props.legendDomain }),
-              }))
+            ? Plot.text(
+                props.data,
+                Plot.stackX({
+                  x: props.xKey,
+                  y: props.yKey,
+                  fill: props.colorBy,
+                  text: (d) =>
+                    props.labelKey && d[props.labelKey] != null
+                      ? String(d[props.labelKey])
+                      : Number(d[props.xKey]).toLocaleString(),
+                  textAnchor: "middle",
+                  ...(props.legendDomain && { order: props.legendDomain }),
+                }),
+              )
             : null,
-        ]
+        ],
       })
     : Plot.plot({
         marginBottom: props.marginBottom,
@@ -251,68 +332,106 @@ function renderChart() {
           label: props.xLabel,
           labelAnchor: "center",
           labelArrow: "none",
-          ...(props.categoryOrder && { domain: props.categoryOrder })
+          ...(props.categoryOrder && { domain: props.categoryOrder }),
         },
         y: {
           grid: true,
           label: props.yLabel,
           labelAnchor: "center",
           labelArrow: "none",
-          ...(props.yMin !== null && props.yMax !== null ? { domain: [props.yMin, props.yMax] } : {}),
-          ...(props.integerTicks && { ticks: computeIntegerTicks(props.data, props.xKey, props.yKey, props.stacked, props.yMin, props.yMax), tickFormat: d => d.toLocaleString() }),
+          ...(props.yMin !== null && props.yMax !== null
+            ? { domain: [props.yMin, props.yMax] }
+            : {}),
+          ...(props.integerTicks && {
+            ticks: computeIntegerTicks(
+              props.data,
+              props.xKey,
+              props.yKey,
+              props.stacked,
+              props.yMin,
+              props.yMax,
+            ),
+            tickFormat: (d) => d.toLocaleString(),
+          }),
         },
         color: {
           legend: props.showLegend,
           style: { fontSize: `${props.fontSize}px` },
           ...(props.legendDomain
             ? { domain: props.legendDomain }
-            : (hasMissing && props.colorBy
-                ? { domain: [...new Set(props.data.map(d => d[props.colorBy]))] }
-                : {})),
-          range: props.legendRange || colorPalette
+            : hasMissing && props.colorBy
+              ? {
+                  domain: [...new Set(props.data.map((d) => d[props.colorBy]))],
+                }
+              : {}),
+          range: props.legendRange || colorPalette,
         },
         marks: [
           props.stacked
-            ? Plot.barY(props.data, Plot.stackY({
-                x: props.yKey,
-                y: props.xKey,
-                fx: props.groupBy,
-                fill: hasMissing ? fillFn : props.colorBy,
-                ...(props.legendDomain && { order: props.legendDomain }),
-                tip: verticalTipFormat
-              }))
+            ? Plot.barY(
+                props.data,
+                Plot.stackY({
+                  x: props.yKey,
+                  y: props.xKey,
+                  fx: props.groupBy,
+                  fill: hasMissing ? fillFn : props.colorBy,
+                  ...(props.legendDomain && { order: props.legendDomain }),
+                  tip: verticalTipFormat,
+                }),
+              )
             : Plot.barY(props.data, {
                 x: props.colorBy || props.yKey,
                 y: props.xKey,
                 fx: props.groupBy,
                 fill: fill,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
-                tip: verticalTipFormat
+                tip: verticalTipFormat,
               }),
           Plot.ruleY([0]),
-          props.hLine !== null ? Plot.ruleY([props.hLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }) : null,
-          props.vLine !== null ? Plot.ruleX([props.vLine], { stroke: colorPalette[6], strokeDasharray: "6,4", strokeWidth: 2 }) : null,
+          props.hLine !== null
+            ? Plot.ruleY([props.hLine], {
+                stroke: colorPalette[6],
+                strokeDasharray: "6,4",
+                strokeWidth: 2,
+              })
+            : null,
+          props.vLine !== null
+            ? Plot.ruleX([props.vLine], {
+                stroke: colorPalette[6],
+                strokeDasharray: "6,4",
+                strokeWidth: 2,
+              })
+            : null,
           props.showLabels && !props.stacked
             ? Plot.text(props.data, {
                 x: props.colorBy || props.yKey,
                 y: props.xKey,
-                text: d => props.labelKey && d[props.labelKey] != null ? String(d[props.labelKey]) : Number(d[props.xKey]).toLocaleString(),
+                text: (d) =>
+                  props.labelKey && d[props.labelKey] != null
+                    ? String(d[props.labelKey])
+                    : Number(d[props.xKey]).toLocaleString(),
                 textAnchor: "middle",
                 dy: -6,
                 sort: getSortOrder(props.sortOrder, props.horizontal),
               })
             : null,
           props.showLabels && props.stacked
-            ? Plot.text(props.data, Plot.stackY({
-                x: props.yKey,
-                y: props.xKey,
-                fill: props.colorBy,
-                text: d => props.labelKey && d[props.labelKey] != null ? String(d[props.labelKey]) : Number(d[props.xKey]).toLocaleString(),
-                textAnchor: "middle",
-                ...(props.legendDomain && { order: props.legendDomain }),
-              }))
+            ? Plot.text(
+                props.data,
+                Plot.stackY({
+                  x: props.yKey,
+                  y: props.xKey,
+                  fill: props.colorBy,
+                  text: (d) =>
+                    props.labelKey && d[props.labelKey] != null
+                      ? String(d[props.labelKey])
+                      : Number(d[props.xKey]).toLocaleString(),
+                  textAnchor: "middle",
+                  ...(props.legendDomain && { order: props.legendDomain }),
+                }),
+              )
             : null,
-        ]
+        ],
       });
 
   chartContainer.value.appendChild(chart);
@@ -342,10 +461,14 @@ watch(() => props.missingAttribute, renderChart, { deep: true });
 watch(() => props.integerTicks, renderChart);
 watch(() => props.hLine, renderChart);
 watch(() => props.vLine, renderChart);
+watch(() => props.xTooltipLabel, renderChart);
+watch(() => props.yTooltipLabel, renderChart);
+watch(() => props.appendPercentX, renderChart);
+watch(() => props.appendPercentY, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
-    chartContainer.value.innerHTML = '';
+    chartContainer.value.innerHTML = "";
   }
 });
 </script>
