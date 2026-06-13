@@ -9,6 +9,7 @@ import AreaChart from "./components/AreaChart.vue";
 import SelectBarChart from "./components/SelectBarChart.vue";
 import SelectBarChartWithBarGraph from "./components/SelectBarChartWithBarGraph.vue";
 import TimeSeriesBarChart from "./components/TimeSeriesBarChart.vue";
+import TimeSeriesBarLineChart from "./components/TimeSeriesBarLineChart.vue";
 import PointRangeChart from "./components/PointRangeChart.vue";
 import TimeSeriesPointRangeChart from "./components/TimeSeriesPointRangeChart.vue";
 import UsChoroplethMap from "./components/UsChoroplethMap.vue";
@@ -56,6 +57,7 @@ export {
   SelectBarChart,
   SelectBarChartWithBarGraph,
   TimeSeriesBarChart,
+  TimeSeriesBarLineChart,
   PointRangeChart,
   TimeSeriesPointRangeChart,
   UsChoroplethMap,
@@ -103,6 +105,7 @@ export default {
     app.component("SelectBarChart", SelectBarChart);
     app.component("SelectBarChartWithBarGraph", SelectBarChartWithBarGraph);
     app.component("TimeSeriesBarChart", TimeSeriesBarChart);
+    app.component("TimeSeriesBarLineChart", TimeSeriesBarLineChart);
     app.component("PointRangeChart", PointRangeChart);
     app.component("TimeSeriesPointRangeChart", TimeSeriesPointRangeChart);
     app.component("UsChoroplethMap", UsChoroplethMap);

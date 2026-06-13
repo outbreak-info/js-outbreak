@@ -114,19 +114,6 @@ function getDateFromBin(binValue) {
   return new Date(binStr);
 }
 
-/**
- * Dynamically computes the x-axis tick interval to avoid label overlapping.
- *
- * @param {Date} minDate     - earliest date in the visible range
- * @param {Date} maxDate     - latest date in the visible range
- * @param {string} binInterval - the bar-grouping interval ('day'|'week'|'month'|'year')
- * @param {number} width       - total chart width in pixels
- * @param {number} marginLeft  - left margin in pixels
- * @param {number} marginRight - right margin in pixels
- * @param {number} fontSize    - font size in pixels (used to estimate label width)
- * @param {number} tickRotate  - tick label rotation in degrees
- * @returns {string} - a d3-time interval string suitable for Plot's `ticks`
- */
 function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, marginRight, fontSize, tickRotate) {
   const plotWidth = width - marginLeft - marginRight;
 
@@ -187,16 +174,6 @@ function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, m
   return 'year';
 }
 
-/**
- * Dynamically computes the left margin to prevent y-axis tick labels from
- * overlapping the y-axis label.
- *
- * @param {number[]} values    - all y values in the dataset
- * @param {number|null} yMin   - explicit y-axis minimum (or null)
- * @param {number|null} yMax   - explicit y-axis maximum (or null)
- * @param {number} fontSize    - font size in pixels
- * @returns {number} - recommended marginLeft in pixels
- */
 function computeMarginLeft(values, yMin, yMax, fontSize) {
   const charWidth = fontSize * 0.6;
 
