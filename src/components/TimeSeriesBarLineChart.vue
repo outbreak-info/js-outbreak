@@ -7,7 +7,7 @@ import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
 import { colorPalette, otherColor } from '../utils/colorSchemes';
 import { defaultFontSize, defaultFontFamily } from '../utils/chartDefaults';
 import * as Plot from '@observablehq/plot';
-import { sum, rollup, max as d3max, ticks as d3ticks } from 'd3-array';
+import { sum, rollup, max as d3max, ticks as d3ticks, tickStep } from 'd3-array';
 import { timeFormat, timeParse } from 'd3-time-format';
 import { timeMonth, timeDay, timeYear, timeWeek } from 'd3-time';
 
@@ -37,6 +37,7 @@ const props = defineProps({
 
   barColor: { type: String, default: otherColor },
   barLegendLabel: { type: String, default: 'Count' },
+  showBarTooltip: { type: Boolean, default: true },
   legendDomain: { type: Array, default: null },
   legendRange: { type: Array, default: null },
   showLegend: { type: Boolean, default: true },
@@ -120,15 +121,7 @@ function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, m
   const plotWidth = width - marginLeft - marginRight;
   const charWidth = fontSize * 0.6;
   const labelCharCounts = { day: 10, week: 6, month: 7, year: 4 };
-  const rawLabelWidth = (labelCharCounts[binInterval] ?? 7) * charWidth;
-
   const rad = (Math.abs(tickRotate) * Math.PI) / 180;
-  const effectiveLabelWidth = rad > 0
-    ? rawLabelWidth * Math.abs(Math.cos(rad)) + fontSize * Math.abs(Math.sin(rad))
-    : rawLabelWidth;
-
-  const minTickSpacing = effectiveLabelWidth + charWidth * 0.5;
-  const maxTicks = Math.floor(plotWidth / minTickSpacing) + 1;
 
   const binFloorFn = { day: timeDay, week: timeWeek, month: timeMonth, year: timeYear }[binInterval] || timeMonth;
   const alignedMin = binFloorFn.floor(minDate);
@@ -146,6 +139,12 @@ function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, m
   const eligible = candidates.filter((_, i) => i >= binIdx);
 
   for (const candidate of eligible) {
+    const rawLabelWidth = (labelCharCounts[candidate.name] ?? 7) * charWidth;
+    const effectiveLabelWidth = rad > 0
+      ? rawLabelWidth * Math.abs(Math.cos(rad)) + fontSize * Math.abs(Math.sin(rad))
+      : rawLabelWidth;
+    const minTickSpacing = effectiveLabelWidth + charWidth * 0.5;
+    const maxTicks = Math.floor(plotWidth / minTickSpacing) + 1;
     if (candidate.countFn() <= maxTicks) {
       return candidate.name;
     }
@@ -188,8 +187,8 @@ function resolveKey(override, shared) {
 
 function niceCeil(v) {
   if (v <= 0) return 1;
-  const mag = Math.pow(10, Math.floor(Math.log10(v)));
-  return Math.ceil(v / mag) * mag;
+  const step = tickStep(0, v, 10);
+  return Math.ceil(v / step) * step;
 }
 
 function toDate(v) {
@@ -280,7 +279,7 @@ function renderChart() {
     ? computeMarginRight(rightTicksOriginal, props.fontSize)
     : props.marginRight;
 
-  // 4. Tick interval, derived from the union of bar + line dates.
+  // Tick interval, derived from the union of bar + line dates.
   let resolvedTickInterval;
   if (!props.autoTickInterval) {
     resolvedTickInterval = props.tickInterval;
@@ -334,7 +333,7 @@ function renderChart() {
         y: 'scaledValue',
         interval: props.binInterval,
         fill: () => props.barLegendLabel,
-        tip: barTipFormat,
+        ...(props.showBarTooltip ? { tip: barTipFormat } : {}),
       })),
     );
   }
@@ -400,7 +399,7 @@ function renderChart() {
       labelAnchor: 'center',
       labelArrow: 'none',
       type: 'time',
-      tickFormat: getTickFormat(props.binInterval),
+      tickFormat: getTickFormat(resolvedTickInterval),
       ticks: resolvedTickInterval,
       tickRotate: props.tickRotate,
       ...(props.xTickMin && props.xTickMax ? { domain: [toDate(props.xTickMin), toDate(props.xTickMax)] } : {}),
@@ -433,7 +432,7 @@ watch(
     props.yLabel, props.yMin, props.yMax,
     props.yRightLabel, props.yRightMin, props.yRightMax,
     props.xLabel,
-    props.barColor, props.barLegendLabel, props.legendDomain, props.legendRange, props.showLegend,
+    props.barColor, props.barLegendLabel, props.showBarTooltip, props.legendDomain, props.legendRange, props.showLegend,
     props.curve, props.showDots, props.dotRadius,
     props.binInterval, props.tickInterval, props.autoTickInterval, props.isPreBinned,
     props.xTickMin, props.xTickMax, props.tickRotate,

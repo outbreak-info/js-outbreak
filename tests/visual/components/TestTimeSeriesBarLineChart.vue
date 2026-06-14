@@ -7,12 +7,11 @@
         :lineData="positivityData"
     />
 
-    Set right-axis max and legend order
+    With binInterval day
     <TimeSeriesBarLineChart
         :barData="enrolledData"
         :lineData="positivityData"
-        :yRightMax="600"
-        :legendDomain="['SARS-CoV-2', 'Influenza', 'RSV', 'Adenovirus']"
+        binInterval="day"
     />
 
     No dots, custom curve
@@ -42,18 +41,18 @@ import TimeSeriesBarLineChart from '../../../src/components/TimeSeriesBarLineCha
 
 // 12 monthly bins of counts
 const enrolledData = ref([
-  { key: '2024-04', value: 410 },
-  { key: '2024-05', value: 380 },
-  { key: '2024-06', value: 250 },
-  { key: '2024-07', value: 190 },
-  { key: '2024-08', value: 210 },
-  { key: '2024-09', value: 320 },
-  { key: '2024-10', value: 360 },
-  { key: '2024-11', value: 430 },
-  { key: '2024-12', value: 470 },
-  { key: '2025-01', value: 450 },
-  { key: '2025-02', value: 500 },
-  { key: '2025-03', value: 400 },
+  { key: '2024-04-01', value: 410 },
+  { key: '2024-05-15', value: 380 },
+  { key: '2024-06-23', value: 250 },
+  { key: '2024-07-04', value: 190 },
+  { key: '2024-08-09', value: 210 },
+  { key: '2024-09-13', value: 320 },
+  { key: '2024-10-25', value: 360 },
+  { key: '2024-11-23', value: 430 },
+  { key: '2024-12-21', value: 470 },
+  { key: '2025-01-08', value: 450 },
+  { key: '2025-02-06', value: 500 },
+  { key: '2025-03-02', value: 400 },
 ])
 
 // % positive by virus, one row per (month, group)
