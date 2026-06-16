@@ -26,12 +26,14 @@ const props = defineProps({
   // Primary y-axis
   yLabel: { type: String, default: 'Primary y-axis' },
   yMin: { type: Number, default: 0 },
-  yMax: { type: Number, default: null },          // null => autoscale (defaults to 100 when lines present)
+  yMax: { type: Number, default: null }, // null => autoscale (defaults to 100 when lines present)
+  yIntegerTicks: { type: Boolean, default: false }, // when true, only integer ticks, deduplicated
 
   // Secondary y-axis (bars)
   yRightLabel: { type: String, default: 'Secondary y-axis' },
   yRightMin: { type: Number, default: 0 },
-  yRightMax: { type: Number, default: null },     // null => autoscale from barData
+  yRightMax: { type: Number, default: null }, // null => autoscale from barData
+  yRightIntegerTicks: { type: Boolean, default: false }, // when true, only integer ticks, deduplicated
 
   xLabel: { type: String, default: 'Surveillance Month' },
 
@@ -209,6 +211,21 @@ function processSeries(rows, dateKey, valueKey, groupKey, binInterval, isPreBinn
     .sort((a, b) => a.date - b.date);
 }
 
+/**
+ * Given a sorted array of tick values, filter to integers only and remove
+ * duplicates.
+ */
+function toIntegerTicks(ticks) {
+  const seen = new Set();
+  return ticks
+    .map(Math.round)
+    .filter(v => {
+      if (seen.has(v)) return false;
+      seen.add(v);
+      return true;
+    });
+}
+
 function renderChart() {
   const hasBars = props.barData && props.barData.length > 0;
   const hasLines = props.lineData && props.lineData.length > 0;
@@ -268,8 +285,22 @@ function renderChart() {
   const barsRescaled = barProcessed.map(d => ({ ...d, scaledValue: toPosition(d.value) }));
 
   // Right-axis ticks: positions live in the left domain, labels show original counts.
-  const rightTicksOriginal = d3ticks(rightMin, rightMax, 5);
+  // When yRightIntegerTicks is true, filter to unique integers in the right  domain
+  // before mapping back to left-domain positions.
+  const rightTicksCandidates = d3ticks(rightMin, rightMax, 5);
+  const rightTicksOriginal = props.yRightIntegerTicks
+    ? toIntegerTicks(rightTicksCandidates)
+    : rightTicksCandidates;
   const rightTickPositions = rightTicksOriginal.map(toPosition);
+
+  // Left-axis ticks: when yIntegerTicks is true, compute explicit integer ticks over
+  // the left domain so Plot does not render fractional values.
+  // These are used both for the explicit axisY mark (dual-axis case) and for the
+  // implicit y-scale ticks (lines-only case, passed via y.ticks).
+  const leftTicksCandidates = d3ticks(leftMin, leftMax, 10);
+  const leftTicksExplicit = props.yIntegerTicks
+    ? toIntegerTicks(leftTicksCandidates)
+    : null; // null => let Plot decide
 
   // 3. Margins.
   const resolvedMarginLeft = props.autoMarginLeft
@@ -361,13 +392,19 @@ function renderChart() {
     // Adding an explicit right axis suppresses Plot's implicit left axis, so the
     // left (primary) axis must be rendered explicitly too.
     marks.push(
-      Plot.axisY({
-        anchor: 'left',
-        label: props.yLabel,
-        labelAnchor: 'center',
-        labelArrow: 'none',
-        tickSize: 6,
-      }),
+      Plot.axisY(
+        // Pass explicit integer ticks when requested; otherwise let Plot choose.
+        ...(leftTicksExplicit ? [leftTicksExplicit] : []),
+        {
+          anchor: 'left',
+          label: props.yLabel,
+          labelAnchor: 'center',
+          labelArrow: 'none',
+          tickSize: 6,
+          // Suppress the ".0" suffix Plot adds to whole-number floats.
+          ...(leftTicksExplicit ? { tickFormat: v => Math.round(v).toLocaleString() } : {}),
+        },
+      ),
     );
     marks.push(
       Plot.axisY(rightTickPositions, {
@@ -409,6 +446,13 @@ function renderChart() {
       labelAnchor: 'center',
       labelArrow: 'none',
       domain: [leftMin, leftMax],
+      // In lines-only mode (no bars) Plot renders the left axis implicitly from
+      // the y scale, so pass ticks here to enforce integer-only values.
+      ...(!hasBars && leftTicksExplicit ? {
+        ticks: leftTicksExplicit,
+        // Suppress the ".0" suffix Plot adds to whole-number floats.
+        tickFormat: v => Math.round(v).toLocaleString(),
+      } : {}),
     },
     color: {
       legend: props.showLegend && colorDomain.length > 0,
@@ -429,8 +473,8 @@ watch(
   () => [
     props.dateKey, props.valueKey, props.groupKey,
     props.barDateKey, props.barValueKey, props.lineDateKey, props.lineValueKey,
-    props.yLabel, props.yMin, props.yMax,
-    props.yRightLabel, props.yRightMin, props.yRightMax,
+    props.yLabel, props.yMin, props.yMax, props.yIntegerTicks,
+    props.yRightLabel, props.yRightMin, props.yRightMax, props.yRightIntegerTicks,
     props.xLabel,
     props.barColor, props.barLegendLabel, props.showBarTooltip, props.legendDomain, props.legendRange, props.showLegend,
     props.curve, props.showDots, props.dotRadius,
