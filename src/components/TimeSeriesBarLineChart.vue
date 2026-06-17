@@ -43,6 +43,10 @@ const props = defineProps({
   legendDomain: { type: Array, default: null },
   legendRange: { type: Array, default: null },
   showLegend: { type: Boolean, default: true },
+  // Horizontal alignment of the auto-generated legend.
+  // null/unset (default) => Observable Plot's own default placement (left-aligned).
+  // 'center' => legend is horizontally centered above the chart.
+  legendPosition: { type: String, default: null },
 
   curve: { type: String, default: 'linear' },
   showDots: { type: Boolean, default: true },
@@ -463,6 +467,21 @@ function renderChart() {
     marks,
   });
 
+  // When a legend is rendered (color.legend: true above), Plot.plot() returns a
+  // <figure> whose first child is a flex-wrap <div> of swatches (class name
+  // ending in "-swatches-wrap"), followed by the chart <svg>. That div has no
+  // justify-content set, so it defaults to left-aligned. To horizontally center
+  // the legend we just set justify-content on that div; the div is a block-level
+  // flex container so it already spans the full chart width. When no legend is
+  // rendered, Plot.plot() returns the bare <svg> instead of a <figure> and the
+  // selector below simply finds nothing, so this is a no-op.
+  if (props.legendPosition === 'center') {
+    const legendEl = chart.querySelector?.('[class*="-swatches-wrap"]');
+    if (legendEl) {
+      legendEl.style.justifyContent = 'center';
+    }
+  }
+
   chartContainer.value.appendChild(chart);
 }
 
@@ -477,6 +496,7 @@ watch(
     props.yRightLabel, props.yRightMin, props.yRightMax, props.yRightIntegerTicks,
     props.xLabel,
     props.barColor, props.barLegendLabel, props.showBarTooltip, props.legendDomain, props.legendRange, props.showLegend,
+    props.legendPosition,
     props.curve, props.showDots, props.dotRadius,
     props.binInterval, props.tickInterval, props.autoTickInterval, props.isPreBinned,
     props.xTickMin, props.xTickMax, props.tickRotate,
