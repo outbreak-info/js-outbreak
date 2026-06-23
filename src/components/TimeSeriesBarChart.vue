@@ -68,13 +68,18 @@ function getMiddleDate(date, binInterval) {
   }
 }
 
-function getTickFormat(binInterval) {
+// spansMultipleYears controls whether the year is included in the label.
+// Defaults to true so that existing callers (bin grouping keys, the bin-total
+// map, tooltip lookups, the cumulative-line tooltip) keep their original,
+// always-unambiguous behavior unless they explicitly opt into the shorter,
+// year-omitted labels used for x-axis ticks when the data fits in one year.
+function getTickFormat(binInterval, spansMultipleYears = true) {
   switch (binInterval) {
-    case 'day': return "%Y-%m-%d";
-    case 'week': return "%b %d";
-    case 'month': return "%b '%y";
+    case 'day': return spansMultipleYears ? "%Y-%m-%d" : "%b %d";
+    case 'week': return spansMultipleYears ? "%b %d '%y" : "%b %d";
+    case 'month': return spansMultipleYears ? "%b '%y" : "%b";
     case 'year': return "%Y";
-    default: return "%b '%y";
+    default: return spansMultipleYears ? "%b '%y" : "%b";
   }
 }
 
@@ -114,19 +119,19 @@ function getDateFromBin(binValue) {
   return new Date(binStr);
 }
 
-function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, marginRight, fontSize, tickRotate) {
+function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, marginRight, fontSize, tickRotate, spansMultipleYears) {
   const plotWidth = width - marginLeft - marginRight;
 
   // Approximate character width relative to font size
   const charWidth = fontSize * 0.6;
 
-  // Estimated label widths (in characters) per format string
-  const labelCharCounts = {
-    day: 10,   // "2024-01-15"
-    week: 6,   // "Jan 15"
-    month: 7,  // "Jan '24"
-    year: 4,   // "2024"
-  };
+  // Estimated label widths (in characters) per format string. These mirror
+  // getTickFormat's two label variants: with the year (e.g. "2024-01-15",
+  // "Jan 15 '24", "Jan '24", "2024") and without it (e.g. "Jan 15", "Jan 15",
+  // "Jan", "2024").
+  const labelCharCounts = spansMultipleYears
+    ? { day: 10, week: 10, month: 7, year: 4 }
+    : { day: 6, week: 6, month: 3, year: 4 };
   const rawLabelWidth = (labelCharCounts[binInterval] ?? 7) * charWidth;
 
   // When labels are rotated, their horizontal footprint shrinks.
@@ -249,6 +254,12 @@ function renderChart() {
   // Sort by date. Should be the only place with sort
   binnedData = binnedData.sort((a, b) => a.date - b.date);
 
+  // Whether the underlying data (not just the visible tick range) touches more
+  // than one calendar year. Drives whether x-axis tick labels need the year
+  // appended to stay unambiguous, or can omit it to save space.
+  const dataYears = processedData.map(d => d.date.getFullYear());
+  const spansMultipleYears = dataYears.length > 0 && Math.max(...dataYears) !== Math.min(...dataYears);
+
   const timeIntervalFloor = { day: timeDay, week: timeWeek, month: timeMonth, year: timeYear };
   const binFloor = timeIntervalFloor[props.binInterval] || timeMonth;
   const binTotalMap = new Map();
@@ -302,6 +313,7 @@ function renderChart() {
       props.marginRight,
       props.fontSize,
       props.tickRotate,
+      spansMultipleYears,
     );
   }
 
@@ -384,7 +396,7 @@ function renderChart() {
       labelAnchor: "center",
       labelArrow: "none",
       type: "time",
-      tickFormat: getTickFormat(props.binInterval),
+      tickFormat: getTickFormat(props.binInterval, spansMultipleYears),
       ticks: resolvedTickInterval,
       tickRotate: props.tickRotate,
       ...(props.xTickMin && props.xTickMax ? {
