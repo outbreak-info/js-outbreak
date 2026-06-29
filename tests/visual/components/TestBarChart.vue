@@ -214,6 +214,18 @@
         :vLine="10"
     />
 
+    Horizontal with multiple vLines
+    <BarChart
+      :data="chartData"
+      :width="width"
+      :height="height"
+      barColor="currentColor"
+      :vLines="[
+        { value: 10, label: 'Target: 10', dy: 100, textAnchor: 'end', dx: 60 },
+        { value: 18, label: 'Stretch goal: 18', dy: -100, textAnchor: 'end', dx: 90 },
+      ]"
+    />
+
     Vertical with hLine at 10
     <BarChart
         :data="chartData"
@@ -222,6 +234,19 @@
         barColor="currentColor"
         :horizontal="false"
         :hLine="10"
+    />
+
+    Vertical with multiple hLines
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        barColor="currentColor"
+        :horizontal="false"
+        :hLines="[
+          { value: 10, label: 'Target: 10', dy: -10, textAnchor: 'end', dx: 100 },
+          { value: 18, label: 'Stretch goal: 18', dy: -10, textAnchor: 'end', dx: 100 },
+        ]"
     />
   </div>
 </template>
