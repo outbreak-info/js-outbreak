@@ -255,15 +255,31 @@ function getSortOrder(sortOrder, horizontal) {
   return false;
 }
 
-function computeIntegerTicks(
-  data,
-  valueKey,
-  categoryKey,
-  stacked,
-  propMin,
-  propMax,
-) {
-  if (!data || data.length === 0) return [];
+// Minimum horizontal gap (px) to keep between adjacent tick labels, on top of their
+// estimated text width, so they don't visually touch or overlap.
+const MIN_TICK_LABEL_GAP = 16;
+
+// Estimates the rendered pixel width of a text label for tick-fitting calculations.
+function estimateLabelWidth(label, fontSize) {
+  return String(label).length * fontSize * AVG_CHAR_WIDTH_FACTOR;
+}
+
+// Estimates how many evenly spaced ticks can fit along an axis of `availableWidth` px
+// without overlapping, sized off the widest of the given sample labels.
+function estimateMaxTickCount(availableWidth, fontSize, sampleLabels) {
+  if (!isFinite(availableWidth) || availableWidth <= 0) return 2;
+  const maxLabelWidth = Math.max(
+    1,
+    ...sampleLabels.map((l) => estimateLabelWidth(l, fontSize)),
+  );
+  const slot = maxLabelWidth + MIN_TICK_LABEL_GAP;
+  return Math.max(2, Math.floor(availableWidth / slot));
+}
+
+// Computes the effective numeric domain [min, max] for the value axis, accounting for
+// stacking (summing values within each category) and any user-specified min/max overrides.
+function computeEffectiveDomain(data, valueKey, categoryKey, stacked, propMin, propMax) {
+  if (!data || data.length === 0) return [0, 0];
 
   let effectiveMax;
   if (propMax !== null) {
@@ -279,15 +295,96 @@ function computeIntegerTicks(
     effectiveMax = Math.max(...data.map((d) => Number(d[valueKey] || 0)));
   }
 
-  const min = Math.floor(propMin !== null ? propMin : 0);
-  const max = Math.ceil(effectiveMax);
-  if (!isFinite(min) || !isFinite(max) || max <= min)
-    return [min, max].filter(isFinite);
+  const min = propMin !== null ? propMin : 0;
+  return [min, effectiveMax];
+}
 
-  const step = Math.max(1, Math.ceil((max - min) / 10));
-  const ticks = [];
-  for (let t = min; t <= max; t += step) ticks.push(t);
-  return ticks;
+// Computes the `ticks` value for a numeric Plot scale, covering both cases in one
+// place:
+//  - integerTicks true: returns explicit, integer-stepped tick values.
+//  - integerTicks false: returns a desired tick *count* (a plain number), letting
+//    Plot/d3 still choose nicely-rounded tick values, just at a width-aware density.
+// `width`/`marginLeft`/`marginRight` are optional: when omitted, falls back to the
+// original fixed ~10-tick budget (used for the value axis in vertical orientation,
+// where the axis runs vertically and isn't governed by chart width).
+function computeNumericTicks(
+  data,
+  valueKey,
+  categoryKey,
+  stacked,
+  propMin,
+  propMax,
+  integerTicks,
+  fontSize,
+  decimalPlaces,
+  width = null,
+  marginLeft = 0,
+  marginRight = 0,
+) {
+  if (!data || data.length === 0) return integerTicks ? [] : undefined;
+
+  const [domainMin, domainMax] = computeEffectiveDomain(
+    data,
+    valueKey,
+    categoryKey,
+    stacked,
+    propMin,
+    propMax,
+  );
+  if (!isFinite(domainMin) || !isFinite(domainMax))
+    return integerTicks ? [] : undefined;
+
+  // When width info is available, size the tick count to fit; otherwise keep the
+  // original fixed budget of ~10 ticks.
+  const availableWidth = width !== null ? width - marginLeft - marginRight : null;
+
+  if (integerTicks) {
+    const min = Math.floor(domainMin);
+    const max = Math.ceil(domainMax);
+    if (!isFinite(min) || !isFinite(max) || max <= min)
+      return [min, max].filter(isFinite);
+
+    const maxTickCount =
+      availableWidth !== null
+        ? estimateMaxTickCount(availableWidth, fontSize, [
+            min.toLocaleString(),
+            max.toLocaleString(),
+          ])
+        : 10;
+
+    const step = Math.max(1, Math.ceil((max - min) / maxTickCount));
+    const ticks = [];
+    for (let t = min; t <= max; t += step) ticks.push(t);
+    return ticks;
+  }
+
+  // Non-integer continuous scale: a width-aware count is only meaningful when width
+  // info is actually provided (the only current caller for this branch).
+  if (availableWidth === null) return undefined;
+
+  const fmt = (v) =>
+    v.toLocaleString(undefined, { maximumFractionDigits: decimalPlaces });
+
+  return estimateMaxTickCount(availableWidth, fontSize, [fmt(domainMin), fmt(domainMax)]);
+}
+
+// Decides whether the categorical axis (x-axis in vertical orientation) needs rotated
+// tick labels to avoid overlap, based on the width available per category vs. the
+// estimated label width. Returns 0 (horizontal, no rotation) when labels comfortably
+// fit, or -45 (matching the original always-rotated behavior) when they don't.
+function computeCategoricalTickRotation(data, categoryKey, categoryOrder, availableWidth, fontSize) {
+  if (!data || data.length === 0) return 0;
+
+  const categories = categoryOrder ?? [...new Set(data.map((d) => d[categoryKey]))];
+  const numCategories = categories.length || 1;
+  const widthPerCategory = availableWidth / numCategories;
+
+  const maxLabelWidth = Math.max(
+    1,
+    ...categories.map((c) => estimateLabelWidth(c, fontSize)),
+  );
+
+  return maxLabelWidth + MIN_TICK_LABEL_GAP <= widthPerCategory ? 0 : -45;
 }
 
 function renderChart() {
@@ -377,6 +474,10 @@ function renderChart() {
   const hLineList = normalizeLines(props.hLine, props.hLines);
   const vLineList = normalizeLines(props.vLine, props.vLines);
 
+  // Available pixel width for the plot area itself (excluding margins), used to size
+  // x-axis ticks/rotation so labels don't overlap regardless of orientation.
+  const plotAreaWidth = props.width - props.marginLeft - props.marginRight;
+
   // Create chart
   const chart = props.horizontal
     ? (() => {
@@ -410,17 +511,24 @@ function renderChart() {
               ? { domain: [props.xMin, props.xMax] }
               : {}),
             grid: true,
-            ...(props.integerTicks && {
-              ticks: computeIntegerTicks(
-                props.data,
-                props.xKey,
-                props.yKey,
-                props.stacked,
-                props.xMin,
-                props.xMax,
-              ),
-              tickFormat: (d) => d.toLocaleString(),
-            }),
+            // x is the numeric value axis in horizontal orientation: size the number of
+            // ticks (integer-stepped or auto-rounded) to the available plot width so
+            // labels don't overlap.
+            ticks: computeNumericTicks(
+              props.data,
+              props.xKey,
+              props.yKey,
+              props.stacked,
+              props.xMin,
+              props.xMax,
+              props.integerTicks,
+              props.fontSize,
+              props.tooltipDecimalPlaces,
+              props.width,
+              props.marginLeft,
+              props.marginRight,
+            ),
+            ...(props.integerTicks && { tickFormat: (d) => d.toLocaleString() }),
           },
           color: {
             legend: props.showLegend,
@@ -508,7 +616,16 @@ function renderChart() {
             background: "transparent",
           },
           x: {
-            tickRotate: -45,
+            // x is the categorical axis in vertical orientation: only rotate labels
+            // (matching the original fixed -45 deg) when they wouldn't otherwise fit
+            // in the width available per category; keep them horizontal when they do.
+            tickRotate: computeCategoricalTickRotation(
+              props.data,
+              props.colorBy || props.yKey,
+              props.categoryOrder,
+              plotAreaWidth,
+              props.fontSize,
+            ),
             label: props.xLabel,
             labelAnchor: "center",
             labelArrow: "none",
@@ -523,13 +640,16 @@ function renderChart() {
               ? { domain: [props.yMin, props.yMax] }
               : {}),
             ...(props.integerTicks && {
-              ticks: computeIntegerTicks(
+              ticks: computeNumericTicks(
                 props.data,
                 props.xKey,
                 props.yKey,
                 props.stacked,
                 props.yMin,
                 props.yMax,
+                true,
+                props.fontSize,
+                props.tooltipDecimalPlaces,
               ),
               tickFormat: (d) => d.toLocaleString(),
             }),
@@ -636,6 +756,9 @@ watch(() => props.xTooltipLabel, renderChart);
 watch(() => props.yTooltipLabel, renderChart);
 watch(() => props.appendPercentX, renderChart);
 watch(() => props.appendPercentY, renderChart);
+watch(() => props.width, renderChart);
+watch(() => props.marginLeft, renderChart);
+watch(() => props.marginRight, renderChart);
 
 onBeforeUnmount(() => {
   if (chartContainer.value) {
