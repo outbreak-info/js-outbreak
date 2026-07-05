@@ -38,6 +38,14 @@ const props = defineProps({
   yAxisLabel: { type: String, default: "prevalence (%)" },
   height: { type: Number, default: 330 },
   barChartTitle: { type: String, default: "Average prevalence" },
+  // Title shown at the top of the tooltip. When left empty (default), the
+  // tooltip falls back to its automatically generated "region · Epiweek N"
+  // header.
+  tooltipTitle: { type: String, default: "" },
+  // Subtitle/date line shown under the tooltip title. When left empty
+  // (default), the tooltip falls back to its automatically generated
+  // date-range line.
+  tooltipSubtitle: { type: String, default: "" },
   width: { type: Number, default: 500 },
 
   // Margins
@@ -438,7 +446,9 @@ const chartContainerStyle = computed(() => ({
       :weekStartAccessor="weekStartAccessor"
       :weekEndAccessor="weekEndAccessor"
       :regionAccessor="regionAccessor"
-      barChartTitle="Average prevalence"
+      :tooltipTitle="tooltipTitle"
+      :tooltipSubtitle="tooltipSubtitle"
+      :barChartTitle="barChartTitle"
       :tooltipDecimalPlaces="tooltipDecimalPlaces"
     />
   </div>
