@@ -276,6 +276,17 @@ function estimateMaxTickCount(availableWidth, fontSize, sampleLabels) {
   return Math.max(2, Math.floor(availableWidth / slot));
 }
 
+// Rounds a raw tick step up to a "nice" number
+function niceIntegerStep(rawStep) {
+  if (!isFinite(rawStep) || rawStep <= 0) return 1;
+
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)) - 1);
+  const unit = magnitude * 5;
+  const rounded = Math.round(rawStep / unit) * unit;
+
+  return Math.max(1, Math.round(rounded));
+}
+
 // Computes the effective numeric domain [min, max] for the value axis, accounting for
 // stacking (summing values within each category) and any user-specified min/max overrides.
 function computeEffectiveDomain(data, valueKey, categoryKey, stacked, propMin, propMax) {
@@ -352,7 +363,7 @@ function computeNumericTicks(
           ])
         : 10;
 
-    const step = Math.max(1, Math.ceil((max - min) / maxTickCount));
+    const step = niceIntegerStep((max - min) / maxTickCount);
     const ticks = [];
     for (let t = min; t <= max; t += step) ticks.push(t);
     return ticks;
