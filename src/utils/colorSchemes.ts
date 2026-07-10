@@ -95,7 +95,7 @@ export const diagonalHatchPatternDef = (
   </pattern>
 `;
 
-// Select accessible color palette based on the number of categories
+// Select 'accessible' color palette based on the number of categories
 export const selectAccessibleColorPalette = (categoryArray: string | string[]) => {
   const numberOfItems = categoryArray.length;
   let colorPalette;
@@ -128,8 +128,39 @@ export const selectAccessibleColorPalette = (categoryArray: string | string[]) =
       case 9:
         colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#dddddd'];
         break;
+      case 10:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#999999'];
+        break;
+      case 11:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#999999'];
+        break;
+      case 12:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#999999'];
+        break;
+      case 13:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#999999'];
+        break;
+      case 14:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#999999'];
+        break;
+      case 15:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#999999'];
+        break;
+      case 16:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#999999'];
+        break;
+      case 17:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#004488', '#999999'];
+        break;
+      case 18:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#004488', '#eedd88', '#999999'];
+        break;
+      case 19:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#004488', '#eedd88', '#994455', '#999999'];
+        break;
       default:
-        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#dddddd'];
+        // 20 or more categories -> fall back to the full 20-color palette
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#004488', '#eedd88', '#994455', '#99ddff', '#999999'];
     }
   } else {
     switch (numberOfItems) {
@@ -160,8 +191,39 @@ export const selectAccessibleColorPalette = (categoryArray: string | string[]) =
       case 9:
         colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499'];
         break;
+      case 10:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd'];
+        break;
+      case 11:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866'];
+        break;
+      case 12:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff'];
+        break;
+      case 13:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000'];
+        break;
+      case 14:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0'];
+        break;
+      case 15:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f'];
+        break;
+      case 16:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#004488'];
+        break;
+      case 17:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#004488', '#eedd88'];
+        break;
+      case 18:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#004488', '#eedd88', '#994455'];
+        break;
+      case 19:
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#004488', '#eedd88', '#994455', '#99ddff'];
+        break;
       default:
-        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#dddddd'];
+        // 20 or more categories -> fall back to the full 20-color palette
+        colorPalette = ['#332288', '#cc6677', '#ddcc77', '#117733', '#88ccee', '#882255', '#44aa99', '#999933', '#aa4499', '#77aadd', '#ee8866', '#648fff', '#ffb000', '#785ef0', '#dc267f', '#004488', '#eedd88', '#994455', '#99ddff', '#7f4f24'];
     }
   }
   return colorPalette;
