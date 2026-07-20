@@ -67,6 +67,11 @@ const props = defineProps({
   hLines: { type: Array, default: () => [] },
   vLines: { type: Array, default: () => [] },
   integerTicks: { type: Boolean, default: false },
+  // When set, forces the numeric value axis to only show tick labels 
+  // that are exact multiples of this number. The step between
+  // ticks is itself sized to a multiple of this number is chosen
+  // based on the available axis width so labels never overlap.
+  tickMultiple: { type: Number, default: null },
   // Append a literal '%' after the numeric value in the tooltip.
   // Independent of showProportion, which computes and appends a derived percentage.
   appendPercentX: { type: Boolean, default: false },
@@ -287,42 +292,67 @@ function niceIntegerStep(rawStep) {
   return Math.max(1, Math.round(rounded));
 }
 
-// Computes the effective numeric domain [min, max] for the value axis, accounting for
-// stacking (summing values within each category) and any user-specified min/max overrides.
-function computeEffectiveDomain(data, valueKey, categoryKey, stacked, propMin, propMax) {
+// Rounds a raw tick step up to the nearest multiple of `multiple`. Unlike
+// niceIntegerStep (which rounds to a "nice" 5/10/50/... number), this
+// guarantees the step (and therefore every tick derived from it) is an 
+// exact multiple of `multiple`
+// (e.g. multiple=10 -> steps of 10, 20, 30, ...).
+function multipleStep(rawStep, multiple) {
+  if (!isFinite(rawStep) || rawStep <= 0 || !multiple || multiple <= 0) return multiple || 1;
+  return Math.max(multiple, Math.ceil(rawStep / multiple) * multiple);
+}
+
+// Computes the effective numeric domain [min, max] for the value axis.
+//
+// This mirrors what Observable Plot's bar marks actually render: Plot.barX/Plot.barY
+// always apply an implicit stack transform internally (see @observablehq/plot's
+// marks/bar.js), summing together any data points that land in the same
+// (facet, categoryKey) band - regardless of whether our own `stacked` prop is set.
+// Our `stacked` prop only changes *which* field is used as that band key (and adds an
+// explicit fill-ordered stack): when stacked it's always yKey; when not stacked it's
+// `colorBy || yKey` (see renderChart, where colorBy is substituted in as the mark's
+// y/x channel). Whenever that key repeats across rows - most commonly because colorBy
+// groups many rows under a shared category - Plot will sum them into one bar, so our
+// domain estimate must sum the same way or our tick calculations (and any explicit
+// tick list, e.g. from tickMultiple/integerTicks) will fall short of the real bars.
+function computeEffectiveDomain(data, valueKey, categoryKey, facetKey, propMin, propMax) {
   if (!data || data.length === 0) return [0, 0];
 
   let effectiveMax;
   if (propMax !== null) {
     effectiveMax = propMax;
-  } else if (stacked) {
+  } else {
     const sums = data.reduce((acc, d) => {
-      const cat = d[categoryKey];
-      acc[cat] = (acc[cat] || 0) + Number(d[valueKey] || 0);
+      const groupKey = `${facetKey ? d[facetKey] : ""}\u0000${d[categoryKey]}`;
+      acc[groupKey] = (acc[groupKey] || 0) + Number(d[valueKey] || 0);
       return acc;
     }, {});
     effectiveMax = Math.max(...Object.values(sums));
-  } else {
-    effectiveMax = Math.max(...data.map((d) => Number(d[valueKey] || 0)));
   }
 
   const min = propMin !== null ? propMin : 0;
   return [min, effectiveMax];
 }
 
-// Computes the `ticks` value for a numeric Plot scale, covering both cases in one
+// Computes the `ticks` value for a numeric Plot scale, covering three cases in one
 // place:
-//  - integerTicks true: returns explicit, integer-stepped tick values.
-//  - integerTicks false: returns a desired tick *count* (a plain number), letting
-//    Plot/d3 still choose nicely-rounded tick values, just at a width-aware density.
+//  - tickMultiple set: returns explicit tick values that are all exact multiples of
+//    tickMultiple, with the step between them also sized to a multiple of tickMultiple
+//    (width-aware, like integerTicks below). Takes priority over integerTicks.
+//  - integerTicks true (and no tickMultiple): returns explicit, integer-stepped tick
+//    values, "nicely" rounded (see niceIntegerStep).
+//  - neither: returns a desired tick *count* (a plain number), letting Plot/d3 still
+//    choose nicely-rounded tick values, just at a width-aware density.
+// `categoryKey` must already be resolved by the caller to whatever field Plot will
+// actually use as the band/grouping channel (yKey when stacked, colorBy || yKey when
+// not; `facetKey` is the groupBy/fx field, if any.
 // `width`/`marginLeft`/`marginRight` are optional: when omitted, falls back to the
-// original fixed ~10-tick budget (used for the value axis in vertical orientation,
-// where the axis runs vertically and isn't governed by chart width).
+// original fixed ~10-tick budget.
 function computeNumericTicks(
   data,
   valueKey,
   categoryKey,
-  stacked,
+  facetKey,
   propMin,
   propMax,
   integerTicks,
@@ -331,23 +361,49 @@ function computeNumericTicks(
   width = null,
   marginLeft = 0,
   marginRight = 0,
+  tickMultiple = null,
 ) {
-  if (!data || data.length === 0) return integerTicks ? [] : undefined;
+  const wantsExplicitTicks = integerTicks || !!tickMultiple;
+
+  if (!data || data.length === 0) return wantsExplicitTicks ? [] : undefined;
 
   const [domainMin, domainMax] = computeEffectiveDomain(
     data,
     valueKey,
     categoryKey,
-    stacked,
+    facetKey,
     propMin,
     propMax,
   );
   if (!isFinite(domainMin) || !isFinite(domainMax))
-    return integerTicks ? [] : undefined;
+    return wantsExplicitTicks ? [] : undefined;
 
   // When width info is available, size the tick count to fit; otherwise keep the
   // original fixed budget of ~10 ticks.
   const availableWidth = width !== null ? width - marginLeft - marginRight : null;
+
+  if (tickMultiple) {
+    // Align the domain edges to the multiple first, so every subsequent tick (min,
+    // min + step, min + 2*step, ...) is guaranteed to also be a multiple of it, since
+    // step is itself a multiple of tickMultiple.
+    const min = Math.floor(domainMin / tickMultiple) * tickMultiple;
+    const max = Math.ceil(domainMax / tickMultiple) * tickMultiple;
+    if (!isFinite(min) || !isFinite(max) || max <= min)
+      return [min, max].filter(isFinite);
+
+    const maxTickCount =
+      availableWidth !== null
+        ? estimateMaxTickCount(availableWidth, fontSize, [
+            min.toLocaleString(),
+            max.toLocaleString(),
+          ])
+        : 10;
+
+    const step = multipleStep((max - min) / maxTickCount, tickMultiple);
+    const ticks = [];
+    for (let t = min; t <= max; t += step) ticks.push(t);
+    return ticks;
+  }
 
   if (integerTicks) {
     const min = Math.floor(domainMin);
@@ -523,13 +579,16 @@ function renderChart() {
               : {}),
             grid: true,
             // x is the numeric value axis in horizontal orientation: size the number of
-            // ticks (integer-stepped or auto-rounded) to the available plot width so
-            // labels don't overlap.
+            // ticks (tick-multiple-stepped, integer-stepped, or auto-rounded) to the
+            // available plot width so labels don't overlap. The categoryKey passed in
+            // must match the actual y/band channel used by the marks below - yKey when
+            // stacked, colorBy || yKey otherwise - so the domain estimate accounts for
+            // Plot's implicit stacking.
             ticks: computeNumericTicks(
               props.data,
               props.xKey,
-              props.yKey,
-              props.stacked,
+              props.stacked ? props.yKey : (props.colorBy || props.yKey),
+              props.groupBy,
               props.xMin,
               props.xMax,
               props.integerTicks,
@@ -538,8 +597,11 @@ function renderChart() {
               props.width,
               props.marginLeft,
               props.marginRight,
+              props.tickMultiple,
             ),
-            ...(props.integerTicks && { tickFormat: (d) => d.toLocaleString() }),
+            ...((props.integerTicks || props.tickMultiple) && {
+              tickFormat: (d) => d.toLocaleString(),
+            }),
           },
           color: {
             legend: props.showLegend,
@@ -650,17 +712,23 @@ function renderChart() {
             ...(props.yMin !== null && props.yMax !== null
               ? { domain: [props.yMin, props.yMax] }
               : {}),
-            ...(props.integerTicks && {
+            ...((props.integerTicks || props.tickMultiple) && {
+              // Same categoryKey resolution as the horizontal x-ticks case above,
+              // adapted to the vertical orientation's x/band channel.
               ticks: computeNumericTicks(
                 props.data,
                 props.xKey,
-                props.yKey,
-                props.stacked,
+                props.stacked ? props.yKey : (props.colorBy || props.yKey),
+                props.groupBy,
                 props.yMin,
                 props.yMax,
-                true,
+                props.integerTicks,
                 props.fontSize,
                 props.tooltipDecimalPlaces,
+                null,
+                0,
+                0,
+                props.tickMultiple,
               ),
               tickFormat: (d) => d.toLocaleString(),
             }),
@@ -759,6 +827,7 @@ watch(() => props.showLabels, renderChart);
 watch(() => props.labelKey, renderChart);
 watch(() => props.missingAttribute, renderChart, { deep: true });
 watch(() => props.integerTicks, renderChart);
+watch(() => props.tickMultiple, renderChart);
 watch(() => props.hLine, renderChart);
 watch(() => props.vLine, renderChart);
 watch(() => props.hLines, renderChart, { deep: true });
