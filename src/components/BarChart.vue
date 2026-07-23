@@ -44,6 +44,12 @@ const props = defineProps({
   showLabels: { type: Boolean, default: false },
   labelKey: { type: String, default: "" },
   missingAttribute: { type: Array, default: () => [] },
+  // Highlights bar(s) whose yKey value matches one of these, by filling
+  // them with highlightColor. Intended for single-color charts.
+  // It takes priority over missingAttribute if a value happens
+  // to appear in both.
+  highlightKeys: { type: Array, default: () => [] },
+  highlightColor: { type: String, default: colorPalette[19] },
   // Single horizontal/vertical reference line (kept for backwards compatibility)
   hLine: { type: Number, default: null },
   vLine: { type: Number, default: null },
@@ -468,6 +474,10 @@ function renderChart() {
     props.missingAttribute && props.missingAttribute.length > 0;
   const missingKey = props.yKey;
 
+  const hasHighlight =
+    props.highlightKeys && props.highlightKeys.length > 0;
+  const highlightKey = props.yKey;
+
   let colorMap = null;
   if (hasMissing && props.colorBy) {
     const domain = props.legendDomain ?? [
@@ -477,16 +487,18 @@ function renderChart() {
     colorMap = new Map(domain.map((v, i) => [v, range[i % range.length]]));
   }
 
-  const fillFn = hasMissing
+  const fillFn = hasMissing || hasHighlight
     ? (d) =>
-        props.missingAttribute.includes(d[missingKey])
-          ? colorPalette[19]
-          : colorMap
-            ? (colorMap.get(d[props.colorBy]) ?? props.barColor)
-            : props.barColor
+        hasHighlight && props.highlightKeys.includes(d[highlightKey])
+          ? props.highlightColor
+          : hasMissing && props.missingAttribute.includes(d[missingKey])
+            ? colorPalette[19]
+            : colorMap
+              ? (colorMap.get(d[props.colorBy]) ?? props.barColor)
+              : props.barColor
     : null;
 
-  const fill = hasMissing ? fillFn : props.colorBy || props.barColor;
+  const fill = hasMissing || hasHighlight ? fillFn : props.colorBy || props.barColor;
 
   const labelMap = props.labelKey
     ? new Map(props.data.map((d) => [Number(d[props.xKey]), d[props.labelKey]]))
@@ -623,7 +635,7 @@ function renderChart() {
                     y: props.yKey,
                     x: props.xKey,
                     fx: props.groupBy,
-                    fill: hasMissing ? fillFn : props.colorBy,
+                    fill: (hasMissing || hasHighlight) ? fillFn : props.colorBy,
                     ...(props.legendDomain && { order: props.legendDomain }),
                     tip: horizontalTipFormat,
                   }),
@@ -753,7 +765,7 @@ function renderChart() {
                     x: props.yKey,
                     y: props.xKey,
                     fx: props.groupBy,
-                    fill: hasMissing ? fillFn : props.colorBy,
+                    fill: (hasMissing || hasHighlight) ? fillFn : props.colorBy,
                     ...(props.legendDomain && { order: props.legendDomain }),
                     tip: verticalTipFormat,
                   }),
@@ -826,6 +838,8 @@ watch(() => props.fontSize, renderChart);
 watch(() => props.showLabels, renderChart);
 watch(() => props.labelKey, renderChart);
 watch(() => props.missingAttribute, renderChart, { deep: true });
+watch(() => props.highlightKeys, renderChart, { deep: true });
+watch(() => props.highlightColor, renderChart);
 watch(() => props.integerTicks, renderChart);
 watch(() => props.tickMultiple, renderChart);
 watch(() => props.hLine, renderChart);

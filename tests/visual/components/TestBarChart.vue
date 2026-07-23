@@ -196,6 +196,16 @@
         :missingAttribute="['D', 'H']"
     />
 
+    Horizontal with missing and highlighted bars
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :missingAttribute="['D', 'H']"
+        :highlight-keys="['A', 'L']"
+        highlight-color="#e15759"
+    />
+
     Vertical with missing bars (D and H gray)
     <BarChart
         :data="chartData"
@@ -203,6 +213,17 @@
         :height="height"
         :horizontal="false"
         :missingAttribute="['D', 'H']"
+    />
+
+     Vertical with missing and highlighted bars
+    <BarChart
+        :data="chartData"
+        :width="width"
+        :height="height"
+        :horizontal="false"
+        :missingAttribute="['D', 'H']"
+        :highlight-keys="['A', 'L']"
+        highlight-color="#e15759"
     />
 
     Horizontal with vLine at 10
