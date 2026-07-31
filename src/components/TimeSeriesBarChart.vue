@@ -8,8 +8,8 @@ import { defaultColor, colorPalette } from '../utils/colorSchemes';
 import { defaultFontSize, defaultFontFamily } from '../utils/chartDefaults';
 import * as Plot from '@observablehq/plot';
 import { sum, rollup } from 'd3-array';
-import { timeFormat, timeParse } from 'd3-time-format';
-import { timeMonth, timeDay, timeYear, timeWeek } from 'd3-time';
+import { timeFormat, timeParse, utcFormat } from 'd3-time-format';
+import { timeMonth, timeDay, timeYear, timeWeek, utcMonth, utcDay, utcYear, utcWeek } from 'd3-time';
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -119,24 +119,29 @@ function getDateFromBin(binValue) {
   return new Date(binStr);
 }
 
-function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, marginRight, fontSize, tickRotate, spansMultipleYears) {
-  const plotWidth = width - marginLeft - marginRight;
+// Compute the actual tick values (bin-centre dates) to show on the x-axis,
+// rather than a generic time interval. Using explicit bin-centre dates means
+// every tick lines up with the bar it labels. When there isn't room for a
+// label under every bar, the list is thinned to an evenly-spaced subset
+// that fits.
+function computeVisibleTicks(binDates, binInterval, width, marginLeft, marginRight, fontSize, tickRotate, spansMultipleYears) {
+  if (binDates.length === 0) return [];
 
-  // Approximate character width relative to font size
+  const plotWidth = width - marginLeft - marginRight;
   const charWidth = fontSize * 0.6;
 
-  // Estimated label widths (in characters) per format string. These mirror
-  // getTickFormat's two label variants: with the year (e.g. "2024-01-15",
-  // "Jan 15 '24", "Jan '24", "2024") and without it (e.g. "Jan 15", "Jan 15",
-  // "Jan", "2024").
-  const labelCharCounts = spansMultipleYears
-    ? { day: 10, week: 10, month: 7, year: 4 }
-    : { day: 6, week: 6, month: 3, year: 4 };
-  const rawLabelWidth = (labelCharCounts[binInterval] ?? 7) * charWidth;
+  // Measure the widest label actually produced for this data, rather than
+  // guessing a fixed character count per interval.
+  const formatter = timeFormat(getTickFormat(binInterval, spansMultipleYears));
+  const widestLabel = binDates.reduce((longest, d) => {
+    const label = formatter(d);
+    return label.length > longest.length ? label : longest;
+  }, '');
+  const rawLabelWidth = widestLabel.length * charWidth;
 
   // When labels are rotated, their horizontal footprint shrinks.
   // Use the projected width onto the x-axis: w * |cos(θ)| + h * |sin(θ)|
-  // For simplicity we treat label height as fontSize.
+  // For simplicity label height is treated as fontSize.
   const rad = (Math.abs(tickRotate) * Math.PI) / 180;
   const effectiveLabelWidth = rad > 0
     ? rawLabelWidth * Math.abs(Math.cos(rad)) + fontSize * Math.abs(Math.sin(rad))
@@ -147,36 +152,18 @@ function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, m
 
   // Maximum number of ticks that fit: n ticks create (n-1) gaps, so the last
   // tick doesn't need a trailing slot. Solving (n-1) * spacing <= plotWidth gives n.
-  const maxTicks = Math.floor(plotWidth / minTickSpacing) + 1;
+  const maxTicks = Math.max(1, Math.floor(plotWidth / minTickSpacing) + 1);
 
-  // Align the date range to bin boundaries, matching how Plot pads its x domain
-  // for bar charts (floor the start, ceil the end to the next bin boundary).
-  const binFloorFn = { day: timeDay, week: timeWeek, month: timeMonth, year: timeYear }[binInterval] || timeMonth;
-  const alignedMin = binFloorFn.floor(minDate);
-  const alignedMax = binFloorFn.ceil(maxDate);
+  if (binDates.length <= maxTicks) return binDates;
 
-  // Candidate intervals ordered finest: coarsest, each paired with a function
-  // that counts how many ticks of that interval fall in [alignedMin, alignedMax].
-  const candidates = [
-    { name: 'day',   countFn: () => timeDay.count(alignedMin, alignedMax) },
-    { name: 'week',  countFn: () => timeWeek.count(alignedMin, alignedMax) },
-    { name: 'month', countFn: () => timeMonth.count(alignedMin, alignedMax) },
-    { name: 'year',  countFn: () => timeYear.count(alignedMin, alignedMax) },
-  ];
-
-  // Only consider intervals that are >= binInterval (no point ticking finer than bins)
-  const binOrder = ['day', 'week', 'month', 'year'];
-  const binIdx = binOrder.indexOf(binInterval);
-  const eligible = candidates.filter((_, i) => i >= binIdx);
-
-  for (const candidate of eligible) {
-    if (candidate.countFn() <= maxTicks) {
-      return candidate.name;
-    }
+  // Thin to an evenly-spaced subset of actual bin centres, always keeping
+  // the first bin's tick.
+  const step = Math.ceil(binDates.length / maxTicks);
+  const thinned = [];
+  for (let i = 0; i < binDates.length; i += step) {
+    thinned.push(binDates[i]);
   }
-
-  // Fallback: yearly ticks always fit
-  return 'year';
+  return thinned;
 }
 
 function computeMarginLeft(values, yMin, yMax, fontSize) {
@@ -220,7 +207,10 @@ function renderChart() {
         .map(d => ({
           group: d[props.groupKey],
           dateBin: d[props.dateKey],
-          date: getDateFromBin(d[props.dateKey]),
+          // Use the bin's middle date so anything derived from
+          // this date (the cumulative line and the x-axis ticks) is
+          // centred under the bar.
+          date: getMiddleDate(getDateFromBin(d[props.dateKey]), props.binInterval),
           value: d[props.valueKey]
         }))
         .sort((a, b) => a.date - b.date);
@@ -262,6 +252,10 @@ function renderChart() {
 
   const timeIntervalFloor = { day: timeDay, week: timeWeek, month: timeMonth, year: timeYear };
   const binFloor = timeIntervalFloor[props.binInterval] || timeMonth;
+
+  // Plot's binX transform computes bin boundaries in UTC.
+  const utcIntervalFloor = { day: utcDay, week: utcWeek, month: utcMonth, year: utcYear };
+  const utcBinFloor = utcIntervalFloor[props.binInterval] || utcMonth;
   const binTotalMap = new Map();
   binnedData.forEach(d => {
     const key = timeFormat(getTickFormat(props.binInterval))(binFloor.floor(d.date));
@@ -285,12 +279,15 @@ function renderChart() {
     ? computeMarginLeft(allValues, props.yMin, props.yMax, props.fontSize)
     : props.marginLeft;
 
-  // When autoTickInterval is true, compute dynamically to avoid label overlap.
-  // Set autoTickInterval to false to use tickInterval as-is.
-  let resolvedTickInterval;
+  // When autoTickInterval is true, compute explicit bin-centre tick dates
+  // dynamically to avoid label overlap. Set autoTickInterval to false to use
+  // tickInterval (a plain time-interval string) as-is.
+  let resolvedTicks;
   if (!props.autoTickInterval) {
-    // Caller opted out of auto-computation — use tickInterval as-is
-    resolvedTickInterval = props.tickInterval;
+    // Caller opted out of auto-computation (use tickInterval as-is).
+    // This reverts to Plot's native time-interval tick placement
+    // rather than bin centres.
+    resolvedTicks = props.tickInterval;
   } else {
     // Derive the visible date range (respecting xTickMin/xTickMax if provided)
     const allDates = binnedData.map(d => d.date);
@@ -304,9 +301,11 @@ function renderChart() {
       ? (props.xTickMax instanceof Date ? props.xTickMax : new Date(props.xTickMax))
       : dataMax;
 
-    resolvedTickInterval = computeTickInterval(
-      rangeMin,
-      rangeMax,
+    // Only bins within the visible domain are candidates for a tick.
+    const visibleBinDates = allDates.filter(d => d >= rangeMin && d <= rangeMax);
+
+    resolvedTicks = computeVisibleTicks(
+      visibleBinDates,
       props.binInterval,
       props.width,
       resolvedMarginLeft,
@@ -317,14 +316,19 @@ function renderChart() {
     );
   }
 
-  // Tooltip format configuration for binned data
+  // Tooltip format configuration for binned data.
+  // Plot.binX outputs the bin extent as separate x1/x2 channels, so x1 gets
+  // the single bin-label formatter and x2 is hidden to ensure that the
+  // tooltip shows one label, e.g., Apr '24.
   let _tipBinKey = null;
   const tipFormat = {
     format: {
-      x: (d) => {
-        _tipBinKey = timeFormat(getTickFormat(props.binInterval))(binFloor.floor(d));
+      x1: (d) => {
+        // d is Plot's own bin boundary (UTC)
+        _tipBinKey = utcFormat(getTickFormat(props.binInterval))(utcBinFloor.floor(d));
         return _tipBinKey;
       },
+      x2: false,
       y: (d) => {
         const binTotal = _tipBinKey ? (binTotalMap.get(_tipBinKey) || 0) : 0;
         const text = d.toLocaleString();
@@ -397,7 +401,7 @@ function renderChart() {
       labelArrow: "none",
       type: "time",
       tickFormat: getTickFormat(props.binInterval, spansMultipleYears),
-      ticks: resolvedTickInterval,
+      ticks: resolvedTicks,
       tickRotate: props.tickRotate,
       ...(props.xTickMin && props.xTickMax ? {
         domain: [
