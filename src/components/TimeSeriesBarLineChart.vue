@@ -28,12 +28,14 @@ const props = defineProps({
   yMin: { type: Number, default: 0 },
   yMax: { type: Number, default: null }, // null => autoscale (defaults to 100 when lines present)
   yIntegerTicks: { type: Boolean, default: false }, // when true, only integer ticks, deduplicated
+  yTickSuffix: { type: String, default: '' }, // optional suffix appended to primary y-axis tick labels, e.g., '%'
 
   // Secondary y-axis (bars)
   yRightLabel: { type: String, default: 'Secondary y-axis' },
   yRightMin: { type: Number, default: 0 },
   yRightMax: { type: Number, default: null }, // null => autoscale from barData
   yRightIntegerTicks: { type: Boolean, default: false }, // when true, only integer ticks, deduplicated
+  yRightTickSuffix: { type: String, default: '' }, // optional suffix appended to secondary y-axis tick labels, e.g., '%'
 
   xLabel: { type: String, default: 'Surveillance Month' },
 
@@ -51,6 +53,7 @@ const props = defineProps({
   curve: { type: String, default: 'linear' },
   showDots: { type: Boolean, default: true },
   dotRadius: { type: Number, default: 3 },
+  lineStrokeWidth: { type: Number, default: 2 }, // thickness of the line marks
 
   binInterval: { type: String, default: 'month' },
   tickInterval: { type: String, default: 'month' },
@@ -158,8 +161,9 @@ function computeTickInterval(minDate, maxDate, binInterval, width, marginLeft, m
   return 'year';
 }
 
-// Copied from TimeSeriesBarChart
-function computeMarginLeft(values, yMin, yMax, fontSize) {
+// `suffix` accounts for any extra characters (e.g., '%') appended to tick labels
+// so the auto-computed margin still fits the widest rendered label.
+function computeMarginLeft(values, yMin, yMax, fontSize, suffix = '') {
   const charWidth = fontSize * 0.6;
   const dataMax = yMax !== null ? yMax : Math.max(...values, 0);
   const dataMin = yMin !== null ? yMin : Math.min(...values, 0);
@@ -169,7 +173,7 @@ function computeMarginLeft(values, yMin, yMax, fontSize) {
   const candidateTicks = Array.from({ length: tickCount + 1 }, (_, i) => dataMin + i * step);
 
   const widestLabel = candidateTicks
-    .map(v => v.toLocaleString())
+    .map(v => `${v.toLocaleString()}${suffix}`)
     .reduce((a, b) => (a.length >= b.length ? a : b), '');
 
   const labelWidth = widestLabel.length * charWidth;
@@ -177,10 +181,10 @@ function computeMarginLeft(values, yMin, yMax, fontSize) {
 }
 
 // Mirror of computeMarginLeft()
-function computeMarginRight(rightTicksOriginal, fontSize) {
+function computeMarginRight(rightTicksOriginal, fontSize, suffix = '') {
   const charWidth = fontSize * 0.6;
   const widestLabel = rightTicksOriginal
-    .map(v => Math.round(v).toLocaleString())
+    .map(v => `${Math.round(v).toLocaleString()}${suffix}`)
     .reduce((a, b) => (a.length >= b.length ? a : b), '');
   const labelWidth = widestLabel.length * charWidth;
   // tick mark (6px) + label + vertical axis title (~fontSize) + breathing room
@@ -306,12 +310,20 @@ function renderChart() {
     ? toIntegerTicks(leftTicksCandidates)
     : null; // null => let Plot decide
 
+  // Tick-label formatters for the two y-axes. Both integer-rounding and an
+  // optional suffix (e.g., '%') are applied here; when neither is requested the
+  // formatter is left undefined so Plot falls back to its own default formatting.
+  const leftTickFormat = (leftTicksExplicit || props.yTickSuffix)
+    ? (v => `${leftTicksExplicit ? Math.round(v).toLocaleString() : v.toLocaleString()}${props.yTickSuffix}`)
+    : undefined;
+  const rightTickFormat = (pos) => `${Math.round(toCount(pos)).toLocaleString()}${props.yRightTickSuffix}`;
+
   // 3. Margins.
   const resolvedMarginLeft = props.autoMarginLeft
-    ? computeMarginLeft([leftMin, leftMax], leftMin, leftMax, props.fontSize)
+    ? computeMarginLeft([leftMin, leftMax], leftMin, leftMax, props.fontSize, props.yTickSuffix)
     : props.marginLeft;
   const resolvedMarginRight = (props.autoMarginRight && hasBars)
-    ? computeMarginRight(rightTicksOriginal, props.fontSize)
+    ? computeMarginRight(rightTicksOriginal, props.fontSize, props.yRightTickSuffix)
     : props.marginRight;
 
   // Tick interval, derived from the union of bar + line dates.
@@ -379,7 +391,7 @@ function renderChart() {
     marks.push(
       Plot.line(lineProcessed, {
         x: 'date', y: 'value', z: 'group', stroke: 'group',
-        strokeWidth: 2, curve: props.curve,
+        strokeWidth: props.lineStrokeWidth, curve: props.curve,
       }),
     );
     if (props.showDots) {
@@ -405,8 +417,9 @@ function renderChart() {
           labelAnchor: 'center',
           labelArrow: 'none',
           tickSize: 6,
-          // Suppress the ".0" suffix Plot adds to whole-number floats.
-          ...(leftTicksExplicit ? { tickFormat: v => Math.round(v).toLocaleString() } : {}),
+          // Suppress the ".0" suffix Plot adds to whole-number floats, and apply
+          // the optional '%'-style suffix.
+          ...(leftTickFormat ? { tickFormat: leftTickFormat } : {}),
         },
       ),
     );
@@ -416,7 +429,7 @@ function renderChart() {
         label: props.yRightLabel,
         labelAnchor: 'center',
         labelArrow: 'none',
-        tickFormat: (pos) => Math.round(toCount(pos)).toLocaleString(),
+        tickFormat: rightTickFormat,
         tickSize: 6,
       }),
     );
@@ -451,11 +464,11 @@ function renderChart() {
       labelArrow: 'none',
       domain: [leftMin, leftMax],
       // In lines-only mode (no bars) Plot renders the left axis implicitly from
-      // the y scale, so pass ticks here to enforce integer-only values.
-      ...(!hasBars && leftTicksExplicit ? {
-        ticks: leftTicksExplicit,
-        // Suppress the ".0" suffix Plot adds to whole-number floats.
-        tickFormat: v => Math.round(v).toLocaleString(),
+      // the y scale, so pass ticks/tickFormat here to enforce integer-only
+      // values and/or the optional suffix.
+      ...(!hasBars && leftTickFormat ? {
+        ...(leftTicksExplicit ? { ticks: leftTicksExplicit } : {}),
+        tickFormat: leftTickFormat,
       } : {}),
     },
     color: {
@@ -492,12 +505,12 @@ watch(
   () => [
     props.dateKey, props.valueKey, props.groupKey,
     props.barDateKey, props.barValueKey, props.lineDateKey, props.lineValueKey,
-    props.yLabel, props.yMin, props.yMax, props.yIntegerTicks,
-    props.yRightLabel, props.yRightMin, props.yRightMax, props.yRightIntegerTicks,
+    props.yLabel, props.yMin, props.yMax, props.yIntegerTicks, props.yTickSuffix,
+    props.yRightLabel, props.yRightMin, props.yRightMax, props.yRightIntegerTicks, props.yRightTickSuffix,
     props.xLabel,
     props.barColor, props.barLegendLabel, props.showBarTooltip, props.legendDomain, props.legendRange, props.showLegend,
     props.legendPosition,
-    props.curve, props.showDots, props.dotRadius,
+    props.curve, props.showDots, props.dotRadius, props.lineStrokeWidth,
     props.binInterval, props.tickInterval, props.autoTickInterval, props.isPreBinned,
     props.xTickMin, props.xTickMax, props.tickRotate,
     props.height, props.width,
