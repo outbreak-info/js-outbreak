@@ -20,6 +20,10 @@
         :lineData="positivityData"
         :showDots="false"
         curve="monotone-x"
+        :lineStrokeWidth="4"
+        barColor="#d8d8d8"
+        yTickSuffix="%"
+        yRightTickSuffix="%"
     />
 
     Lines only (no bars, no right axis)
