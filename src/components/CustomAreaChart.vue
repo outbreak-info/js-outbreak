@@ -36,6 +36,14 @@ const props = defineProps({
   regionKey: { type: String, default: "geo_loc_region" },
   xAxisLabel: { type: String, default: "last epiweek day" },
   yAxisLabel: { type: String, default: "prevalence (%)" },
+  // Position of the y-axis label
+  // 'top' (default): horizontal text sitting above the axis,
+  // near the top-left corner of the plot area.
+  // 'left': vertical text, rotated -90 degrees, and centered
+  // along the axis height.
+  yAxisLabelPosition: { type: String, default: "top" },
+  // Font weight for the x-axis and y-axis label.
+  axisLabelFontWeight: { type: [String, Number], default: 700 },
   height: { type: Number, default: 330 },
   barChartTitle: { type: String, default: "Average prevalence" },
   // Title shown at the top of the tooltip. When left empty (default), the
@@ -246,6 +254,8 @@ const colorScale = computed(() =>
   scaleOrdinal(colors.value).domain(props.legendDomain || uniqueLabels.value)
 );
 
+const yAxisLabelLeftX = computed(() => -(marginLeft - 35));
+
 const handleMouseMove = (e) => {
   const xPosition = e.offsetX - marginLeft;
 
@@ -306,12 +316,23 @@ const chartContainerStyle = computed(() => ({
             stroke-width="1"
           />
           <text
+            v-if="yAxisLabelPosition === 'left'"
+            :transform="`translate(${yAxisLabelLeftX}, ${innerHeight / 2}) rotate(-90)`"
+            text-anchor="middle"
+            fill="#2c3e50"
+            :font-size="`${fontSize}px`"
+            :font-weight="axisLabelFontWeight"
+          >
+            {{ yAxisLabel }}
+          </text>
+          <text
+            v-else
             x="-12"
             y="-25"
             text-anchor="middle"
             fill="#2c3e50"
             :font-size="`${fontSize}px`"
-            font-weight="700"
+            :font-weight="axisLabelFontWeight"
           >
             {{ yAxisLabel }}
           </text>
@@ -342,7 +363,7 @@ const chartContainerStyle = computed(() => ({
             y="45"
             fill="#2c3e50"
             :font-size="`${fontSize}px`"
-            font-weight="700"
+            :font-weight="axisLabelFontWeight"
           >
             {{ xAxisLabel }}
           </text>
