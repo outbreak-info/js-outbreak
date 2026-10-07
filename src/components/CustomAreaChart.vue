@@ -25,16 +25,19 @@ import CustomCategoricalLegend from "./CustomCategoricalLegend.vue";
 
 const props = defineProps({
   aggregatedData: { type: Array, required: true },
-  firstWeek: { type: Number, required: true },
-  lastWeek: { type: Number, required: true },
-  areaChartRange: { type: Number, required: true },
+  // Epiweek mode only. Not needed when timeUnit="month".
+  firstWeek: { type: Number, default: null },
+  lastWeek: { type: Number, default: null },
+  areaChartRange: { type: Number, default: null },
   weekStartKey: { type: String, default: "week_start" },
   weekEndKey: { type: String, default: "week_end" },
   valueKey: { type: String, default: "mean_lineage_prevalence" },
   labelKey: { type: String, default: "name" },
   weekKey: { type: String, default: "epiweek" },
   regionKey: { type: String, default: "geo_loc_region" },
-  xAxisLabel: { type: String, default: "last epiweek day" },
+  // When null, falls back to "last epiweek day" (epiweek mode) or "month"
+  // (month mode).
+  xAxisLabel: { type: String, default: null },
   yAxisLabel: { type: String, default: "prevalence (%)" },
   // Position of the y-axis label
   // 'top' (default): horizontal text sitting above the axis,
@@ -47,12 +50,12 @@ const props = defineProps({
   height: { type: Number, default: 330 },
   barChartTitle: { type: String, default: "Average prevalence" },
   // Title shown at the top of the tooltip. When left empty (default), the
-  // tooltip falls back to its automatically generated "region · Epiweek N"
-  // header.
+  // tooltip falls back to its automatically generated header
+  // ("region · Epiweek N" in epiweek mode, location in month mode).
   tooltipTitle: { type: String, default: "" },
   // Subtitle/date line shown under the tooltip title. When left empty
   // (default), the tooltip falls back to its automatically generated
-  // date-range line.
+  // date line.
   tooltipSubtitle: { type: String, default: "" },
   width: { type: Number, default: 500 },
 
@@ -69,6 +72,7 @@ const props = defineProps({
   containerMarginLeft: { type: Number, default: 10 },
 
   // Scale props
+  // In month mode, the domain must contain "YYYY-MM" strings.
   xScale: { type: Function, default: null },
 
   // Interpolation curve used for the area chart.
@@ -81,6 +85,18 @@ const props = defineProps({
   legendDomain: { type: Array, default: null },
   fontSize: { type: Number, default: defaultFontSize },
   tooltipDecimalPlaces: { type: Number, default: 2 },
+
+  // Month mode
+  // 'epiweek' (default) or 'month'
+  timeUnit: { type: String, default: "epiweek" },
+  // Keys used to build the "YYYY-MM" x value of each row in month mode
+  yearKey: { type: String, default: "year" },
+  monthKey: { type: String, default: "month" },
+  // Key holding the location shown on the first tooltip row in month mode
+  locationKey: { type: String, default: "location" },
+  // Optional "YYYY-MM" bounds for the monthly x-axis
+  firstMonth: { type: String, default: "" },
+  lastMonth: { type: String, default: "" },
 });
 
 const width = ref(props.width);
@@ -125,18 +141,103 @@ const yAccessor = (d) => d[props.valueKey];
 const weekAccessor = (d) => d[props.weekKey];
 const labelAccessor = (d) => d[props.labelKey];
 const regionAccessor = (d) => d[props.regionKey];
+const locationAccessor = (d) => d[props.locationKey];
 
 const formatValueKey = format(".2s");
 const parseTime = timeParse("%Y-%m-%d");
 const formatTime = timeFormat("%b %e");
+
+// Month mode helpers
+const isMonthly = computed(() => props.timeUnit === "month");
+
+const parseMonth = timeParse("%Y-%m");
+const formatMonthTick = timeFormat("%b %Y");
+
+const resolvedXAxisLabel = computed(
+  () => props.xAxisLabel ?? (isMonthly.value ? "month" : "last epiweek day"),
+);
+
+// Tick / hovered-date label for the x-axis
+const formatXLabel = (key) =>
+  isMonthly.value
+    ? formatMonthTick(parseMonth(key))
+    : formatTime(parseTime(key));
+
+// { year: 2025, month: 9 } -> "2025-09"
+const monthKeyOf = (d) =>
+  `${d[props.yearKey]}-${String(d[props.monthKey]).padStart(2, "0")}`;
+
+// Monthly mode: collapse rows to one row per (month, label), summing values
+// (e.g., XFG.1 + XFG.2 both named "XFG*"). Epiweek mode: data untouched.
+const baseData = computed(() => {
+  if (!isMonthly.value) return props.aggregatedData;
+  const map = new Map();
+  for (const d of props.aggregatedData) {
+    const xKey = monthKeyOf(d);
+    const label = labelAccessor(d);
+    const k = `${xKey}|${label}`;
+    const value = Number(yAccessor(d)) || 0;
+    const existing = map.get(k);
+    if (existing) {
+      existing[props.valueKey] += value;
+    } else {
+      map.set(k, {
+        __xKey: xKey,
+        [props.labelKey]: label,
+        [props.valueKey]: value,
+        [props.locationKey]: d[props.locationKey],
+        [props.yearKey]: d[props.yearKey],
+        [props.monthKey]: d[props.monthKey],
+      });
+    }
+  }
+  return [...map.values()];
+});
+
+// x key of a raw row OR a stacked row's .data
+const xKeyAccessor = (d) => (isMonthly.value ? d.__xKey : weekEndAccessor(d));
+
+// Consecutive "YYYY-MM" keys between first and last (inclusive)
+const buildMonthDomain = (keys, first, last) => {
+  if (!keys.length) return [];
+  const sorted = [...keys].sort();
+  const start = (first || sorted[0]).slice(0, 7);
+  const end = (last || sorted[sorted.length - 1]).slice(0, 7);
+  let [y, m] = start.split("-").map(Number);
+  const out = [];
+  for (;;) {
+    const k = `${y}-${String(m).padStart(2, "0")}`;
+    if (k > end) break;
+    out.push(k); // "YYYY-MM"
+    if (++m > 12) {
+      m = 1;
+      y++;
+    }
+  }
+  return out;
+};
+
+// Wide rows ({ __xKey, [label]: value, ... }) for d3.stack, in domain order.
+// Months with no data are skipped.
+const buildMonthlyStack = (rows, labels, domain) => {
+  const byX = new Map();
+  for (const r of rows) {
+    if (!byX.has(r.__xKey)) byX.set(r.__xKey, { __xKey: r.__xKey });
+    byX.get(r.__xKey)[labelAccessor(r)] = yAccessor(r);
+  }
+  const zeros = Object.fromEntries(labels.map((l) => [l, 0]));
+  return domain
+    .filter((x) => byX.has(x))
+    .map((x) => ({ ...zeros, ...byX.get(x) }));
+};
 
 const firstWeekEnd = computed(() =>
   findWeekEnd(
     props.firstWeek,
     props.aggregatedData,
     weekAccessor,
-    weekEndAccessor
-  )
+    weekEndAccessor,
+  ),
 );
 
 const lastWeekEnd = computed(() =>
@@ -144,25 +245,32 @@ const lastWeekEnd = computed(() =>
     props.lastWeek,
     props.aggregatedData,
     weekAccessor,
-    weekEndAccessor
-  )
+    weekEndAccessor,
+  ),
 );
 
 const xScaleDomain = computed(() => {
   if (props.xScale) {
     return props.xScale.domain();
   }
+  if (isMonthly.value) {
+    return buildMonthDomain(
+      baseData.value.map((d) => d.__xKey),
+      props.firstMonth,
+      props.lastMonth,
+    );
+  }
   return createDateArray(
     firstWeekEnd.value,
     lastWeekEnd.value,
-    props.areaChartRange
+    props.areaChartRange,
   );
 });
 
-// Only keep rows whose week_end falls within the x-scale domain
+// Only keep rows whose x key falls within the x-scale domain
 const filteredData = computed(() => {
   const domainSet = new Set(xScaleDomain.value);
-  return props.aggregatedData.filter((d) => domainSet.has(weekEndAccessor(d)));
+  return baseData.value.filter((d) => domainSet.has(xKeyAccessor(d)));
 });
 
 const uniqueLabels = computed(() =>
@@ -170,26 +278,41 @@ const uniqueLabels = computed(() =>
     if (a === "Other") return 1;
     if (b === "Other") return -1;
     return a.localeCompare(b);
-  })
+  }),
 );
 
 const numOfUniqueWeeks = computed(
-  () => [...new Set(filteredData.value.map(weekAccessor))].length
+  () =>
+    [
+      ...new Set(
+        filteredData.value.map(isMonthly.value ? xKeyAccessor : weekAccessor),
+      ),
+    ].length,
 );
 
 const data = computed(() =>
-  createStackedAreaArray(
-    filteredData.value,
-    uniqueLabels.value,
-    weekAccessor,
-    weekStartAccessor,
-    weekEndAccessor,
-    labelAccessor,
-    yAccessor
-  )
+  isMonthly.value
+    ? buildMonthlyStack(
+        filteredData.value,
+        uniqueLabels.value,
+        xScaleDomain.value,
+      )
+    : createStackedAreaArray(
+        filteredData.value,
+        uniqueLabels.value,
+        weekAccessor,
+        weekStartAccessor,
+        weekEndAccessor,
+        labelAccessor,
+        yAccessor,
+      ),
 );
 
 const datesWithData = computed(() => {
+  if (isMonthly.value) {
+    // "YYYY-MM" strings sort correctly as plain strings
+    return [...new Set(filteredData.value.map(xKeyAccessor))].sort();
+  }
   const dates = [...new Set(filteredData.value.map((d) => d.week_end))];
   return dates.sort((a, b) => new Date(a) - new Date(b));
 });
@@ -223,35 +346,44 @@ const yScale = scaleLinear()
 
 const allXTicks = computed(() => xScale.value.domain());
 
-const xTicksToBeRendered = computed(() =>
-  filterXTicks(allXTicks.value, innerWidth.value)
-);
+const xTicksToBeRendered = computed(() => {
+  if (!isMonthly.value) return filterXTicks(allXTicks.value, innerWidth.value);
+  // Monthly mode: roughly one tick per 70px
+  const ticks = allXTicks.value;
+  const maxTicks = Math.max(1, Math.floor(innerWidth.value / 70));
+  const step = Math.ceil(ticks.length / maxTicks);
+  return ticks.filter((_, i) => i % step === 0);
+});
 
 const yTicks = computed(() => {
   const numberOfYTicks = Math.floor(innerHeight.value / 40);
   return yScale.ticks(numberOfYTicks);
 });
 
-const resolvedCurve = computed(() => CURVE_MAP[props.curveType] ?? curveMonotoneX);
+const resolvedCurve = computed(
+  () => CURVE_MAP[props.curveType] ?? curveMonotoneX,
+);
 
 const areaGenerator = computed(() =>
   area()
     .x((d) => {
-      return xScale.value(weekEndAccessor(d.data));
+      return xScale.value(xKeyAccessor(d.data));
     })
     .y1((d) => yScale(d[1]))
     .y0((d) => yScale(d[0]))
-    .curve(resolvedCurve.value)
+    .curve(resolvedCurve.value),
 );
 
 const colors = computed(() =>
-  props.legendRange.length > 0 ? props.legendRange :
-  props.colors.length > 0 ? props.colors :
-  selectAccessibleColorPalette(uniqueLabels.value)
+  props.legendRange.length > 0
+    ? props.legendRange
+    : props.colors.length > 0
+      ? props.colors
+      : selectAccessibleColorPalette(uniqueLabels.value),
 );
 
 const colorScale = computed(() =>
-  scaleOrdinal(colors.value).domain(props.legendDomain || uniqueLabels.value)
+  scaleOrdinal(colors.value).domain(props.legendDomain || uniqueLabels.value),
 );
 
 const yAxisLabelLeftX = computed(() => -(marginLeft - 35));
@@ -268,8 +400,8 @@ const handleMouseMove = (e) => {
         : curr;
     });
 
-    tooltipData.value = props.aggregatedData.filter(
-      (item) => weekEndAccessor(item) === hoveredDate.value
+    tooltipData.value = baseData.value.filter(
+      (item) => xKeyAccessor(item) === hoveredDate.value,
     );
   } else {
     hoveredDate.value = null;
@@ -365,7 +497,7 @@ const chartContainerStyle = computed(() => ({
             :font-size="`${fontSize}px`"
             :font-weight="axisLabelFontWeight"
           >
-            {{ xAxisLabel }}
+            {{ resolvedXAxisLabel }}
           </text>
           <g
             v-for="(tick, index) in xTicksToBeRendered"
@@ -380,7 +512,7 @@ const chartContainerStyle = computed(() => ({
               :fill="hoveredDate ? '#bdc3c7' : '#2c3e50'"
               :font-size="`${fontSize}px`"
             >
-              {{ formatTime(parseTime(tick)) }}
+              {{ formatXLabel(tick) }}
             </text>
           </g>
           <g
@@ -395,7 +527,7 @@ const chartContainerStyle = computed(() => ({
               stroke-width="4px"
               :font-size="`${fontSize}px`"
             >
-              {{ formatTime(parseTime(hoveredDate)) }}
+              {{ formatXLabel(hoveredDate) }}
             </text>
             <text
               y="10"
@@ -405,7 +537,7 @@ const chartContainerStyle = computed(() => ({
               stroke-width="1px"
               :font-size="`${fontSize}px`"
             >
-              {{ formatTime(parseTime(hoveredDate)) }}
+              {{ formatXLabel(hoveredDate) }}
             </text>
           </g>
         </g>
@@ -471,6 +603,8 @@ const chartContainerStyle = computed(() => ({
       :tooltipSubtitle="tooltipSubtitle"
       :barChartTitle="barChartTitle"
       :tooltipDecimalPlaces="tooltipDecimalPlaces"
+      :timeUnit="timeUnit"
+      :locationAccessor="locationAccessor"
     />
   </div>
 </template>
