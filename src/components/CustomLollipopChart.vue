@@ -5,7 +5,7 @@ import { max } from "d3-array";
 import { format } from "d3-format";
 import { timeFormat, timeParse } from "d3-time-format";
 import { quadtree } from "d3-quadtree";
-import { createDateArray } from "../utils/arrays";
+import { createDateArray, createMonthArray } from "../utils/arrays";
 import { filterXTicks } from "../utils/tickFilters";
 
 const props = defineProps({
@@ -53,7 +53,7 @@ const width = ref(500);
 const internalHoveredPoint = ref(null);
 const focusedIndex = ref(-1);
 const chartId = ref(
-  `lollipop-chart-${Math.random().toString(36).substr(2, 9)}`
+  `lollipop-chart-${Math.random().toString(36).substr(2, 9)}`,
 );
 const liveRegionId = ref(`${chartId.value}-live`);
 
@@ -74,7 +74,8 @@ onUnmounted(() => {
 });
 
 const handleResize = () => {
-  width.value = window.innerWidth >= props.maxWidth ? props.maxWidth : window.innerWidth;
+  width.value =
+    window.innerWidth >= props.maxWidth ? props.maxWidth : window.innerWidth;
 };
 
 const xAccessor = (d) => d[props.dateKey];
@@ -82,8 +83,35 @@ const yAccessor = (d) => d[props.valueKey];
 
 const formatHoveredValueKey = format(",.0f");
 const formatValueKey = format(".2s");
-const parseTime = timeParse("%Y-%m-%d");
-const formatTime = timeFormat("%b %e");
+
+// Date key handling: supports "YYYY-MM-DD" (daily) and "YYYY-MM" (monthly)
+const MONTH_KEY_RE = /^\d{4}-\d{2}$/;
+const isMonthKey = (key) => typeof key === "string" && MONTH_KEY_RE.test(key);
+
+const parseDay = timeParse("%Y-%m-%d");
+const parseMonth = timeParse("%Y-%m");
+const formatDay = timeFormat("%b %e"); // "Mar 23"
+const formatMonth = timeFormat("%b %Y"); // "Sep 2025"
+
+// Formats an x key for display. Falls back to the raw string if unparseable.
+const formatDateLabel = (key) => {
+  if (isMonthKey(key)) {
+    const parsed = parseMonth(key);
+    return parsed ? formatMonth(parsed) : key;
+  }
+  const parsed = parseDay(key);
+  return parsed ? formatDay(parsed) : key;
+};
+
+// Minimum horizontal space (px) between monthly tick labels
+const MONTH_TICK_MIN_SPACING = 70;
+
+const filterMonthTicks = (ticks, availableWidth) => {
+  if (ticks.length <= 1) return ticks;
+  const step = availableWidth / ticks.length;
+  const interval = Math.max(1, Math.ceil(MONTH_TICK_MIN_SPACING / step));
+  return ticks.filter((_, index) => index % interval === 0);
+};
 
 const responsivePointRadius = computed(() => {
   if (width.value < 400) return 2;
@@ -108,21 +136,23 @@ const effectiveHeight = computed(() => {
 });
 
 const innerWidth = computed(
-  () => width.value - props.marginLeft - props.marginRight
+  () => width.value - props.marginLeft - props.marginRight,
 );
 
 const innerHeight = computed(
-  () => props.height - props.marginTop - props.marginBottom
+  () => props.height - props.marginTop - props.marginBottom,
 );
 
 const xScaleDomain = computed(() => {
   if (props.xScale) {
     return props.xScale.domain();
   }
-  return createDateArray(
-    xAccessor(props.data[0]),
-    xAccessor(props.data[props.data.length - 1])
-  );
+  const first = xAccessor(props.data[0]);
+  const last = xAccessor(props.data[props.data.length - 1]);
+
+  return isMonthKey(first)
+    ? createMonthArray(first, last)
+    : createDateArray(first, last);
 });
 
 const xScale = computed(() => {
@@ -139,15 +169,15 @@ const yScale = computed(() =>
   scaleLinear()
     .domain([0, max(props.data, yAccessor)])
     .range([innerHeight.value, 0])
-    .nice()
+    .nice(),
 );
 
 const bandwidthOffset = computed(() =>
-  props.useBandwidthOffset ? xScale.value.bandwidth() / 2 : 0
+  props.useBandwidthOffset ? xScale.value.bandwidth() / 2 : 0,
 );
 
 const xAccessorScaled = computed(
-  () => (d) => xScale.value(xAccessor(d)) + bandwidthOffset.value
+  () => (d) => xScale.value(xAccessor(d)) + bandwidthOffset.value,
 );
 
 const yAccessorScaled = computed(() => (d) => yScale.value(yAccessor(d)));
@@ -156,7 +186,7 @@ const quadtreeInstance = computed(() =>
   quadtree()
     .x((d) => xScale.value(xAccessor(d)) + bandwidthOffset.value)
     .y((d) => yScale.value(yAccessor(d)))
-    .addAll(props.data)
+    .addAll(props.data),
 );
 
 const yTicks = computed(() => {
@@ -166,9 +196,13 @@ const yTicks = computed(() => {
 
 const allXTicks = computed(() => xScale.value.domain());
 
-const xTicksToBeRendered = computed(() =>
-  filterXTicks(allXTicks.value, innerWidth.value)
-);
+const xTicksToBeRendered = computed(() => {
+  const ticks = allXTicks.value;
+  // Monthly keys use spacing-based filtering, whereas daily keys keep filterXTicks
+  return isMonthKey(ticks[0])
+    ? filterMonthTicks(ticks, innerWidth.value)
+    : filterXTicks(ticks, innerWidth.value);
+});
 
 const hoveredPoint = computed(() => {
   if (props.activeKey) {
@@ -227,7 +261,7 @@ const handleKeyDown = (e, d, index) => {
     internalHoveredPoint.value = props.data[newIndex];
     // Focus the next element
     const elements = document.querySelectorAll(
-      `[data-chart-id="${chartId.value}"] g[role="button"]`
+      `[data-chart-id="${chartId.value}"] g[role="button"]`,
     );
     if (elements[newIndex]) {
       elements[newIndex].focus();
@@ -254,14 +288,14 @@ const ariaLabel = computed(() => {
   const description =
     `A lollipop chart displaying ${props.data.length} data points. ` +
     `Values range from ${formatHoveredValueKey(
-      minValue.value
+      minValue.value,
     )} to ${formatHoveredValueKey(maxValue.value)}.`;
   return `${title}. ${description}`;
 });
 
 // Individual point aria label
 const getPointAriaLabel = (d) => {
-  const date = formatTime(parseTime(xAccessor(d)));
+  const date = formatDateLabel(xAccessor(d));
   const value = formatHoveredValueKey(yAccessor(d));
   return `${date}: ${value} ${props.yAxisLabel}`;
 };
@@ -269,7 +303,7 @@ const getPointAriaLabel = (d) => {
 // Screen reader instructions
 const srInstructions = computed(
   () =>
-    "Use arrow keys to navigate between data points. Press Home or End to jump to first or last point."
+    "Use arrow keys to navigate between data points. Press Home or End to jump to first or last point.",
 );
 
 // Live region announcement for screen readers
@@ -341,7 +375,7 @@ const lollipopPointStyle = {
           `A lollipop chart showing ${yAxisLabel} over ${xAxisLabel.toLowerCase()}. The chart contains ${
             data.length
           } data points ranging from ${formatHoveredValueKey(
-            minValue
+            minValue,
           )} to ${formatHoveredValueKey(maxValue)}.`
         }}
       </desc>
@@ -424,7 +458,7 @@ const lollipopPointStyle = {
                     : '400'
                 "
               >
-                {{ formatTime(parseTime(tick)) }}
+                {{ formatDateLabel(tick) }}
               </text>
             </g>
           </g>
@@ -526,7 +560,7 @@ const lollipopPointStyle = {
               stroke-width="4px"
               font-size="14px"
             >
-              {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
+              {{ formatDateLabel(xAccessor(hoveredPoint)) }}
             </text>
             <text
               :x="xAccessorScaled(hoveredPoint)"
@@ -537,7 +571,7 @@ const lollipopPointStyle = {
               font-size="14px"
               font-weight="600"
             >
-              {{ formatTime(parseTime(xAccessor(hoveredPoint))) }}
+              {{ formatDateLabel(xAccessor(hoveredPoint)) }}
             </text>
           </g>
         </g>
